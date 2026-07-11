@@ -1,0 +1,48 @@
+name: Task
+description: Propose concrete implementation, maintenance, documentation, or release work.
+title: "Task: "
+type: Task
+projects:
+  - modwire/1
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Select every pinned issue field before submission. Use native dependencies and sub-issues for relationships.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: State the observable result, not only the activity.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe the implementation boundary and important exclusions.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Observable behavior is implemented.
+        - [ ] Relevant tests and documentation are updated.
+    validations:
+      required: true
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout and rollback
+      description: Explain compatibility, migration, rollout, or rollback considerations; write "Not applicable" when none exist.
+    validations:
+      required: true
+  - type: input
+    id: relationships
+    attributes:
+      label: Related issues
+      description: Link candidate blockers, blocked work, parents, or sub-issues for native relationship assignment.
+    validations:
+      required: false
