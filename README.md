@@ -6,6 +6,53 @@ Every external boundary is behind a package interface: catalog, href resolution,
 field creation, link creation, resource hrefs, and serialization. `ModwireSirenFactory` is the
 standard composition root; `ModwireSiren` is the small public façade.
 
+## What Siren is
+
+[Siren](https://github.com/kevinswiber/siren) is a hypermedia specification for representing an
+entity together with the controls a client can use next. A JSON Siren document uses the media type
+`application/vnd.siren+json` and can contain:
+
+- `properties`: the entity's data;
+- `entities`: related entities embedded in the representation;
+- `links`: navigational controls identified by link relations; and
+- `actions`: named state transitions, including the target, HTTP method, media type, and input
+  fields.
+
+This makes a Siren response more than a JSON snapshot. A client can discover available transitions
+from the response instead of reconstructing URLs or duplicating server-side routing rules. Siren is
+a community specification, not an IETF RFC. Its normative project specification is the
+[Siren specification](https://github.com/kevinswiber/siren/blob/master/README.md); link relation
+semantics come from [RFC 8288](https://www.rfc-editor.org/rfc/rfc8288), with standard relation names
+listed in the [IANA Link Relations registry](https://www.iana.org/assignments/link-relations/).
+
+## What this package adds
+
+OpenAPI describes the API surface; Siren describes the controls available in a particular response.
+`modwire-siren` joins the two: it reads routes, operations, request schemas, and the explicit
+`x-siren-resource` metadata from one OpenAPI document, then projects runtime resource values into a
+typed Siren entity. Applications therefore do not need to maintain a second route map for Siren
+links and actions.
+
+The package intentionally does not decide authorization. Callers pass the operation IDs that are
+legal for the current entity and principal, and only those operations become actions. It also does
+not serve HTTP responses itself; the framework layer remains responsible for content negotiation
+and returning `Content-Type: application/vnd.siren+json`.
+
+## Useful next improvements
+
+The most valuable additions for this project would be:
+
+1. Add framework response adapters that set the Siren content type and handle content negotiation,
+   while keeping the core framework-independent.
+2. Publish a machine-readable schema for `x-siren-resource` and validate it in editor/CI workflows,
+   so mistakes are caught before application startup.
+3. Add specification conformance fixtures for embedded entities, every action field type, and link
+   relations, alongside the current unit tests.
+4. Generate a complete example response in this README, not only the construction code, so users
+   can immediately see the resulting wire format.
+5. Document an authorization recipe showing how a policy selects the runtime `operation_ids`
+   without leaking unavailable actions to clients.
+
 <!-- generated:public-api:start -->
 ## Public API
 
