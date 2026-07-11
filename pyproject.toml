@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.28", "hatch-vcs>=0.5"]
+build-backend = "hatchling.build"
+
+[project]
+name = "modwire-siren"
+dynamic = ["version"]
+description = "Siren hypermedia and OpenAPI integration for Modwire."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "9orky" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
+]
+
+dependencies = ["pydantic>=2.12"]
+
+[dependency-groups]
+dev = ["build>=1.3", "packaging>=25", "pytest>=9", "ruff>=0.14", "twine>=6"]
+
+[project.urls]
+Repository = "https://github.com/9orky/modwire-siren"
+Issues = "https://github.com/9orky/modwire-siren/issues"
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = '^v(?P<version>\d+\.\d+\.\d+)$'
+fallback-version = "0.0.0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/modwire_siren/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/modwire_siren"]
+
+[tool.hatch.build.targets.sdist]
+include = ["examples", "src", "tests", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["**/_version.py"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
