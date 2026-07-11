@@ -1,0 +1,30 @@
+name: Human approval
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: human-approval-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  human-approval:
+    name: Human approval
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    environment:
+      name: human-approval
+      deployment: false
+    steps:
+      - name: Record human confirmation
+        run: |
+          echo "::notice title=Human approval received::A human approved this pull request for merge."
+          {
+            echo "## Human approval received"
+            echo
+            echo "A required human reviewer approved this pull request for merge."
+          } >> "$GITHUB_STEP_SUMMARY"
