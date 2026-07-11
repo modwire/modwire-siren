@@ -9,14 +9,14 @@ permissions:
 
 jobs:
   build:
-    uses: 9orky/modwire/.github/workflows/python-release-build.yml@workflows-v1
+    uses: modwire/modwire/.github/workflows/python-release-build.yml@workflows-v1
     with:
       release-tag: ${{ github.event.release.tag_name }}
       python-version: "3.12"
 
   publish-github-assets:
     needs: build
-    uses: 9orky/modwire/.github/workflows/python-release-assets.yml@workflows-v1
+    uses: modwire/modwire/.github/workflows/python-release-assets.yml@workflows-v1
     with:
       release-tag: ${{ github.event.release.tag_name }}
     permissions:
