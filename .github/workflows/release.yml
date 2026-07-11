@@ -30,6 +30,7 @@ jobs:
           python-version: "3.12"
       - run: uv sync --all-groups --frozen
       - run: make verify
+      - run: git restore src/modwire_siren/_version.py
       - run: uv build --out-dir dist
       - run: uv run twine check dist/*
       - run: uv run python scripts/verify_release.py "$RELEASE_TAG" dist
