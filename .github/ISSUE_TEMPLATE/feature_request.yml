@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose a new user-facing capability or behavior.
+title: "Feature: "
+type: Feature
+projects:
+  - modwire/1
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Select every pinned issue field before submission. Use native dependencies and sub-issues for relationships.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user or integration problem this should solve.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Proposed outcome
+      description: Describe observable behavior without prescribing unnecessary implementation detail.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Observable behavior is implemented.
+        - [ ] Relevant tests and documentation are updated.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: input
+    id: relationships
+    attributes:
+      label: Related issues
+      description: Link candidate blockers, blocked work, parents, or sub-issues for native relationship assignment.
+    validations:
+      required: false
