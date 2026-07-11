@@ -66,6 +66,6 @@ jobs:
         with:
           name: distributions
           path: dist/
-      - run: gh release upload "$RELEASE_TAG" dist/* --clobber
+      - run: gh release upload "$RELEASE_TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
