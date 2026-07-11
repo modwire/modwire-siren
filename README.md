@@ -160,7 +160,7 @@ handlers, and projects the result through the standard `ModwireSiren` compositio
 ## Development and release
 
 Run `uv sync --all-groups` and `make verify`. Releases use strict SemVer tags and PyPI Trusted
-Publishing configured for repository `9orky/modwire-siren`, workflow `release.yml`, and environment
+Publishing configured for repository `modwire/modwire-siren`, workflow `release.yml`, and environment
 `pypi`. Create and push the tag before publishing its GitHub Release; that release drives the shared
 build, attaches the verified distributions, and then publishes the same files to PyPI.
 
