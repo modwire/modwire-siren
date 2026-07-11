@@ -1,0 +1,21 @@
+name: Issue metadata
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - typed
+      - untyped
+      - field_added
+      - field_removed
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    uses: modwire/modwire/.github/workflows/issue-metadata.yml@main
