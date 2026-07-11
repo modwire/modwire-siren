@@ -1,0 +1,46 @@
+name: Bug report
+description: Report incorrect or unexpected existing behavior.
+title: "Bug: "
+type: Bug
+projects:
+  - modwire/1
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Select every pinned issue field before submission. Use native dependencies and sub-issues for relationships.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reproducible example, command, or fixture.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: State the behavior that would resolve the bug.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 1.2.3 or commit SHA
+    validations:
+      required: false
+  - type: input
+    id: relationships
+    attributes:
+      label: Related issues
+      description: Link candidate blockers, blocked work, parents, or sub-issues for native relationship assignment.
+    validations:
+      required: false
