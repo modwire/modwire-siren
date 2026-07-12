@@ -4,9 +4,9 @@
   "entities": [
     {
       "class": ["modwire-ui-profile"],
-      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "rel": ["https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md#profile-entity"],
       "properties": {
-        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "profile": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md",
         "language": "en-GB",
         "presentation": {
           "role": "document",
@@ -27,6 +27,6 @@
   "actions": [],
   "links": [
     {"rel": ["self"], "href": "https://api.example.test/guides/getting-started"},
-    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+    {"rel": ["profile"], "href": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md"}
   ]
 }

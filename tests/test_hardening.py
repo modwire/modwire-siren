@@ -4,6 +4,9 @@ from modwire_siren import ModwireSirenFactory, OpenApiError, SirenEntityRequest
 from modwire_siren.openapi.factory import OpenApiCatalogFactory
 from modwire_siren.openapi.href import OpenApiHrefResolver
 from modwire_siren.openapi.resolver import ComponentSchemaResolver
+from modwire_siren.openapi.resource import OpenApiResourceReader
+from modwire_siren.profile.document import ProfileDocument
+from modwire_siren.profile.standard import ProfileStandard
 
 
 def resource(name: str, path_parameter: str = "id") -> dict:
@@ -16,14 +19,19 @@ def resource(name: str, path_parameter: str = "id") -> dict:
     }
 
 
+CATALOGS = OpenApiCatalogFactory(
+    OpenApiResourceReader(ProfileDocument(ProfileStandard.load()))
+)
+
+
 def test_catalog_rejects_duplicate_operation_and_resource_names():
     with pytest.raises(OpenApiError, match=r"Duplicate OpenAPI operationId.*same"):
-        OpenApiCatalogFactory.create(
+        CATALOGS.create(
             {"paths": {"/a": {"get": {"operationId": "same"}}, "/b": {"get": {"operationId": "same"}}}}
         )
 
     with pytest.raises(OpenApiError, match=r"Duplicate Siren resource name.*record"):
-        OpenApiCatalogFactory.create(
+        CATALOGS.create(
             {
                 "paths": {
                     "/a/{id}": {"x-siren-resource": resource("record"), "get": {"operationId": "a"}},
@@ -34,7 +42,7 @@ def test_catalog_rejects_duplicate_operation_and_resource_names():
 
 
 def test_operation_reader_merges_path_parameters_with_operation_overrides():
-    catalog = OpenApiCatalogFactory.create(
+    catalog = CATALOGS.create(
         {
             "paths": {
                 "/records": {

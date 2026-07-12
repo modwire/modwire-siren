@@ -19,6 +19,7 @@ class PackageDocumentation:
     module: str
     readme: Path
     example: Path
+    example_link: str
 
 
 PACKAGES = (
@@ -26,6 +27,13 @@ PACKAGES = (
         "modwire_siren",
         ROOT / "README.md",
         ROOT / "examples/build_document.py",
+        "examples/build_document.py",
+    ),
+    PackageDocumentation(
+        "modwire_siren.profile",
+        ROOT / "docs/siren-ui-profile/python-api.md",
+        ROOT / "examples/profile.py",
+        "../../examples/profile.py",
     ),
 )
 
@@ -53,7 +61,7 @@ class DocumentationGenerator:
                 "",
                 "## Executable example",
                 "",
-                f"Source: [`{package.example.name}`](examples/{package.example.name}). "
+                f"Source: [`{package.example.name}`]({package.example_link}). "
                 "This file is executed by the test suite.",
                 "",
                 "```python",
@@ -77,8 +85,16 @@ class DocumentationGenerator:
         if not inspect.isclass(value):
             return "—"
         operations = []
-        for name, _member in value.__dict__.items():
-            if name.startswith("_") or not callable(getattr(value, name, None)):
+        for name, member in value.__dict__.items():
+            if name.startswith("_"):
+                continue
+            if isinstance(member, property):
+                annotation = DocumentationGenerator._annotation(
+                    inspect.signature(member.fget).return_annotation
+                )
+                operations.append(f"`{name}: {annotation}`")
+                continue
+            if not callable(getattr(value, name, None)):
                 continue
             signature = DocumentationGenerator._signature(getattr(value, name))
             parameters = tuple(signature.parameters.values())

@@ -36,15 +36,59 @@ links and actions.
 The package intentionally does not decide authorization. Callers pass the operation IDs that are
 legal for the current entity and principal, and only those operations become actions. It also does
 not serve HTTP responses itself; the framework layer remains responsible for content negotiation
-and returning `Content-Type: application/vnd.siren+json`.
+and returning the media type exposed by the profile API when a profile is applied.
 
 ## Approved UI profile
 
 The owner-approved [Modwire Siren UI Profile](docs/siren-ui-profile/README.md) defines a Siren-native,
 framework-independent vocabulary for nested interfaces, action forms, semantic component selection,
-and predictable state transitions. Its specification, schemas, examples, conformance rules, and
-independent project boundaries are the implementation authority. Runtime support is delivered
-separately from this specification commit.
+and predictable state transitions. This package implements its producer, validation, discovery, and
+enhancement contract. The packaged JSON Schema is the only vocabulary and type authority. Python
+applies its progressive defaults to plain JSON data and rejects dangling properties, relations,
+actions, fields, and regions through one structured validation error contract.
+
+The supported Python profile revision is `1.0-draft`, identified by
+`https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md`. Profiled responses advertise both the required
+profile link and the media type parameter. `SirenProfile.media_type` exposes the exact response
+`Content-Type` for a framework adapter.
+
+OpenAPI resources opt in with `x-siren-ui-profile`. The extension contains the complete schema-valid
+metadata document. Runtime `operation_ids` remain the authorization authority: unavailable actions
+and their presentation metadata are removed together before reference validation and serialization.
+
+```yaml
+paths:
+  /records/{record_slug}:
+    x-siren-resource:
+      name: record
+      class: record
+      identifier: slug
+      path-parameters: {record_slug: slug}
+      relations: {}
+    x-siren-ui-profile:
+      profile: https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md
+      presentation: {role: detail}
+      properties:
+        title: {label: Title, importance: primary}
+      actions:
+        revise_record:
+          intent: primary
+          result: {mode: replace, relations: [self], optimistic: false}
+    patch:
+      operationId: revise_record
+      summary: Revise record
+```
+
+The [`modwire_siren.profile`](docs/siren-ui-profile/python-api.md) package exposes one profile class.
+It also enhances manually assembled Siren dictionaries, so OpenAPI is an integration path rather
+than a requirement:
+
+```python
+from modwire_siren.profile import SirenProfile
+
+profile = SirenProfile()
+metadata = profile.discover(document)
+```
 
 ## Following advertised controls
 
@@ -73,8 +117,8 @@ The most valuable additions for this project would be:
    while keeping the core framework-independent.
 2. Publish a machine-readable schema for `x-siren-resource` and validate it in editor/CI workflows,
    so mistakes are caught before application startup.
-3. Add specification conformance fixtures for embedded entities, every action field type, and link
-   relations, alongside the current unit tests.
+3. Publish the profile schema at its stable identifier and automate public schema availability
+   checks without changing the package-owned schema source.
 4. Generate a complete example response in this README, not only the construction code, so users
    can immediately see the resulting wire format.
 5. Document an authorization recipe showing how a policy selects the runtime `operation_ids`
@@ -116,6 +160,13 @@ openapi_schema = {
                 "identifier": "slug",
                 "path-parameters": {"record_slug": "slug"},
                 "relations": {},
+            },
+            "x-siren-ui-profile": {
+                "profile": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md",
+                "presentation": {"role": "detail", "label": "Architecture record"},
+                "properties": {
+                    "title": {"label": "Title", "importance": "primary"},
+                },
             },
             "get": {"operationId": "get_record", "summary": "Get record"},
         }

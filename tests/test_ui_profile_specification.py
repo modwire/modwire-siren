@@ -11,8 +11,8 @@ SCHEMA_PATH = PROFILE_ROOT / "schema" / "profile.schema.json"
 VALID = PROFILE_ROOT / "examples" / "valid"
 INVALID = PROFILE_ROOT / "examples" / "invalid"
 NORMALIZED = PROFILE_ROOT / "examples" / "normalized"
-PROFILE = "https://modwire.pmstag.online/profiles/siren-ui/v1"
-PROFILE_REL = "https://modwire.pmstag.online/rels/ui-profile"
+PROFILE = "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md"
+PROFILE_REL = "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md#profile-entity"
 
 
 def read_json(path: Path):

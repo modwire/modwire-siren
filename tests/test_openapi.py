@@ -5,7 +5,10 @@ from modwire_siren.factories.action import SirenActionFactory
 from modwire_siren.factories.field import OpenApiSirenFieldFactory
 from modwire_siren.openapi.factory import OpenApiCatalogFactory
 from modwire_siren.openapi.href import OpenApiHrefResolver
+from modwire_siren.openapi.resource import OpenApiResourceReader
 from modwire_siren.policies.field_type import OpenApiSirenFieldTypeResolver
+from modwire_siren.profile.document import ProfileDocument
+from modwire_siren.profile.standard import ProfileStandard
 
 SCHEMA = {
     "openapi": "3.1.0",
@@ -50,10 +53,13 @@ SCHEMA = {
         },
     },
 }
+CATALOGS = OpenApiCatalogFactory(
+    OpenApiResourceReader(ProfileDocument(ProfileStandard.load()))
+)
 
 
 def test_openapi_builds_actions_and_explicit_resource_metadata():
-    catalog = OpenApiCatalogFactory.create(SCHEMA)
+    catalog = CATALOGS.create(SCHEMA)
     hrefs = OpenApiHrefResolver("https://api.test/")
     fields = OpenApiSirenFieldFactory(OpenApiSirenFieldTypeResolver())
 
@@ -93,7 +99,7 @@ def test_composition_builds_links_and_only_runtime_legal_actions():
 
 def test_openapi_rejects_operations_without_stable_ids():
     with pytest.raises(OpenApiError, match="operationId"):
-        OpenApiCatalogFactory.create({"paths": {"/records": {"get": {}}}})
+        CATALOGS.create({"paths": {"/records": {"get": {}}}})
 
 
 def test_openapi_requires_explicit_resource_path_parameter_mapping():
@@ -112,7 +118,7 @@ def test_openapi_requires_explicit_resource_path_parameter_mapping():
     }
 
     with pytest.raises(ValueError, match="path-parameters"):
-        OpenApiCatalogFactory.create(schema)
+        CATALOGS.create(schema)
 
 
 def test_openapi_rejects_unknown_schema_references():
@@ -130,4 +136,4 @@ def test_openapi_rejects_unknown_schema_references():
     }
 
     with pytest.raises(OpenApiError, match="Unknown OpenAPI schema reference"):
-        OpenApiCatalogFactory.create(schema)
+        CATALOGS.create(schema)

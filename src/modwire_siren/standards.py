@@ -19,3 +19,4 @@ class SirenFieldType(StrEnum):
 
 class SirenOpenApiExtension(StrEnum):
     RESOURCE = "x-siren-resource"
+    UI_PROFILE = "x-siren-ui-profile"
