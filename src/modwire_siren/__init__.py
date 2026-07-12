@@ -1,4 +1,7 @@
 from ._version import __version__
+from .client.contracts import SirenResponse, SirenTransport
+from .client.error import SirenClientError
+from .client.facade import SirenClient
 from .composition import ModwireSirenFactory
 from .contracts.entity import SirenEntityRequest
 from .facade import ModwireSiren
@@ -10,7 +13,11 @@ __all__ = [
     "ModwireSirenFactory",
     "NinjaExtraSirenController",
     "OpenApiError",
+    "SirenClient",
+    "SirenClientError",
     "SirenEntityDecorator",
     "SirenEntityRequest",
+    "SirenResponse",
+    "SirenTransport",
     "__version__",
 ]

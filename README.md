@@ -38,6 +38,25 @@ legal for the current entity and principal, and only those operations become act
 not serve HTTP responses itself; the framework layer remains responsible for content negotiation
 and returning `Content-Type: application/vnd.siren+json`.
 
+## Following advertised controls
+
+`SirenClient` consumes links and actions without reconstructing server routes. The caller owns an
+async `SirenTransport` and its lifecycle, so the package remains independent of HTTP libraries:
+
+```python
+from modwire_siren import SirenClient
+
+client = SirenClient("https://api.example.com/", transport)
+root = await client.root()
+records = await client.follow(root, "records")
+record = await client.collection_item(records, "architecture")
+updated = await client.execute(record, "revise_record", {"title": "Architecture"})
+```
+
+Relative targets are resolved against the configured root and must remain on the same origin.
+Missing or malformed affordances raise `SirenClientError`; non-success responses preserve their
+status and complete problem document.
+
 ## Useful next improvements
 
 The most valuable additions for this project would be:
@@ -64,8 +83,12 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `ModwireSirenFactory` | Build the standard OpenAPI-backed Siren façade. | `standard(schema: dict[str, typing.Any], base_url: str) -> modwire_siren.facade.ModwireSiren` |
 | `NinjaExtraSirenController` | Framework-light base for Ninja Extra controllers that emit Siren documents. | `siren_document(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any], entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = ()) -> dict[str, typing.Any]` |
 | `OpenApiError` | Report invalid or incomplete OpenAPI data used for Siren projection. | — |
+| `SirenClient` | Navigate Siren relations and execute only advertised actions. | `root() -> dict[str, typing.Any]`<br>`follow(document: collections.abc.Mapping[str, typing.Any], relation: str) -> dict[str, typing.Any]`<br>`execute(document: collections.abc.Mapping[str, typing.Any], action_name: str, payload: collections.abc.Mapping[str, typing.Any] | None = None) -> dict[str, typing.Any]`<br>`action(document: collections.abc.Mapping[str, typing.Any], action_name: str) -> collections.abc.Mapping[str, typing.Any]`<br>`collection_item(collection: collections.abc.Mapping[str, typing.Any], identifier: Any, *, identifier_field: str = 'id') -> dict[str, typing.Any]` |
+| `SirenClientError` | Report navigation, affordance, transport, and remote problem failures. | `as_dict() -> dict[str, typing.Any]`<br>`problem(status_code: int, document: collections.abc.Mapping[str, typing.Any]) -> 'SirenClientError'` |
 | `SirenEntityDecorator` | Turn a controller method's property mapping into a Siren entity document. | — |
 | `SirenEntityRequest` | Describe the resource data and allowed operations projected into one entity. | — |
+| `SirenResponse` | Carry one transport response without coupling Siren to an HTTP library. | — |
+| `SirenTransport` | Execute Siren requests for a client-owned transport lifecycle. | `request(method: str, href: str, payload: collections.abc.Mapping[str, typing.Any] | None = None) -> modwire_siren.client.contracts.SirenResponse` |
 | `__version__` | Installed distribution version. | — |
 
 ## Executable example
