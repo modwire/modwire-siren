@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
 from typing import Any
 
@@ -15,7 +17,7 @@ class SirenClientError(RuntimeError):
         return {"kind": self.kind, "detail": self.detail, **self.context}
 
     @classmethod
-    def problem(cls, status_code: int, document: Mapping[str, Any]) -> "SirenClientError":
+    def problem(cls, status_code: int, document: Mapping[str, Any]) -> SirenClientError:
         body = dict(document)
         return cls(
             "remote-problem",
