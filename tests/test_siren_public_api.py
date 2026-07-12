@@ -7,8 +7,12 @@ def test_root_api_is_intentionally_small_and_complete():
         "ModwireSirenFactory",
         "NinjaExtraSirenController",
         "OpenApiError",
+        "SirenClient",
+        "SirenClientError",
         "SirenEntityDecorator",
         "SirenEntityRequest",
+        "SirenResponse",
+        "SirenTransport",
         "__version__",
     ]
 
