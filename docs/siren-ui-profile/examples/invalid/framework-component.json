@@ -1,0 +1,7 @@
+{
+  "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+  "presentation": {
+    "role": "detail",
+    "component": "MaterialRecordCard"
+  }
+}

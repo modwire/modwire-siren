@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modwire.pmstag.online/schemas/siren-ui-profile/v1/profile.schema.json",
+  "title": "Modwire Siren UI Profile metadata",
+  "description": "Properties of the embedded modwire-ui-profile Siren entity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "presentation"],
+  "properties": {
+    "profile": {
+      "const": "https://modwire.pmstag.online/profiles/siren-ui/v1"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$"
+    },
+    "presentation": {"$ref": "#/$defs/presentation"},
+    "properties": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/propertyMetadata"},
+      "propertyNames": {"minLength": 1}
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/relationMetadata"},
+      "propertyNames": {"minLength": 1}
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/actionMetadata"},
+      "propertyNames": {"minLength": 1}
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {"format": "uri"},
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "nonEmpty": {"type": "string", "minLength": 1},
+    "order": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
+    "localized": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role"],
+      "properties": {
+        "role": {
+          "enum": ["detail", "summary", "collection", "dashboard", "document", "tree", "form"]
+        },
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "layout": {"$ref": "#/$defs/layout"}
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["flow", "grid", "master-detail", "tabs", "stack"]},
+        "regions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/region"}
+        }
+      }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "content"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmpty"},
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "order": {"$ref": "#/$defs/order"},
+        "content": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "properties": {"$ref": "#/$defs/uniqueNames"},
+            "relations": {"$ref": "#/$defs/uniqueNames"},
+            "actions": {"$ref": "#/$defs/uniqueNames"}
+          }
+        }
+      }
+    },
+    "uniqueNames": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonEmpty"},
+      "uniqueItems": true
+    },
+    "propertyMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "order": {"$ref": "#/$defs/order"},
+        "group": {"$ref": "#/$defs/nonEmpty"},
+        "format": {
+          "enum": ["text", "number", "date", "datetime", "duration", "currency", "percent", "code", "markdown", "uri", "image", "status", "hidden"]
+        },
+        "unit": {"$ref": "#/$defs/nonEmpty"},
+        "importance": {"enum": ["primary", "secondary", "supporting"]},
+        "sensitive": {"type": "boolean"}
+      }
+    },
+    "relationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role"],
+      "properties": {
+        "role": {"enum": ["item", "detail", "navigation", "supplementary", "choice-source", "progress", "problem"]},
+        "loading": {"enum": ["embedded", "eager", "lazy", "manual"]},
+        "cardinality": {"enum": ["one", "many"]},
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "order": {"$ref": "#/$defs/order"},
+        "region": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "actionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intent": {"enum": ["primary", "secondary", "destructive", "navigation", "background"]},
+        "placement": {"enum": ["entity", "collection", "item", "inline", "overflow"]},
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "order": {"$ref": "#/$defs/order"},
+        "region": {"$ref": "#/$defs/nonEmpty"},
+        "confirmation": {"$ref": "#/$defs/confirmation"},
+        "fields": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/fieldMetadata"},
+          "propertyNames": {"minLength": 1}
+        },
+        "result": {"$ref": "#/$defs/result"}
+      }
+    },
+    "confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "acknowledgement": {"$ref": "#/$defs/nonEmpty"}
+      }
+    },
+    "fieldMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "widget": {"enum": ["automatic", "text", "textarea", "number", "toggle", "select", "multi-select", "date", "datetime", "file", "code", "hidden"]},
+        "label": {"$ref": "#/$defs/nonEmpty"},
+        "description": {"$ref": "#/$defs/nonEmpty"},
+        "message": {"$ref": "#/$defs/nonEmpty"},
+        "placeholder": {"type": "string"},
+        "order": {"$ref": "#/$defs/order"},
+        "group": {"$ref": "#/$defs/nonEmpty"},
+        "choices": {"$ref": "#/$defs/choices"},
+        "visibleWhen": {"$ref": "#/$defs/predicate"},
+        "enabledWhen": {"$ref": "#/$defs/predicate"}
+      }
+    },
+    "choices": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {"kind": {"const": "inline"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "relation", "valuePath", "labelPath"],
+          "properties": {
+            "kind": {"const": "relation"},
+            "relation": {"$ref": "#/$defs/nonEmpty"},
+            "valuePath": {"pattern": "^properties/[A-Za-z0-9_.-]+$"},
+            "labelPath": {"pattern": "^properties/[A-Za-z0-9_.-]+$"}
+          }
+        }
+      ]
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operator"],
+      "properties": {
+        "path": {"pattern": "^(properties|fields)/[A-Za-z0-9_.-]+$"},
+        "operator": {"enum": ["exists", "equals", "not-equals", "in", "not-in", "truthy", "falsy"]},
+        "value": true
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["replace", "refresh", "navigate", "monitor", "none"]},
+        "relations": {"$ref": "#/$defs/uniqueNames"},
+        "optimistic": {"const": false}
+      }
+    }
+  }
+}

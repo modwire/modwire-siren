@@ -1,0 +1,32 @@
+{
+  "class": ["guide", "document"],
+  "properties": {"title": "Getting started", "body": "Use the advertised controls."},
+  "entities": [
+    {
+      "class": ["modwire-ui-profile"],
+      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "properties": {
+        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "language": "en-GB",
+        "presentation": {
+          "role": "document",
+          "label": "Getting started",
+          "message": "guide.getting-started.title",
+          "layout": {"kind": "flow"}
+        },
+        "properties": {
+          "title": {"label": "Title", "message": "common.title", "order": 10, "importance": "primary"},
+          "body": {"label": "Content", "message": "guide.body", "order": 20, "format": "markdown"}
+        }
+      },
+      "entities": [],
+      "actions": [],
+      "links": []
+    }
+  ],
+  "actions": [],
+  "links": [
+    {"rel": ["self"], "href": "https://api.example.test/guides/getting-started"},
+    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+  ]
+}

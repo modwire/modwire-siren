@@ -1,0 +1,73 @@
+{
+  "class": ["record", "collection"],
+  "properties": {"count": 2, "page": 1},
+  "entities": [
+    {
+      "class": ["record", "summary"],
+      "rel": ["item"],
+      "properties": {"slug": "architecture", "title": "Architecture", "status": "draft"},
+      "entities": [],
+      "actions": [],
+      "links": [{"rel": ["self"], "href": "https://api.example.test/records/architecture"}]
+    },
+    {
+      "class": ["record", "summary"],
+      "rel": ["item"],
+      "properties": {"slug": "delivery", "title": "Delivery", "status": "published"},
+      "entities": [],
+      "actions": [],
+      "links": [{"rel": ["self"], "href": "https://api.example.test/records/delivery"}]
+    },
+    {
+      "class": ["modwire-ui-profile"],
+      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "properties": {
+        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "presentation": {"role": "collection", "label": "Records", "layout": {"kind": "master-detail"}},
+        "properties": {
+          "count": {"label": "Total", "format": "number", "importance": "supporting"},
+          "page": {"label": "Page", "format": "number", "importance": "supporting"}
+        },
+        "relations": {
+          "item": {"role": "item", "loading": "embedded", "cardinality": "many", "order": 10},
+          "next": {"role": "navigation", "loading": "manual", "cardinality": "one", "label": "Next page"}
+        },
+        "actions": {
+          "filter_records": {
+            "intent": "secondary",
+            "placement": "collection",
+            "fields": {
+              "query": {"widget": "text", "label": "Search", "placeholder": "Title or slug", "order": 10},
+              "status": {"widget": "select", "label": "Status", "order": 20, "choices": {"kind": "inline"}}
+            },
+            "result": {"mode": "replace", "relations": ["self"], "optimistic": false}
+          }
+        }
+      },
+      "entities": [],
+      "actions": [],
+      "links": []
+    }
+  ],
+  "actions": [
+    {
+      "name": "filter_records",
+      "title": "Filter records",
+      "method": "GET",
+      "href": "https://api.example.test/records",
+      "type": "application/x-www-form-urlencoded",
+      "fields": [
+        {"name": "query", "type": "search"},
+        {"name": "status", "type": "radio", "value": [
+          {"value": "draft", "title": "Draft"},
+          {"value": "published", "title": "Published"}
+        ]}
+      ]
+    }
+  ],
+  "links": [
+    {"rel": ["self"], "href": "https://api.example.test/records?page=1"},
+    {"rel": ["next"], "href": "https://api.example.test/records?page=2"},
+    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+  ]
+}

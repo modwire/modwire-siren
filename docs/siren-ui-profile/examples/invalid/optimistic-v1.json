@@ -1,0 +1,9 @@
+{
+  "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+  "presentation": {"role": "detail"},
+  "actions": {
+    "revise": {
+      "result": {"mode": "replace", "optimistic": true}
+    }
+  }
+}

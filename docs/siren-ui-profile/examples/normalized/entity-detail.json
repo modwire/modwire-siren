@@ -1,0 +1,41 @@
+{
+  "kind": "entity",
+  "role": "detail",
+  "classes": ["record"],
+  "componentResolution": {
+    "level": "profile",
+    "matched": ["role:detail"],
+    "rule": "profile.entity.detail"
+  },
+  "regions": [
+    {
+      "id": "identity",
+      "properties": ["title", "slug", "status"],
+      "relations": [],
+      "actions": ["revise_record"]
+    },
+    {
+      "id": "content",
+      "properties": ["description"],
+      "relations": ["section"],
+      "actions": []
+    }
+  ],
+  "relations": [
+    {
+      "relation": "section",
+      "role": "supplementary",
+      "loading": "embedded",
+      "children": [
+        {"kind": "entity", "role": "summary", "classes": ["section", "summary"]}
+      ]
+    },
+    {
+      "relation": "assignee-choice",
+      "role": "choice-source",
+      "loading": "lazy",
+      "children": []
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,19 @@
+{
+  "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+  "presentation": {"role": "form"},
+  "actions": {
+    "revise": {
+      "fields": {
+        "owner": {
+          "widget": "select",
+          "choices": {
+            "kind": "relation",
+            "url": "https://untrusted.example/users",
+            "valuePath": "properties/id",
+            "labelPath": "properties/name"
+          }
+        }
+      }
+    }
+  }
+}

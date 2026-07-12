@@ -1,0 +1,34 @@
+{
+  "class": ["article", "detail"],
+  "properties": {"id": "profile-draft", "status": "draft", "title": "Profile draft"},
+  "entities": [
+    {
+      "class": ["modwire-ui-profile"],
+      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "properties": {
+        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "presentation": {"role": "detail", "label": "Article"},
+        "properties": {"status": {"label": "Status", "format": "status"}},
+        "actions": {
+          "publish": {
+            "intent": "primary",
+            "placement": "entity",
+            "label": "Publish",
+            "confirmation": {"required": true, "label": "Publish this draft?"},
+            "result": {"mode": "replace", "relations": ["self"], "optimistic": false}
+          }
+        }
+      },
+      "entities": [],
+      "actions": [],
+      "links": []
+    }
+  ],
+  "actions": [
+    {"name": "publish", "title": "Publish", "method": "POST", "href": "https://api.example.test/articles/profile-draft/publish"}
+  ],
+  "links": [
+    {"rel": ["self"], "href": "https://api.example.test/articles/profile-draft"},
+    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+  ]
+}
