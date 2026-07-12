@@ -38,6 +38,14 @@ legal for the current entity and principal, and only those operations become act
 not serve HTTP responses itself; the framework layer remains responsible for content negotiation
 and returning `Content-Type: application/vnd.siren+json`.
 
+## Approved UI profile
+
+The owner-approved [Modwire Siren UI Profile](docs/siren-ui-profile/README.md) defines a Siren-native,
+framework-independent vocabulary for nested interfaces, action forms, semantic component selection,
+and predictable state transitions. Its specification, schemas, examples, conformance rules, and
+independent project boundaries are the implementation authority. Runtime support is delivered
+separately from this specification commit.
+
 ## Following advertised controls
 
 `SirenClient` consumes links and actions without reconstructing server routes. The caller owns an

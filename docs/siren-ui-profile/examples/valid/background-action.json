@@ -1,0 +1,52 @@
+{
+  "class": ["analysis", "detail"],
+  "properties": {"id": "run-42", "status": "ready"},
+  "entities": [
+    {
+      "class": ["modwire-ui-profile"],
+      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "properties": {
+        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "presentation": {"role": "detail", "label": "Architecture analysis"},
+        "properties": {
+          "id": {"label": "Run", "format": "code", "order": 10},
+          "status": {"label": "Status", "format": "status", "order": 20}
+        },
+        "relations": {
+          "progress": {"role": "progress", "loading": "eager", "cardinality": "one"}
+        },
+        "actions": {
+          "start_analysis": {
+            "intent": "background",
+            "placement": "entity",
+            "label": "Start analysis",
+            "result": {"mode": "monitor", "relations": ["progress"], "optimistic": false}
+          },
+          "delete_analysis": {
+            "intent": "destructive",
+            "placement": "overflow",
+            "label": "Delete analysis",
+            "confirmation": {
+              "required": true,
+              "label": "Delete this analysis?",
+              "acknowledgement": "delete"
+            },
+            "result": {"mode": "navigate", "relations": ["up"], "optimistic": false}
+          }
+        }
+      },
+      "entities": [],
+      "actions": [],
+      "links": []
+    }
+  ],
+  "actions": [
+    {"name": "start_analysis", "title": "Start analysis", "method": "POST", "href": "https://api.example.test/analyses/run-42/start"},
+    {"name": "delete_analysis", "title": "Delete analysis", "method": "DELETE", "href": "https://api.example.test/analyses/run-42"}
+  ],
+  "links": [
+    {"rel": ["self"], "href": "https://api.example.test/analyses/run-42"},
+    {"rel": ["up"], "href": "https://api.example.test/analyses"},
+    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+  ]
+}

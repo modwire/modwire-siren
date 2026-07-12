@@ -1,0 +1,118 @@
+{
+  "class": ["record"],
+  "properties": {
+    "slug": "architecture",
+    "title": "Architecture",
+    "status": "draft",
+    "description": "A bounded architecture record"
+  },
+  "entities": [
+    {
+      "class": ["section", "summary"],
+      "rel": ["section"],
+      "properties": {"id": "contracts", "title": "Contracts"},
+      "entities": [],
+      "actions": [],
+      "links": [
+        {"rel": ["self"], "href": "https://api.example.test/sections/contracts"}
+      ]
+    },
+    {
+      "class": ["user", "collection"],
+      "rel": ["assignee-choice"],
+      "href": "https://api.example.test/users?role=maintainer"
+    },
+    {
+      "class": ["modwire-ui-profile"],
+      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "properties": {
+        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "language": "en",
+        "presentation": {
+          "role": "detail",
+          "label": "Architecture record",
+          "layout": {
+            "kind": "flow",
+            "regions": [
+              {
+                "id": "identity",
+                "label": "Identity",
+                "order": 10,
+                "content": {
+                  "properties": ["title", "slug", "status"],
+                  "relations": [],
+                  "actions": ["revise_record"]
+                }
+              },
+              {
+                "id": "content",
+                "label": "Content",
+                "order": 20,
+                "content": {
+                  "properties": ["description"],
+                  "relations": ["section"],
+                  "actions": []
+                }
+              }
+            ]
+          }
+        },
+        "properties": {
+          "title": {"label": "Title", "order": 10, "importance": "primary"},
+          "slug": {"label": "Slug", "order": 20, "format": "code"},
+          "status": {"label": "Status", "order": 30, "format": "status"},
+          "description": {"label": "Description", "order": 40, "format": "markdown"}
+        },
+        "relations": {
+          "section": {"role": "supplementary", "loading": "embedded", "cardinality": "many", "order": 10},
+          "assignee-choice": {"role": "choice-source", "loading": "lazy", "cardinality": "many"}
+        },
+        "actions": {
+          "revise_record": {
+            "intent": "primary",
+            "placement": "entity",
+            "label": "Revise record",
+            "order": 10,
+            "fields": {
+              "title": {"widget": "text", "label": "Title", "order": 10},
+              "description": {"widget": "textarea", "label": "Description", "order": 20},
+              "assignee": {
+                "widget": "select",
+                "label": "Assignee",
+                "order": 30,
+                "choices": {
+                  "kind": "relation",
+                  "relation": "assignee-choice",
+                  "valuePath": "properties/id",
+                  "labelPath": "properties/name"
+                }
+              }
+            },
+            "result": {"mode": "replace", "relations": ["self"], "optimistic": false}
+          }
+        }
+      },
+      "entities": [],
+      "actions": [],
+      "links": []
+    }
+  ],
+  "actions": [
+    {
+      "name": "revise_record",
+      "title": "Revise record",
+      "method": "PATCH",
+      "href": "https://api.example.test/records/architecture",
+      "type": "application/json",
+      "fields": [
+        {"name": "title", "type": "text", "value": "Architecture"},
+        {"name": "description", "type": "text", "value": "A bounded architecture record"},
+        {"name": "assignee", "type": "text"}
+      ]
+    }
+  ],
+  "links": [
+    {"rel": ["self"], "href": "https://api.example.test/records/architecture"},
+    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+  ]
+}
