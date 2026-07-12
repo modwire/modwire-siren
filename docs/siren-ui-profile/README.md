@@ -2,13 +2,14 @@
 
 Status: **Approved — implementation authorized**  
 Profile version: `1.0-draft`  
-Profile identifier: `https://modwire.pmstag.online/profiles/siren-ui/v1`  
+Profile identifier: `https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md`
 Schema: [`schema/profile.schema.json`](schema/profile.schema.json)
 
 This document specifies a Siren profile for communicating semantic presentation,
 interaction, and update hints without communicating framework components. It is the
-approved design authority for future Python and npm implementations. It is not yet an
-implemented or released Modwire contract.
+approved design authority for the Python and npm implementations. The Python producer,
+validation, discovery, and OpenAPI projection contract is implemented by `modwire-siren`;
+the independent npm implementations remain separate delivery projects.
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and
 **MAY** are to be interpreted as described by RFC 2119 and RFC 8174 when, and only
@@ -39,14 +40,16 @@ The root entity MUST advertise the profile with both:
 
 - a link whose `rel` contains `profile` and whose `href` is the profile identifier;
 - the media type parameter
-  `application/vnd.siren+json; profile="https://modwire.pmstag.online/profiles/siren-ui/v1"`.
+  `application/vnd.siren+json; profile="https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md"`.
+
+### Profile entity
 
 The root entity MUST contain exactly one embedded profile entity with:
 
 ```json
 {
   "class": ["modwire-ui-profile"],
-  "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+  "rel": ["https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md#profile-entity"],
   "properties": {"...": "profile metadata"},
   "entities": [],
   "actions": [],
@@ -105,6 +108,13 @@ It has these members:
 Unknown members MUST make the profile metadata invalid. Invalid profile metadata
 MUST be reported and ignored as a unit; it MUST NOT make the base Siren document
 unusable.
+
+Optional enhancement members are absent, never `null`. Before projection or consumption,
+a conforming implementation applies the defaults declared by the normative JSON Schema.
+The defaults provide a complete baseline profile: flow layout, empty metadata maps and
+regions, generic text/supporting properties, manual one-valued relations, secondary
+entity actions with `none` results, automatic fields, zero ordering, and non-sensitive,
+non-optimistic behavior. Explicit metadata progressively replaces those defaults.
 
 ## 5. Presentation
 
@@ -401,9 +411,13 @@ Every normative rule MUST eventually be covered by a positive or negative fixtur
 The initial draft corpus demonstrates the principal interaction shapes and establishes
 the file contract; completeness is tracked in [`review-checklist.md`](review-checklist.md).
 
+The schema `$id` is its immutable public source location in this repository:
+`https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/schema/profile.schema.json`.
+
 ## 20. Approved decisions and deferred project naming
 
-1. Profile, relation, and schema identifiers are owned under `modwire.pmstag.online`.
+1. Profile, relation, and schema identifiers resolve to their public source files in
+   `modwire/modwire-siren` through `raw.githubusercontent.com`.
 2. Literal strings and message identifiers may coexist; section 14 defines fallback precedence.
 3. `result.optimistic` remains reserved throughout v1.
 4. V1 uses the constrained property paths defined in the schema; adopting a general pointer

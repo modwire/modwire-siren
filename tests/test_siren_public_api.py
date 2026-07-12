@@ -23,9 +23,12 @@ def test_feature_packages_are_not_barrels():
     import modwire_siren.integrations
     import modwire_siren.openapi
     import modwire_siren.policies
+    import modwire_siren.profile
 
     assert not hasattr(modwire_siren.contracts, "SirenEntity")
     assert not hasattr(modwire_siren.factories, "SirenEntityFactory")
     assert not hasattr(modwire_siren.integrations, "NinjaExtraSirenController")
     assert not hasattr(modwire_siren.openapi, "OpenApiCatalog")
     assert not hasattr(modwire_siren.policies, "SirenFieldTypeResolver")
+    assert not hasattr(modwire_siren.profile, "SirenUiProfile")
+    assert modwire_siren.profile.__all__ == ["SirenProfile"]

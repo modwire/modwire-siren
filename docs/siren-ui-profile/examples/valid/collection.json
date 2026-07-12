@@ -20,9 +20,9 @@
     },
     {
       "class": ["modwire-ui-profile"],
-      "rel": ["https://modwire.pmstag.online/rels/ui-profile"],
+      "rel": ["https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md#profile-entity"],
       "properties": {
-        "profile": "https://modwire.pmstag.online/profiles/siren-ui/v1",
+        "profile": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md",
         "presentation": {"role": "collection", "label": "Records", "layout": {"kind": "master-detail"}},
         "properties": {
           "count": {"label": "Total", "format": "number", "importance": "supporting"},
@@ -68,6 +68,6 @@
   "links": [
     {"rel": ["self"], "href": "https://api.example.test/records?page=1"},
     {"rel": ["next"], "href": "https://api.example.test/records?page=2"},
-    {"rel": ["profile"], "href": "https://modwire.pmstag.online/profiles/siren-ui/v1"}
+    {"rel": ["profile"], "href": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md"}
   ]
 }

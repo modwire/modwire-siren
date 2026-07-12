@@ -1,3 +1,7 @@
+from typing import Any
+
+from pydantic import Field
+
 from .base import SirenContract
 
 
@@ -15,3 +19,4 @@ class SirenResource(SirenContract):
     identifier: str
     path_parameters: dict[str, str]
     relations: tuple[SirenRelation, ...]
+    profile: dict[str, Any] = Field(default_factory=dict)

@@ -11,6 +11,13 @@ openapi_schema = {
                 "path-parameters": {"record_slug": "slug"},
                 "relations": {},
             },
+            "x-siren-ui-profile": {
+                "profile": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md",
+                "presentation": {"role": "detail", "label": "Architecture record"},
+                "properties": {
+                    "title": {"label": "Title", "importance": "primary"},
+                },
+            },
             "get": {"operationId": "get_record", "summary": "Get record"},
         }
     },

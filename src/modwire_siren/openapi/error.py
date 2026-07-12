@@ -1,4 +1,8 @@
-class OpenApiError(ValueError):
+from ..error import SirenError
+
+
+class OpenApiError(SirenError):
     """Report invalid or incomplete OpenAPI data used for Siren projection."""
 
-    pass
+    def __init__(self, detail: str):
+        super().__init__("openapi.invalid", detail)
