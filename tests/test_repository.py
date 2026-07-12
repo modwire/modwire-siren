@@ -1,12 +1,25 @@
 import runpy
 from pathlib import Path
 
+from modwire_siren import SirenClient
+
 ROOT = Path(__file__).parents[1]
 
 
 def test_documented_example_executes():
     namespace = runpy.run_path(ROOT / "examples/build_document.py")
     assert namespace["document"]["class"] == ["record"]
+
+
+def test_generated_signatures_are_stable_for_postponed_annotations():
+    generator = runpy.run_path(ROOT / "scripts/generate_docs.py")[
+        "DocumentationGenerator"
+    ]
+
+    operations = generator._operations(SirenClient)
+
+    assert "payload: Mapping[str, Any] | None = None" in operations
+    assert "'Mapping[str, Any]" not in operations
 
 
 def test_release_uses_trusted_publishing_without_secrets():

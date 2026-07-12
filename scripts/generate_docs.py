@@ -9,6 +9,11 @@ START = "<!-- generated:public-api:start -->"
 END = "<!-- generated:public-api:end -->"
 
 
+class AnnotationText(str):
+    def __repr__(self) -> str:
+        return str(self)
+
+
 @dataclass(frozen=True)
 class PackageDocumentation:
     module: str
@@ -75,12 +80,32 @@ class DocumentationGenerator:
         for name, _member in value.__dict__.items():
             if name.startswith("_") or not callable(getattr(value, name, None)):
                 continue
-            signature = inspect.signature(getattr(value, name))
+            signature = DocumentationGenerator._signature(getattr(value, name))
             parameters = tuple(signature.parameters.values())
             if parameters and parameters[0].name in {"self", "cls"}:
                 signature = signature.replace(parameters=parameters[1:])
             operations.append(f"`{name}{signature}`")
         return "<br>".join(operations) or "—"
+
+    @staticmethod
+    def _signature(value: object) -> inspect.Signature:
+        signature = inspect.signature(value)
+        parameters = tuple(
+            parameter.replace(
+                annotation=DocumentationGenerator._annotation(parameter.annotation)
+            )
+            for parameter in signature.parameters.values()
+        )
+        return signature.replace(
+            parameters=parameters,
+            return_annotation=DocumentationGenerator._annotation(
+                signature.return_annotation
+            ),
+        )
+
+    @staticmethod
+    def _annotation(value: object) -> object:
+        return AnnotationText(value) if isinstance(value, str) else value
 
     @classmethod
     def update(cls, package: PackageDocumentation, check: bool) -> bool:
