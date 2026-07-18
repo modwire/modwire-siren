@@ -9,26 +9,18 @@ permissions:
 
 jobs:
   build:
-    uses: modwire/modwire/.github/workflows/python-release-build.yml@workflows-v1
+    uses: modwire/modwire-architecture/.github/workflows/python-release-build.yml@workflows-v1
     with:
       release-tag: ${{ github.event.release.tag_name }}
       python-version: "3.12"
 
   publish-github-assets:
     needs: build
-    runs-on: ubuntu-latest
+    uses: modwire/modwire-architecture/.github/workflows/python-release-assets.yml@workflows-v1
+    with:
+      release-tag: ${{ github.event.release.tag_name }}
     permissions:
       contents: write
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Upload GitHub release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
 
   publish-pypi:
     needs: [build, publish-github-assets]
