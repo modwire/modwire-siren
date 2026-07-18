@@ -13,6 +13,7 @@ from modwire_siren import (
     SirenEntityRequest,
     siren_entity,
 )
+from modwire_siren.integrations.ninja_extra import problem_from_exception, validation_problem
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +50,17 @@ class Request:
 
     def build_absolute_uri(self, path: str) -> str:
         return f"{self.origin.rstrip('/')}/{path.lstrip('/')}"
+
+
+class HttpError(Exception):
+    def __init__(self, status_code: int, message: str):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class ValidationError(Exception):
+    def errors(self) -> list[dict[str, str]]:
+        return [{"field": "title", "message": "Missing title"}]
 
 
 SCHEMA = {
@@ -265,6 +277,64 @@ def test_response_adapter_builds_problem_json_responses():
     assert response.content_type == "application/problem+json"
     assert response.headers == {"X-Trace-Id": "trace-1"}
     assert response.body == {"title": "Missing record", "status": 404}
+
+
+def test_problem_from_exception_preserves_http_status_and_detail():
+    problem = problem_from_exception(HttpError(404, "Record not found"))
+
+    assert problem == {
+        "title": "Not found",
+        "status": 404,
+        "detail": "Record not found",
+    }
+
+
+def test_validation_problem_preserves_error_details():
+    problem = validation_problem({"title": "Missing title"}, detail="Invalid input")
+
+    assert problem == {
+        "title": "Validation error",
+        "status": 422,
+        "detail": "Invalid input",
+        "errors": ({"field": "title", "message": "Missing title"},),
+    }
+
+
+def test_response_adapter_builds_problem_from_exception():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.exception(HttpError(403, "No access"), headers={"X-Trace-Id": "trace-1"})
+
+    assert response.status_code == 403
+    assert response.content_type == "application/problem+json"
+    assert response.headers == {"X-Trace-Id": "trace-1"}
+    assert response.body == {"title": "Forbidden", "status": 403, "detail": "No access"}
+
+
+def test_response_adapter_builds_problem_from_validation_error():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.exception(ValidationError(), status=422)
+
+    assert response.status_code == 422
+    assert response.body == {
+        "title": "Validation error",
+        "status": 422,
+        "errors": ({"field": "title", "message": "Missing title"},),
+    }
+
+
+def test_response_adapter_builds_validation_problem_response():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.validation([{"field": "slug", "message": "Invalid slug"}], status=400)
+
+    assert response.status_code == 400
+    assert response.body == {
+        "title": "Validation error",
+        "status": 400,
+        "errors": ({"field": "slug", "message": "Invalid slug"},),
+    }
 
 
 def test_response_adapter_rejects_content_type_header_duplication():

@@ -5,6 +5,7 @@ from ...contracts.collection import SirenCollectionRequest
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
 from ...contracts.related_link import RelatedLinkInput
 from ...standards import SirenMediaType
+from .problem import exception_problem_response, validation_problem_response
 from .projector import RequestAwareSirenProjectorFactory, SirenProjector
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse, NinjaExtraSirenResponseFactory
 from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer, serialize_collection_items
@@ -111,3 +112,45 @@ class NinjaExtraSirenResponseAdapter:
 
     def no_content(self, *, headers: Mapping[str, str] = EMPTY_HEADERS) -> NinjaExtraSirenResponse:
         return self._responses.create(None, status_code=204, headers=headers, content_type=None)
+
+    def exception(
+        self,
+        error: BaseException,
+        *,
+        title: str = "",
+        status: int = 500,
+        detail: str = "",
+        type_: str = "",
+        instance: str = "",
+        headers: Mapping[str, str] = EMPTY_HEADERS,
+    ) -> NinjaExtraSirenResponse:
+        return exception_problem_response(
+            error,
+            title=title,
+            status=status,
+            detail=detail,
+            type_=type_,
+            instance=instance,
+            headers=headers,
+        )
+
+    def validation(
+        self,
+        errors: Any,
+        *,
+        title: str = "Validation error",
+        status: int = 422,
+        detail: str = "",
+        type_: str = "",
+        instance: str = "",
+        headers: Mapping[str, str] = EMPTY_HEADERS,
+    ) -> NinjaExtraSirenResponse:
+        return validation_problem_response(
+            errors,
+            title=title,
+            status=status,
+            detail=detail,
+            type_=type_,
+            instance=instance,
+            headers=headers,
+        )

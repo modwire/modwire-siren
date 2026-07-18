@@ -3,7 +3,11 @@ import types
 
 import pytest
 
-from modwire_siren.integrations.django import to_django_response
+from modwire_siren.integrations.django import (
+    django_problem_response,
+    django_validation_problem_response,
+    to_django_response,
+)
 from modwire_siren.integrations.ninja_extra.response import NinjaExtraSirenResponse
 from modwire_siren.standards import SirenMediaType
 
@@ -19,6 +23,13 @@ class FakeHttpResponse:
 
     def __delitem__(self, name: str) -> None:
         del self.headers[name]
+
+
+class HttpError(Exception):
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
 
 
 @pytest.fixture
@@ -97,3 +108,27 @@ def test_to_django_response_rejects_none_body_for_content_responses(django_http)
 def test_to_django_response_rejects_missing_content_type_for_body(django_http):
     with pytest.raises(ValueError, match="content_type"):
         to_django_response(NinjaExtraSirenResponse({"ok": True}, content_type=None))
+
+
+def test_django_problem_response_maps_framework_exception_to_problem_payload():
+    response = django_problem_response(HttpError(404, "Missing record"))
+
+    assert response.status_code == 404
+    assert response.content_type == "application/problem+json"
+    assert response.body == {
+        "title": "Not found",
+        "status": 404,
+        "detail": "Missing record",
+    }
+
+
+def test_django_validation_problem_response_maps_validation_details():
+    response = django_validation_problem_response({"title": "Missing title"}, status=400)
+
+    assert response.status_code == 400
+    assert response.content_type == "application/problem+json"
+    assert response.body == {
+        "title": "Validation error",
+        "status": 400,
+        "errors": ({"field": "title", "message": "Missing title"},),
+    }
