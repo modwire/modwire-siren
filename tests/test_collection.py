@@ -125,6 +125,67 @@ def test_collection_defaults_to_current_item_count_and_self_link_without_paginat
     assert document["links"][0]["href"] == "https://api.test/records"
 
 
+def test_collection_only_resource_projects_items_without_item_self_links():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/languages": {
+                "x-siren-resource": {
+                    "name": "language",
+                    "class": "language",
+                    "identifier": "id",
+                    "path-parameters": {},
+                    "relations": {},
+                    "collection-only": True,
+                },
+                "get": {"operationId": "list_languages"},
+            },
+        },
+    }
+
+    document = ModwireSirenFactory.standard(schema, "https://api.test").collection(
+        SirenCollectionRequest(
+            resource_name="language",
+            items=({"id": "python", "name": "Python"},),
+            collection_operation_ids=("list_languages",),
+            item_operation_ids=(),
+            path_values={},
+        )
+    )
+
+    assert document["class"] == ["collection", "language"]
+    assert document["links"][0]["href"] == "https://api.test/languages"
+    assert document["entities"][0] == {
+        "rel": ["item"],
+        "class": ["language"],
+        "properties": {"id": "python", "name": "Python"},
+        "links": [],
+        "actions": [],
+        "entities": [],
+    }
+
+
+def test_collection_only_must_be_explicit_to_omit_identifier_path_mapping():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/languages": {
+                "x-siren-resource": {
+                    "name": "language",
+                    "class": "language",
+                    "identifier": "id",
+                    "path-parameters": {},
+                    "relations": {},
+                },
+                "get": {"operationId": "list_languages"},
+            },
+        },
+    }
+
+    with pytest.raises(OpenApiError, match=r"identifier 'id'.*path-parameters"):
+        ModwireSirenFactory.standard(schema, "https://api.test")
+
+
 def test_collection_projects_declared_subpath_actions_with_request_schema_fields():
     document = siren().collection(
         SirenCollectionRequest(

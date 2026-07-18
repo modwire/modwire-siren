@@ -52,6 +52,18 @@ def user_spec() -> SirenResourceSpec:
     )
 
 
+def language_spec() -> SirenResourceSpec:
+    return SirenResourceSpec(
+        name="language",
+        path="/languages",
+        resource_class="language",
+        identifier="id",
+        path_parameters={},
+        relations={},
+        collection_only=True,
+    )
+
+
 def test_inject_siren_resources_returns_schema_copy_with_typed_extensions():
     schema = inject_siren_resources(SCHEMA, (user_spec(), record_spec()))
 
@@ -64,6 +76,29 @@ def test_inject_siren_resources_returns_schema_copy_with_typed_extensions():
         "relations": {"owner_id": {"rel": "owner", "resource": "user", "many": False}},
         "collection-operations": ("search_records",),
     }
+
+
+def test_inject_siren_resources_serializes_collection_only_metadata():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/languages": {
+                "get": {"operationId": "list_languages"},
+            },
+        },
+    }
+
+    schema = inject_siren_resources(schema, (language_spec(),))
+
+    assert schema["paths"]["/languages"]["x-siren-resource"] == {
+        "name": "language",
+        "class": "language",
+        "identifier": "id",
+        "path-parameters": {},
+        "relations": {},
+        "collection-only": True,
+    }
+    validate_siren_resources(schema, ("language",))
 
 
 def test_validate_siren_resources_reuses_catalog_validation_and_required_resource_lookup():
@@ -138,6 +173,24 @@ def test_siren_resource_decorator_collects_controller_specs_and_accepts_relation
     resources = collect_siren_resources(RecordController)
 
     assert resources == (record_spec(),)
+
+
+def test_siren_resource_decorator_accepts_collection_only_resources():
+    @siren_resource(
+        name="language",
+        path="/languages",
+        class_="language",
+        identifier="id",
+        path_parameters={},
+        relations={},
+        collection_only=True,
+    )
+    class LanguageController:
+        pass
+
+    resources = collect_siren_resources(LanguageController)
+
+    assert resources == (language_spec(),)
 
 
 def test_siren_resource_decorator_rejects_non_boolean_many():

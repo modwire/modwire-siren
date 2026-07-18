@@ -22,6 +22,8 @@ class OpenApiSirenLinkFactory(SirenLinkFactory):
         self._hrefs = hrefs
 
     def create(self, resource: SirenResource, properties: Mapping[str, Any]) -> tuple[SirenLink, ...]:
+        if resource.collection_only:
+            return self._relation_links(resource, properties)
         return (self._self_link(resource, properties), *self._relation_links(resource, properties))
 
     def _self_link(self, resource: SirenResource, properties: Mapping[str, Any]) -> SirenLink:
