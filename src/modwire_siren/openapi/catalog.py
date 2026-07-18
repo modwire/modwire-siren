@@ -16,6 +16,14 @@ class SirenResourceCatalog(ABC):
     def resource(self, name: str) -> SirenResource:
         raise NotImplementedError
 
+    @abstractmethod
+    def operations(self) -> tuple[OpenApiOperation, ...]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def resources(self) -> tuple[SirenResource, ...]:
+        raise NotImplementedError
+
 
 class OpenApiCatalog(SirenResourceCatalog):
     def __init__(self, operations: tuple[OpenApiOperation, ...], resources: tuple[SirenResource, ...]):
@@ -42,11 +50,17 @@ class OpenApiCatalog(SirenResourceCatalog):
         except KeyError as error:
             raise OpenApiError(f"Unknown OpenAPI operation: {operation_id}") from error
 
+    def operations(self) -> tuple[OpenApiOperation, ...]:
+        return tuple(self._operations.values())
+
     def resource(self, name: str) -> SirenResource:
         try:
             return self._resources[name]
         except KeyError as error:
             raise OpenApiError(f"Unknown Siren resource: {name}") from error
+
+    def resources(self) -> tuple[SirenResource, ...]:
+        return tuple(self._resources.values())
 
     def _validate_resources(self) -> None:
         for resource in self._resources.values():

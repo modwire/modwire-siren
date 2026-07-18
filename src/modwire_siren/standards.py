@@ -4,6 +4,7 @@ from enum import StrEnum
 class SirenMediaType(StrEnum):
     ACTION = "application/json"
     ENTITY = "application/vnd.siren+json"
+    OPENAPI = "application/vnd.oai.openapi+json;version=3.1"
     PROBLEM = "application/problem+json"
 
 
