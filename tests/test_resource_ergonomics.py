@@ -104,6 +104,42 @@ def test_inject_siren_resources_serializes_collection_only_metadata():
     validate_siren_resources(schema, ("language",))
 
 
+def test_inject_siren_resources_serializes_singleton_root_visibility_metadata():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/records/search": {
+                "post": {"operationId": "search_records"},
+            },
+        },
+    }
+    resource = SirenResourceSpec(
+        name="record_search",
+        path="/records/search",
+        resource_class="record-search",
+        identifier="",
+        path_parameters={},
+        relations={},
+        operations=("search_records",),
+        singleton=True,
+        root_visible=False,
+    )
+
+    schema = inject_siren_resources(schema, (resource,))
+
+    assert schema["paths"]["/records/search"]["x-siren-resource"] == {
+        "name": "record_search",
+        "class": "record-search",
+        "identifier": "",
+        "path-parameters": {},
+        "relations": {},
+        "operations": ["search_records"],
+        "singleton": True,
+        "root-visible": False,
+    }
+    validate_siren_resources(schema, ("record_search",))
+
+
 def test_validate_siren_resources_reuses_catalog_validation_and_required_resource_lookup():
     schema = inject_siren_resources(SCHEMA, (user_spec(), record_spec()))
 
@@ -194,6 +230,38 @@ def test_siren_resource_decorator_accepts_collection_only_resources():
     resources = collect_siren_resources(LanguageController)
 
     assert resources == (language_spec(),)
+
+
+def test_siren_resource_decorator_accepts_singleton_resources():
+    @siren_resource(
+        name="record_search",
+        path="/records/search",
+        class_="record-search",
+        identifier="",
+        path_parameters={},
+        relations={},
+        operations=("search_records",),
+        singleton=True,
+        root_visible=False,
+    )
+    class RecordSearchController:
+        pass
+
+    resources = collect_siren_resources(RecordSearchController)
+
+    assert resources == (
+        SirenResourceSpec(
+            name="record_search",
+            path="/records/search",
+            resource_class="record-search",
+            identifier="",
+            path_parameters={},
+            relations={},
+            operations=("search_records",),
+            singleton=True,
+            root_visible=False,
+        ),
+    )
 
 
 def test_siren_resource_decorator_rejects_non_boolean_many():

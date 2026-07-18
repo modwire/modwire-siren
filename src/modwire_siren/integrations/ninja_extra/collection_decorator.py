@@ -73,6 +73,7 @@ class SirenCollectionResponseDecorator:
                     item_operation_ids=item_operations,
                     path_values=invocation.path_values,
                     pagination=pagination,
+                    query=_request_query(invocation.request),
                 ),
                 status_code=status_code,
                 headers=headers,
@@ -119,3 +120,19 @@ def siren_collection(
         headers=headers,
         serializer=serializer,
     )
+
+
+def _request_query(request: Any) -> tuple[tuple[str, Any], ...]:
+    for name in ("GET", "query_params"):
+        query = getattr(request, name, None)
+        if query is None:
+            continue
+        if hasattr(query, "lists"):
+            return tuple((key, value) for key, values in query.lists() for value in values)
+        if hasattr(query, "multi_items"):
+            return tuple(query.multi_items())
+        if hasattr(query, "getlist"):
+            return tuple((key, value) for key in query for value in query.getlist(key))
+        if hasattr(query, "items"):
+            return tuple(query.items())
+    return ()

@@ -21,6 +21,8 @@ class SirenResourceDecorator:
         operations: tuple[str, ...] = (),
         collection_operations: tuple[str, ...] = (),
         collection_only: bool = False,
+        singleton: bool = False,
+        root_visible: bool | None = None,
     ):
         relation_inputs = SirenRelationInputFactory()
         self._spec = SirenResourceSpec(
@@ -33,6 +35,8 @@ class SirenResourceDecorator:
             operations=operations,
             collection_operations=collection_operations,
             collection_only=collection_only,
+            singleton=singleton,
+            root_visible=root_visible,
         )
 
     def __call__(self, controller: T) -> T:
@@ -52,6 +56,8 @@ def siren_resource(
     operations: tuple[str, ...] = (),
     collection_operations: tuple[str, ...] = (),
     collection_only: bool = False,
+    singleton: bool = False,
+    root_visible: bool | None = None,
 ) -> SirenResourceDecorator:
     """Attach a typed Siren resource declaration to a Ninja Extra controller class."""
     return SirenResourceDecorator(
@@ -64,4 +70,6 @@ def siren_resource(
         operations=operations,
         collection_operations=collection_operations,
         collection_only=collection_only,
+        singleton=singleton,
+        root_visible=root_visible,
     )

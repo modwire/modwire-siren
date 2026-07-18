@@ -29,3 +29,5 @@ class OpenApiResourceExtension(SirenContract):
     operations: StringTuple = ()
     collection_operations: Annotated[StringTuple, Field(validation_alias="collection-operations")] = ()
     collection_only: Annotated[bool, Field(validation_alias="collection-only")] = False
+    singleton: bool = False
+    root_visible: Annotated[bool | None, Field(validation_alias="root-visible")] = None

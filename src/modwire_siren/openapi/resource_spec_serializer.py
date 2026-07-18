@@ -21,4 +21,8 @@ class SirenResourceSpecSerializer:
             extension["collection-operations"] = list(resource.collection_operations)
         if resource.collection_only:
             extension["collection-only"] = True
+        if resource.singleton:
+            extension["singleton"] = True
+        if resource.root_visible is not None:
+            extension["root-visible"] = resource.root_visible
         return extension
