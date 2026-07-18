@@ -4,7 +4,7 @@ from typing import Any
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
 from ...facade import ModwireSiren
 from .adapter import NinjaExtraSirenResponseAdapter
-from .response import NinjaExtraSirenResponse
+from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse
 
 
 class NinjaExtraSirenController:
@@ -35,13 +35,13 @@ class NinjaExtraSirenController:
     def siren_response(
         self,
         resource_name: str,
-        properties: Mapping[str, Any] | None,
+        properties: Mapping[str, Any],
         *,
         operation_ids: tuple[str, ...],
-        path_values: Mapping[str, Any] | None = None,
+        path_values: Mapping[str, Any] = EMPTY_VALUES,
         entities: tuple[SirenEmbeddedEntity, ...] = (),
         status_code: int = 200,
-        headers: Mapping[str, str] | None = None,
+        headers: Mapping[str, str] = EMPTY_HEADERS,
     ) -> NinjaExtraSirenResponse:
         return self._siren_responses.entity(
             resource_name,

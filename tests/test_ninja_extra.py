@@ -103,7 +103,7 @@ def test_response_adapter_projects_entities_without_controller_subclassing():
         {"slug": "architecture"},
         operations=(),
         status_code=201,
-        headers={"Content-Type": "application/json", "Location": "/records/architecture"},
+        headers={"Location": "/records/architecture"},
     )
 
     assert response.status_code == 201
@@ -115,12 +115,40 @@ def test_response_adapter_projects_entities_without_controller_subclassing():
 def test_response_adapter_builds_problem_json_responses():
     adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
 
-    response = adapter.problem({"title": "Missing record", "status": 404}, headers={"X-Trace-Id": "trace-1"})
+    response = adapter.problem(
+        {"title": "Missing record", "status": 404},
+        status_code=404,
+        headers={"X-Trace-Id": "trace-1"},
+    )
 
     assert response.status_code == 404
     assert response.content_type == "application/problem+json"
     assert response.headers == {"X-Trace-Id": "trace-1"}
     assert response.body == {"title": "Missing record", "status": 404}
+
+
+def test_response_adapter_rejects_content_type_header_duplication():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    with pytest.raises(ValueError, match="content_type"):
+        adapter.entity("record", {"slug": "architecture"}, operations=(), headers={"Content-Type": "text/plain"})
+
+
+def test_response_adapter_rejects_mismatched_problem_status():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    with pytest.raises(ValueError, match="must match"):
+        adapter.problem({"title": "Missing record", "status": 400}, status_code=404)
+
+
+def test_siren_entity_response_rejects_no_content_body():
+    class InvalidController(NinjaExtraSirenController):
+        @siren_entity(resource="record", operations=(), status_code=204)
+        def delete_record(self, record_slug: str) -> dict:
+            return {"slug": record_slug}
+
+    with pytest.raises(ValueError, match="must not include a body"):
+        InvalidController(ModwireSirenFactory.standard(SCHEMA, "https://api.test")).delete_record("architecture")
 
 
 def test_siren_entity_rejects_blank_resource_names_at_declaration_time():

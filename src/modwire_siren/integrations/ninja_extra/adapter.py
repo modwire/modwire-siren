@@ -4,9 +4,7 @@ from typing import Any
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
 from ...facade import ModwireSiren
 from ...standards import SirenMediaType
-from .response import NinjaExtraSirenResponse
-
-PROBLEM_JSON = "application/problem+json"
+from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse
 
 
 class NinjaExtraSirenResponseAdapter:
@@ -18,24 +16,22 @@ class NinjaExtraSirenResponseAdapter:
     def entity(
         self,
         resource_name: str,
-        properties: Mapping[str, Any] | None,
+        properties: Mapping[str, Any],
         *,
         operations: tuple[str, ...],
-        path_values: Mapping[str, Any] | None = None,
+        path_values: Mapping[str, Any] = EMPTY_VALUES,
         entities: tuple[SirenEmbeddedEntity, ...] = (),
         status_code: int = 200,
-        headers: Mapping[str, str] | None = None,
+        headers: Mapping[str, str] = EMPTY_HEADERS,
     ) -> NinjaExtraSirenResponse:
         if status_code == 204:
-            return self.no_content(headers=headers)
-        if properties is None:
-            raise ValueError("Siren entity responses require properties unless status_code is 204")
+            raise ValueError("Siren entity responses cannot use 204 No Content; call no_content()")
         document = self._siren.document(
             SirenEntityRequest(
                 resource_name=resource_name,
                 properties=dict(properties),
                 operation_ids=operations,
-                path_values=dict(path_values or {}),
+                path_values=dict(path_values),
                 entities=entities,
             )
         )
@@ -50,38 +46,37 @@ class NinjaExtraSirenResponseAdapter:
         self,
         problem: Mapping[str, Any],
         *,
-        status_code: int | None = None,
-        headers: Mapping[str, str] | None = None,
+        status_code: int,
+        headers: Mapping[str, str] = EMPTY_HEADERS,
     ) -> NinjaExtraSirenResponse:
-        resolved_status = status_code or self._problem_status(problem)
-        if resolved_status == 204:
+        if status_code == 204:
             raise ValueError("Problem responses cannot use 204 No Content")
+        body_status = problem.get("status")
+        if body_status is not None and body_status != status_code:
+            raise ValueError("Problem document status must match response status_code")
         return self._response(
             dict(problem),
-            status_code=resolved_status,
+            status_code=status_code,
             headers=headers,
-            content_type=PROBLEM_JSON,
+            content_type=SirenMediaType.PROBLEM,
         )
 
-    def no_content(self, *, headers: Mapping[str, str] | None = None) -> NinjaExtraSirenResponse:
+    def no_content(self, *, headers: Mapping[str, str] = EMPTY_HEADERS) -> NinjaExtraSirenResponse:
         return self._response(None, status_code=204, headers=headers, content_type=None)
-
-    @staticmethod
-    def _problem_status(problem: Mapping[str, Any]) -> int:
-        status = problem.get("status", 500)
-        return status if isinstance(status, int) else 500
 
     @staticmethod
     def _response(
         body: dict[str, Any] | None,
         *,
         status_code: int,
-        headers: Mapping[str, str] | None,
+        headers: Mapping[str, str],
         content_type: str | None,
     ) -> NinjaExtraSirenResponse:
+        if any(name.lower() == "content-type" for name in headers):
+            raise ValueError("Pass response media type through content_type, not headers")
         return NinjaExtraSirenResponse(
             body=body,
             status_code=status_code,
-            headers={name: value for name, value in (headers or {}).items() if name.lower() != "content-type"},
+            headers=dict(headers),
             content_type=content_type,
         )
