@@ -27,6 +27,15 @@ class RecordOrmSerializer:
             raise TypeError(f"Unsupported ORM value: {type(value).__name__}")
         return {"slug": value.slug, "title": value.title}
 
+
+class Request:
+    def __init__(self, origin: str):
+        self.origin = origin
+
+    def build_absolute_uri(self, path: str) -> str:
+        return f"{self.origin.rstrip('/')}/{path.lstrip('/')}"
+
+
 SCHEMA = {
     "openapi": "3.1.0",
     "paths": {
@@ -391,6 +400,28 @@ def test_ninja_adapter_serializes_collection_items_with_adapter_serializer():
 
     assert response.body["entities"][0]["properties"] == {"slug": "architecture", "title": "Architecture"}
     assert response.body["entities"][0]["links"][0]["href"] == "https://api.test/records/architecture"
+
+
+def test_ninja_adapter_for_request_uses_request_base_url_resolver_for_collections():
+    siren_factory = ModwireSirenFactory.web(
+        SCHEMA,
+        base_url_resolver=lambda request: request.build_absolute_uri("/api/"),
+    )
+    response = NinjaExtraSirenResponseAdapter.for_request(
+        siren_factory=siren_factory,
+        request=Request("https://tenant.test"),
+    ).collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=({"slug": "architecture"},),
+            collection_operation_ids=("list_records",),
+            item_operation_ids=("get_record",),
+            path_values={},
+        )
+    )
+
+    assert response.body["links"][0]["href"] == "https://tenant.test/api/records"
+    assert response.body["entities"][0]["links"][0]["href"] == "https://tenant.test/api/records/architecture"
 
 
 def test_siren_collection_response_serializes_items_with_decorator_serializer():

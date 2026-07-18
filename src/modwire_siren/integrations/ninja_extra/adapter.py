@@ -4,8 +4,8 @@ from typing import Any
 from ...contracts.collection import SirenCollectionRequest
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
 from ...contracts.related_link import RelatedLinkInput
-from ...facade import ModwireSiren
 from ...standards import SirenMediaType
+from .projector import RequestAwareSirenProjectorFactory, SirenProjector
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse, NinjaExtraSirenResponseFactory
 from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer, serialize_collection_items
 
@@ -15,13 +15,24 @@ class NinjaExtraSirenResponseAdapter:
 
     def __init__(
         self,
-        siren: ModwireSiren,
+        siren: SirenProjector,
         *,
         property_serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
     ):
         self._siren = siren
         self._responses = NinjaExtraSirenResponseFactory()
         self._properties = property_serializer
+
+    @classmethod
+    def for_request(
+        cls,
+        *,
+        siren_factory: RequestAwareSirenProjectorFactory,
+        request: Any,
+        property_serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
+    ) -> "NinjaExtraSirenResponseAdapter":
+        siren = siren_factory.for_request(request)
+        return cls(siren, property_serializer=property_serializer)
 
     def entity(
         self,
