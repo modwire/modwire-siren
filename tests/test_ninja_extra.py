@@ -1,5 +1,7 @@
 import asyncio
 import inspect
+from dataclasses import dataclass
+from typing import Any
 
 import pytest
 
@@ -10,6 +12,34 @@ from modwire_siren import (
     SirenEntityDecorator,
     siren_entity,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class RecordData:
+    slug: str
+    title: str
+
+
+class RecordModel:
+    def __init__(self, slug: str, title: str):
+        self.slug = slug
+        self.title = title
+
+    def model_dump(self) -> dict[str, str]:
+        return {"slug": self.slug, "title": self.title}
+
+
+class RecordOrm:
+    def __init__(self, slug: str, title: str):
+        self.slug = slug
+        self.title = title
+
+
+class OrmSerializer:
+    def serialize(self, value: Any) -> dict[str, str]:
+        if not isinstance(value, RecordOrm):
+            raise TypeError(f"Unsupported ORM value: {type(value).__name__}")
+        return {"slug": value.slug, "title": value.title}
 
 SCHEMA = {
     "paths": {
@@ -33,9 +63,21 @@ class RecordController(NinjaExtraSirenController):
     def get_record(self, record_slug: str) -> dict:
         return {"slug": record_slug, "title": "Architecture"}
 
+    @SirenEntityDecorator("record", operations=("revise_record",))
+    def get_record_document_from_dataclass(self, record_slug: str) -> RecordData:
+        return RecordData(slug=record_slug, title="Architecture")
+
     @siren_entity(resource="record", operations=("revise_record",), headers={"X-Trace-Id": "trace-1"})
     def get_record_response(self, record_slug: str) -> dict:
         return {"slug": record_slug, "title": "Architecture"}
+
+    @siren_entity(resource="record", operations=("revise_record",))
+    def get_record_response_from_model(self, record_slug: str) -> RecordModel:
+        return RecordModel(slug=record_slug, title="Architecture")
+
+    @siren_entity(resource="record", operations=("revise_record",), serializer=OrmSerializer())
+    def get_record_response_from_orm(self, record_slug: str) -> RecordOrm:
+        return RecordOrm(slug=record_slug, title="Architecture")
 
     @SirenEntityDecorator("record", operations=())
     async def get_record_async(self, record_slug: str) -> dict:
@@ -64,6 +106,13 @@ def test_siren_entity_keeps_controller_thin_and_preserves_route_signature():
     assert [action["name"] for action in document["actions"]] == ["revise_record"]
 
 
+def test_siren_entity_document_serializes_dataclass_returns_before_projection():
+    document = controller().get_record_document_from_dataclass("architecture")
+
+    assert document["properties"] == {"slug": "architecture", "title": "Architecture"}
+    assert document["links"][0]["href"] == "https://api.test/records/architecture"
+
+
 def test_siren_entity_supports_async_controller_methods():
     document = asyncio.run(controller().get_record_async("architecture"))
     assert document["class"] == ["record"]
@@ -80,6 +129,19 @@ def test_siren_entity_response_sets_siren_content_type_and_preserves_headers():
     assert response.body["properties"] == {"slug": "architecture/aggregate", "title": "Architecture"}
     assert response.body["links"][0]["href"] == "https://api.test/records/architecture%2Faggregate"
     assert [action["name"] for action in response.body["actions"]] == ["revise_record"]
+
+
+def test_siren_entity_response_serializes_model_dump_returns_before_projection():
+    response = controller().get_record_response_from_model("architecture")
+
+    assert response.body["properties"] == {"slug": "architecture", "title": "Architecture"}
+    assert response.body["links"][0]["href"] == "https://api.test/records/architecture"
+
+
+def test_siren_entity_response_uses_decorator_serializer_for_orm_returns():
+    response = controller().get_record_response_from_orm("architecture")
+
+    assert response.body["properties"] == {"slug": "architecture", "title": "Architecture"}
 
 
 def test_siren_entity_response_supports_async_controller_methods():
@@ -110,6 +172,28 @@ def test_response_adapter_projects_entities_without_controller_subclassing():
     assert response.content_type == "application/vnd.siren+json"
     assert response.headers == {"Location": "/records/architecture"}
     assert response.body["links"][0]["href"] == "https://api.test/records/architecture"
+
+
+def test_response_adapter_serializes_properties_with_adapter_serializer():
+    adapter = NinjaExtraSirenResponseAdapter(
+        ModwireSirenFactory.standard(SCHEMA, "https://api.test"),
+        property_serializer=OrmSerializer(),
+    )
+
+    response = adapter.entity(
+        "record",
+        RecordOrm("architecture", "Architecture"),
+        operations=(),
+    )
+
+    assert response.body["properties"] == {"slug": "architecture", "title": "Architecture"}
+
+
+def test_response_adapter_reports_clear_property_serialization_failures():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    with pytest.raises(TypeError, match="Siren property serialization requires"):
+        adapter.entity("record", object(), operations=())
 
 
 def test_response_adapter_builds_problem_json_responses():

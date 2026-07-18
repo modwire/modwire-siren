@@ -7,19 +7,26 @@ from ...contracts.related_link import RelatedLinkInput
 from ...facade import ModwireSiren
 from ...standards import SirenMediaType
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse, NinjaExtraSirenResponseFactory
+from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer, serialize_collection_items
 
 
 class NinjaExtraSirenResponseAdapter:
     """Build framework-light response payloads for Ninja Extra controllers."""
 
-    def __init__(self, siren: ModwireSiren):
+    def __init__(
+        self,
+        siren: ModwireSiren,
+        *,
+        property_serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
+    ):
         self._siren = siren
         self._responses = NinjaExtraSirenResponseFactory()
+        self._properties = property_serializer
 
     def entity(
         self,
         resource_name: str,
-        properties: Mapping[str, Any],
+        properties: Any,
         *,
         operations: tuple[str, ...],
         path_values: Mapping[str, Any] = EMPTY_VALUES,
@@ -30,10 +37,11 @@ class NinjaExtraSirenResponseAdapter:
     ) -> NinjaExtraSirenResponse:
         if status_code == 204:
             raise ValueError("Siren entity responses cannot use 204 No Content; call no_content()")
+        serialized = self._properties.serialize(properties)
         document = self._siren.document(
             SirenEntityRequest(
                 resource_name=resource_name,
-                properties=dict(properties),
+                properties=dict(serialized),
                 operation_ids=operations,
                 path_values=dict(path_values),
                 entities=entities,
@@ -56,8 +64,16 @@ class NinjaExtraSirenResponseAdapter:
     ) -> NinjaExtraSirenResponse:
         if status_code == 204:
             raise ValueError("Siren collection responses cannot use 204 No Content; call no_content()")
+        serialized = SirenCollectionRequest(
+            resource_name=request.resource_name,
+            items=serialize_collection_items(self._properties, request.items),
+            collection_operation_ids=request.collection_operation_ids,
+            item_operation_ids=request.item_operation_ids,
+            path_values=request.path_values,
+            pagination=request.pagination,
+        )
         return self._responses.create(
-            self._siren.collection(request),
+            self._siren.collection(serialized),
             status_code=status_code,
             headers=headers,
             content_type=SirenMediaType.ENTITY,
