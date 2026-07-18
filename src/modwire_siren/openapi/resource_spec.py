@@ -16,3 +16,4 @@ class SirenResourceSpec:
     relations: Mapping[str, SirenRelationSpec]
     operations: tuple[str, ...] = ()
     collection_operations: tuple[str, ...] = ()
+    collection_only: bool = False

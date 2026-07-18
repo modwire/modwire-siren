@@ -21,4 +21,5 @@ class SirenResource(SirenContract):
     relations: tuple[SirenRelation, ...]
     operations: tuple[str, ...] = ()
     collection_operations: tuple[str, ...] = ()
+    collection_only: bool = False
     profile: dict[str, Any] = Field(default_factory=dict)

@@ -19,3 +19,4 @@ class OpenApiResourceExtension(SirenContract):
     relations: dict[str, OpenApiRelationExtension]
     operations: tuple[str, ...] = ()
     collection_operations: Annotated[tuple[str, ...], Field(validation_alias="collection-operations")] = ()
+    collection_only: Annotated[bool, Field(validation_alias="collection-only")] = False

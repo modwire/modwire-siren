@@ -46,5 +46,6 @@ class OpenApiResourceReader(OpenApiResourceSource):
             ),
             operations=extension.operations,
             collection_operations=extension.collection_operations,
+            collection_only=extension.collection_only,
             profile=self._profiles.validate(raw_profile) if raw_profile else {},
         )

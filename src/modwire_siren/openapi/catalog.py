@@ -57,7 +57,7 @@ class OpenApiCatalog(SirenResourceCatalog):
                     f"Resource {resource.name!r} path parameters must explicitly map "
                     f"{sorted(placeholders)}; received {sorted(declared)}"
                 )
-            if resource.identifier not in resource.path_parameters.values():
+            if not resource.collection_only and resource.identifier not in resource.path_parameters.values():
                 raise OpenApiError(
                     f"Resource {resource.name!r} identifier {resource.identifier!r} must be resolvable "
                     "from path-parameters"
