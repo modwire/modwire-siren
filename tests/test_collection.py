@@ -3,11 +3,13 @@ import pytest
 from modwire_siren import (
     CustomPagination,
     ModwireSirenFactory,
+    NinjaExtraSirenController,
     NinjaExtraSirenResponseAdapter,
     OffsetPagination,
     OpenApiError,
     PaginationLinkInput,
     SirenCollectionRequest,
+    siren_collection,
 )
 
 SCHEMA = {
@@ -211,3 +213,26 @@ def test_ninja_adapter_returns_collection_response():
     assert response.content_type == "application/vnd.siren+json"
     assert response.headers == {"Accept-Ranges": "items"}
     assert response.body["class"] == ["collection", "record"]
+
+
+def test_siren_collection_response_handles_no_content_status_cleanly():
+    class RecordController(NinjaExtraSirenController):
+        @siren_collection(resource="record", operations=(), status_code=204)
+        def delete_all_records(self) -> None:
+            return None
+
+    response = RecordController(siren()).delete_all_records()
+
+    assert response.status_code == 204
+    assert response.body is None
+    assert response.content_type is None
+
+
+def test_siren_collection_response_rejects_no_content_body():
+    class RecordController(NinjaExtraSirenController):
+        @siren_collection(resource="record", operations=(), status_code=204)
+        def delete_all_records(self) -> tuple[dict, ...]:
+            return ()
+
+    with pytest.raises(ValueError, match="must not include a body"):
+        RecordController(siren()).delete_all_records()

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from ..standards import SirenMediaType
 from ..validation.schema import JsonSchema
 
 
@@ -32,4 +33,4 @@ class ProfileStandard:
 
     @property
     def media_type(self) -> str:
-        return f'application/vnd.siren+json; profile="{self.identifier}"'
+        return f'{SirenMediaType.ENTITY}; profile="{self.identifier}"'

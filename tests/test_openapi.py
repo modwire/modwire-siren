@@ -97,6 +97,21 @@ def test_composition_builds_links_and_only_runtime_legal_actions():
     assert [action["name"] for action in document["actions"]] == ["revise_record"]
 
 
+def test_openapi_rejects_singular_relation_iterables():
+    siren = ModwireSirenFactory.standard(SCHEMA, "https://api.test/")
+
+    with pytest.raises(OpenApiError, match="singular value"):
+        siren.document(
+            SirenEntityRequest(
+                resource_name="record",
+                properties={"slug": "architecture", "section_slug": ["architecture", "billing"]},
+                operation_ids=(),
+                path_values={},
+                entities=(),
+            )
+        )
+
+
 def test_openapi_rejects_operations_without_stable_ids():
     with pytest.raises(OpenApiError, match="operationId"):
         CATALOGS.create({"paths": {"/records": {"get": {}}}})
@@ -136,4 +151,48 @@ def test_openapi_rejects_unknown_schema_references():
     }
 
     with pytest.raises(OpenApiError, match="Unknown OpenAPI schema reference"):
+        CATALOGS.create(schema)
+
+
+def test_openapi_requires_resource_identifier_to_be_path_resolvable():
+    schema = {
+        "paths": {
+            "/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "id",
+                    "path-parameters": {"record_slug": "slug"},
+                    "relations": {},
+                },
+                "get": {"operationId": "get_record"},
+            }
+        }
+    }
+
+    with pytest.raises(OpenApiError, match=r"identifier 'id'.*path-parameters"):
+        CATALOGS.create(schema)
+
+
+def test_openapi_rejects_resource_owned_sub_actions_with_extra_path_parameters():
+    schema = {
+        "paths": {
+            "/records/{record_id}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "id",
+                    "path-parameters": {"record_id": "id"},
+                    "relations": {},
+                    "operations": ("comment_record",),
+                },
+                "get": {"operationId": "get_record"},
+            },
+            "/records/{record_id}/comments/{comment_id}": {
+                "post": {"operationId": "comment_record"},
+            },
+        }
+    }
+
+    with pytest.raises(OpenApiError, match="comment_id"):
         CATALOGS.create(schema)

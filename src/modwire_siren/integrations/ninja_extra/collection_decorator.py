@@ -13,6 +13,7 @@ from ...contracts.collection import (
 from .collection_policy import CollectionOperationSelection, SirenCollectionPolicyResolver
 from .no_policy import NO_SIREN_POLICY
 from .response import EMPTY_HEADERS, NinjaExtraSirenResponse
+from .route_invocation import SirenRouteInvocation
 from .route_invocation_factory import SirenRouteInvocationFactory
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -52,33 +53,13 @@ class SirenCollectionResponseDecorator:
         headers = self._headers
         policies = self._policies
 
-        if inspect.iscoroutinefunction(function):
-
-            @wraps(function)
-            async def async_wrapper(self, *args: Any, **kwargs: Any) -> NinjaExtraSirenResponse:
-                items = await function(self, *args, **kwargs)
-                invocation = invocations.create(self, args, kwargs)
-                return self.siren_collection_response(
-                    SirenCollectionRequest(
-                        resource_name=resource_name,
-                        items=cast(Sequence[Mapping[str, Any]], items),
-                        collection_operation_ids=policies.operations(
-                            policy, operations, invocation.request, resource_name
-                        ),
-                        item_operation_ids=item_operations,
-                        path_values=invocation.path_values,
-                        pagination=pagination,
-                    ),
-                    status_code=status_code,
-                    headers=headers,
-                )
-
-            return cast(F, async_wrapper)
-
-        @wraps(function)
-        def wrapper(self, *args: Any, **kwargs: Any) -> NinjaExtraSirenResponse:
-            items = function(self, *args, **kwargs)
-            invocation = invocations.create(self, args, kwargs)
+        def response(self, items: Any, invocation: SirenRouteInvocation) -> NinjaExtraSirenResponse:
+            if status_code == 204:
+                if items is not None:
+                    raise ValueError("204 Siren responses must not include a body")
+                return self.siren_responses.no_content(headers=headers)
+            if items is None:
+                raise ValueError("Siren collection responses require items")
             return self.siren_collection_response(
                 SirenCollectionRequest(
                     resource_name=resource_name,
@@ -91,6 +72,22 @@ class SirenCollectionResponseDecorator:
                 status_code=status_code,
                 headers=headers,
             )
+
+        if inspect.iscoroutinefunction(function):
+
+            @wraps(function)
+            async def async_wrapper(self, *args: Any, **kwargs: Any) -> NinjaExtraSirenResponse:
+                items = await function(self, *args, **kwargs)
+                invocation = invocations.create(self, args, kwargs)
+                return response(self, items, invocation)
+
+            return cast(F, async_wrapper)
+
+        @wraps(function)
+        def wrapper(self, *args: Any, **kwargs: Any) -> NinjaExtraSirenResponse:
+            items = function(self, *args, **kwargs)
+            invocation = invocations.create(self, args, kwargs)
+            return response(self, items, invocation)
 
         return cast(F, wrapper)
 

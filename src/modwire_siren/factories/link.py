@@ -59,4 +59,6 @@ class OpenApiSirenLinkFactory(SirenLinkFactory):
             if any(item is None for item in values):
                 raise OpenApiError(f"Relation {relation.rel!r} requires non-null values")
             return values
+        if not isinstance(value, (str, bytes, Mapping)) and isinstance(value, Iterable):
+            raise OpenApiError(f"Relation {relation.rel!r} requires a singular value")
         return (value,)
