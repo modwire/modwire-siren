@@ -41,6 +41,8 @@ def rewrite_siren_responses(
     document = deepcopy(schema)
     for response in _responses(document):
         status_code, response_document = response
+        if "$ref" in response_document:
+            continue
         if _is_no_content(status_code):
             response_document.pop("content", None)
         elif _is_success(status_code):
@@ -56,6 +58,8 @@ def rewrite_problem_responses(
     """Rewrite non-2xx operation responses to problem JSON response content."""
     document = deepcopy(schema)
     for status_code, response in _responses(document):
+        if "$ref" in response:
+            continue
         if not _is_success(status_code) and not _is_no_content(status_code):
             response["content"] = _content(problem_media_type, PROBLEM_REF)
     return document
@@ -167,7 +171,7 @@ def _components() -> dict[str, dict[str, Any]]:
         },
         "Problem": {
             "type": "object",
-            "required": ["title"],
+            "required": ["title", "status"],
             "properties": {
                 "type": {"type": "string", "format": "uri-reference"},
                 "title": {"type": "string"},

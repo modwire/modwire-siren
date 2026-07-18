@@ -3,13 +3,12 @@ import types
 
 import pytest
 
+from modwire_siren import NinjaExtraSirenResponse
 from modwire_siren.integrations.django import (
     django_problem_response,
     django_validation_problem_response,
     to_django_response,
 )
-from modwire_siren.integrations.ninja_extra.response import NinjaExtraSirenResponse
-from modwire_siren.standards import SirenMediaType
 
 
 class FakeHttpResponse:
@@ -47,7 +46,7 @@ def test_to_django_response_maps_siren_body_status_content_type_and_headers(djan
             {"class": ["record"], "properties": {"slug": "architecture"}},
             status_code=201,
             headers={"Location": "/records/architecture", "Content-Length": "999"},
-            content_type=SirenMediaType.ENTITY,
+            content_type="application/vnd.siren+json",
         )
     )
 
@@ -64,7 +63,7 @@ def test_to_django_response_maps_problem_json(django_http):
         NinjaExtraSirenResponse(
             {"title": "Missing record", "status": 404},
             status_code=404,
-            content_type=SirenMediaType.PROBLEM,
+            content_type="application/problem+json",
         )
     )
 
@@ -95,7 +94,7 @@ def test_to_django_response_rejects_content_type_headers(django_http):
                 {"title": "Conflict"},
                 status_code=409,
                 headers={"Content-Type": "text/plain"},
-                content_type=SirenMediaType.PROBLEM,
+                content_type="application/problem+json",
             )
         )
 

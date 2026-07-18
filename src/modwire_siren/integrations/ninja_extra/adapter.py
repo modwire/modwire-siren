@@ -103,8 +103,9 @@ class NinjaExtraSirenResponseAdapter:
         body_status = problem.get("status")
         if body_status is not None and body_status != status_code:
             raise ValueError("Problem document status must match response status_code")
+        body = {"status": status_code, **problem}
         return self._responses.create(
-            dict(problem),
+            body,
             status_code=status_code,
             headers=headers,
             content_type=SirenMediaType.PROBLEM,

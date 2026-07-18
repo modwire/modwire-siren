@@ -227,6 +227,21 @@ def test_collection_projects_declared_subpath_actions_with_request_schema_fields
     assert [field["name"] for field in document["actions"][0]["fields"]] == ["query"]
 
 
+def test_collection_keeps_collection_self_href_when_only_advertising_declared_subpath_action():
+    document = siren().collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(),
+            collection_operation_ids=("search_records",),
+            item_operation_ids=(),
+            path_values={},
+        )
+    )
+
+    assert document["links"][0]["href"] == "https://api.test/records"
+    assert [action["href"] for action in document["actions"]] == ["https://api.test/records/search"]
+
+
 def test_collection_supports_custom_pagination_links():
     document = siren().collection(
         SirenCollectionRequest(
@@ -316,6 +331,62 @@ def test_collection_rejects_undeclared_subpath_collection_operations():
                 path_values={},
             )
         )
+
+
+def test_declared_collection_subpath_operation_must_be_owned_by_resource_collection():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/records": {
+                "get": {"operationId": "list_records"},
+            },
+            "/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "slug",
+                    "path-parameters": {"record_slug": "slug"},
+                    "relations": {},
+                    "collection-operations": ("search_users",),
+                },
+                "get": {"operationId": "get_record"},
+            },
+            "/users/search": {
+                "post": {"operationId": "search_users"},
+            },
+        },
+    }
+
+    with pytest.raises(OpenApiError, match="Collection operation 'search_users' is not owned"):
+        ModwireSirenFactory.standard(schema, "https://api.test")
+
+
+def test_declared_collection_subpath_operation_cannot_require_unavailable_item_path_values():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/records": {
+                "get": {"operationId": "list_records"},
+            },
+            "/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "slug",
+                    "path-parameters": {"record_slug": "slug"},
+                    "relations": {},
+                    "collection-operations": ("archive_record",),
+                },
+                "get": {"operationId": "get_record"},
+            },
+            "/records/{record_slug}/archive": {
+                "post": {"operationId": "archive_record"},
+            },
+        },
+    }
+
+    with pytest.raises(OpenApiError, match="unmapped path parameters"):
+        ModwireSirenFactory.standard(schema, "https://api.test")
 
 
 def test_collection_rejects_declared_subpath_actions_with_missing_path_values():

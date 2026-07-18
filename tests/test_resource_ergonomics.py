@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from modwire_siren import (
@@ -74,8 +76,9 @@ def test_inject_siren_resources_returns_schema_copy_with_typed_extensions():
         "identifier": "id",
         "path-parameters": {"record_id": "id"},
         "relations": {"owner_id": {"rel": "owner", "resource": "user", "many": False}},
-        "collection-operations": ("search_records",),
+        "collection-operations": ["search_records"],
     }
+    assert json.loads(json.dumps(schema)) == schema
 
 
 def test_inject_siren_resources_serializes_collection_only_metadata():

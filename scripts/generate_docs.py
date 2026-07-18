@@ -108,7 +108,8 @@ class DocumentationGenerator:
         signature = inspect.signature(value)
         parameters = tuple(
             parameter.replace(
-                annotation=DocumentationGenerator._annotation(parameter.annotation)
+                annotation=DocumentationGenerator._annotation(parameter.annotation),
+                default=DocumentationGenerator._default(parameter.default),
             )
             for parameter in signature.parameters.values()
         )
@@ -122,6 +123,14 @@ class DocumentationGenerator:
     @staticmethod
     def _annotation(value: object) -> object:
         return AnnotationText(value) if isinstance(value, str) else value
+
+    @staticmethod
+    def _default(value: object) -> object:
+        if value is inspect.Parameter.empty:
+            return value
+        if isinstance(value, str | int | float | bool | tuple | dict | type(None)):
+            return value
+        return AnnotationText(f"<{type(value).__module__}.{type(value).__qualname__}>")
 
     @classmethod
     def update(cls, package: PackageDocumentation, check: bool) -> bool:
