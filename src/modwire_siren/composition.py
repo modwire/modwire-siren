@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 from .facade import ModwireSiren
@@ -18,6 +19,8 @@ from .profile.document import ProfileDocument
 from .profile.projection import ProfileProjector
 from .profile.standard import ProfileStandard
 from .serialization import PydanticSirenSerializer
+
+BaseUrlResolver = str | Callable[[Any], str]
 
 
 class ModwireSirenFactory:
@@ -46,3 +49,21 @@ class ModwireSirenFactory:
         )
         roots = SirenRootFactory(catalog, hrefs)
         return ModwireSiren(entities, collections, roots, PydanticSirenSerializer())
+
+    @classmethod
+    def web(cls, schema: dict[str, Any], *, base_url_resolver: BaseUrlResolver) -> "RequestAwareModwireSirenFactory":
+        """Create a request-aware factory for web integrations."""
+        return RequestAwareModwireSirenFactory(schema, base_url_resolver)
+
+
+class RequestAwareModwireSirenFactory:
+    """Build Siren façades from the current web request."""
+
+    def __init__(self, schema: dict[str, Any], base_url_resolver: BaseUrlResolver):
+        self._schema = schema
+        self._base_url_resolver = base_url_resolver
+
+    def for_request(self, request: Any) -> ModwireSiren:
+        resolver = self._base_url_resolver
+        base_url = resolver(request) if callable(resolver) else resolver
+        return ModwireSirenFactory.standard(self._schema, base_url)

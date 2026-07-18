@@ -10,6 +10,7 @@ from modwire_siren import (
     NinjaExtraSirenController,
     NinjaExtraSirenResponseAdapter,
     SirenEntityDecorator,
+    SirenEntityRequest,
     siren_entity,
 )
 
@@ -40,6 +41,15 @@ class OrmSerializer:
         if not isinstance(value, RecordOrm):
             raise TypeError(f"Unsupported ORM value: {type(value).__name__}")
         return {"slug": value.slug, "title": value.title}
+
+
+class Request:
+    def __init__(self, origin: str):
+        self.origin = origin
+
+    def build_absolute_uri(self, path: str) -> str:
+        return f"{self.origin.rstrip('/')}/{path.lstrip('/')}"
+
 
 SCHEMA = {
     "paths": {
@@ -187,6 +197,52 @@ def test_response_adapter_serializes_properties_with_adapter_serializer():
     )
 
     assert response.body["properties"] == {"slug": "architecture", "title": "Architecture"}
+
+
+def test_response_adapter_for_request_uses_request_base_url_resolver():
+    siren_factory = ModwireSirenFactory.web(
+        SCHEMA,
+        base_url_resolver=lambda request: request.build_absolute_uri("/api/"),
+    )
+    adapter = NinjaExtraSirenResponseAdapter.for_request(
+        siren_factory=siren_factory,
+        request=Request("https://tenant.test"),
+    )
+
+    response = adapter.entity("record", {"slug": "architecture"}, operations=())
+
+    assert response.body["links"][0]["href"] == "https://tenant.test/api/records/architecture"
+
+
+def test_web_factory_accepts_static_base_url_resolver():
+    siren = ModwireSirenFactory.web(SCHEMA, base_url_resolver="https://static.test/api/").for_request(object())
+
+    document = siren.document(
+        SirenEntityRequest(
+            resource_name="record",
+            properties={"slug": "architecture"},
+            operation_ids=(),
+            path_values={},
+            entities=(),
+        )
+    )
+
+    assert document["links"][0]["href"] == "https://static.test/api/records/architecture"
+
+
+def test_controller_for_request_uses_request_base_url_resolver():
+    siren_factory = ModwireSirenFactory.web(
+        SCHEMA,
+        base_url_resolver=lambda request: request.build_absolute_uri("/api/"),
+    )
+    controller = RecordController.for_request(
+        siren_factory=siren_factory,
+        request=Request("https://preview.test"),
+    )
+
+    response = controller.get_record_response("architecture")
+
+    assert response.body["links"][0]["href"] == "https://preview.test/api/records/architecture"
 
 
 def test_response_adapter_reports_clear_property_serialization_failures():
