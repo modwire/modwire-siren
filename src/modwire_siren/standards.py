@@ -8,6 +8,10 @@ class SirenMediaType(StrEnum):
 
 
 class SirenRelationName(StrEnum):
+    FIRST = "first"
+    ITEM = "item"
+    NEXT = "next"
+    PREVIOUS = "previous"
     SELF = "self"
 
 

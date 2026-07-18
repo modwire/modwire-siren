@@ -3,14 +3,18 @@ import modwire_siren
 
 def test_root_api_is_intentionally_small_and_complete():
     assert modwire_siren.__all__ == [
+        "CustomPagination",
         "ModwireSiren",
         "ModwireSirenFactory",
         "NinjaExtraSirenController",
         "NinjaExtraSirenResponse",
         "NinjaExtraSirenResponseAdapter",
+        "OffsetPagination",
         "OpenApiError",
+        "PaginationLinkInput",
         "SirenClient",
         "SirenClientError",
+        "SirenCollectionRequest",
         "SirenEntityDecorator",
         "SirenEntityRequest",
         "SirenResponse",

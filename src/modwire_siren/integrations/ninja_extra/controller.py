@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from typing import Any
 
+from ...contracts.collection import SirenCollectionRequest
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
 from ...facade import ModwireSiren
 from .adapter import NinjaExtraSirenResponseAdapter
@@ -52,6 +53,15 @@ class NinjaExtraSirenController:
             status_code=status_code,
             headers=headers,
         )
+
+    def siren_collection_response(
+        self,
+        request: SirenCollectionRequest,
+        *,
+        status_code: int = 200,
+        headers: Mapping[str, str] = EMPTY_HEADERS,
+    ) -> NinjaExtraSirenResponse:
+        return self._siren_responses.collection(request, status_code=status_code, headers=headers)
 
     @property
     def siren_responses(self) -> NinjaExtraSirenResponseAdapter:
