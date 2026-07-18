@@ -6,6 +6,8 @@ def test_root_api_is_intentionally_small_and_complete():
         "ModwireSiren",
         "ModwireSirenFactory",
         "NinjaExtraSirenController",
+        "NinjaExtraSirenResponse",
+        "NinjaExtraSirenResponseAdapter",
         "OpenApiError",
         "SirenClient",
         "SirenClientError",
@@ -14,6 +16,7 @@ def test_root_api_is_intentionally_small_and_complete():
         "SirenResponse",
         "SirenTransport",
         "__version__",
+        "siren_entity",
     ]
 
 

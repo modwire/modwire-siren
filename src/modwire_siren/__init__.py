@@ -5,13 +5,21 @@ from .client.facade import SirenClient
 from .composition import ModwireSirenFactory
 from .contracts.entity import SirenEntityRequest
 from .facade import ModwireSiren
-from .integrations.ninja_extra import NinjaExtraSirenController, SirenEntityDecorator
+from .integrations.ninja_extra import (
+    NinjaExtraSirenController,
+    NinjaExtraSirenResponse,
+    NinjaExtraSirenResponseAdapter,
+    SirenEntityDecorator,
+    siren_entity,
+)
 from .openapi.error import OpenApiError
 
 __all__ = [
     "ModwireSiren",
     "ModwireSirenFactory",
     "NinjaExtraSirenController",
+    "NinjaExtraSirenResponse",
+    "NinjaExtraSirenResponseAdapter",
     "OpenApiError",
     "SirenClient",
     "SirenClientError",
@@ -20,4 +28,5 @@ __all__ = [
     "SirenResponse",
     "SirenTransport",
     "__version__",
+    "siren_entity",
 ]

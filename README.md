@@ -133,7 +133,9 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | --- | --- | --- |
 | `ModwireSiren` | Project validated entity requests into serialized Siren documents. | `document(request: modwire_siren.contracts.entity.SirenEntityRequest) -> dict[str, typing.Any]` |
 | `ModwireSirenFactory` | Build the standard OpenAPI-backed Siren façade. | `standard(schema: dict[str, typing.Any], base_url: str) -> modwire_siren.facade.ModwireSiren` |
-| `NinjaExtraSirenController` | Framework-light base for Ninja Extra controllers that emit Siren documents. | `siren_document(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any], entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = ()) -> dict[str, typing.Any]` |
+| `NinjaExtraSirenController` | Framework-light base for Ninja Extra controllers that emit Siren documents. | `siren_document(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any], entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = ()) -> dict[str, typing.Any]`<br>`siren_response(resource_name: str, properties: collections.abc.Mapping[str, Any] | None, *, operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, Any] | None = None, entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = (), status_code: int = 200, headers: collections.abc.Mapping[str, str] | None = None) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`siren_responses: <class 'modwire_siren.integrations.ninja_extra.adapter.NinjaExtraSirenResponseAdapter'>` |
+| `NinjaExtraSirenResponse` | Framework-light response payload for Ninja Extra adapters. | — |
+| `NinjaExtraSirenResponseAdapter` | Build framework-light response payloads for Ninja Extra controllers. | `entity(resource_name: str, properties: collections.abc.Mapping[str, Any] | None, *, operations: tuple[str, ...], path_values: collections.abc.Mapping[str, Any] | None = None, entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = (), status_code: int = 200, headers: collections.abc.Mapping[str, str] | None = None) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`problem(problem: collections.abc.Mapping[str, typing.Any], *, status_code: int | None = None, headers: collections.abc.Mapping[str, str] | None = None) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`no_content(*, headers: collections.abc.Mapping[str, str] | None = None) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse` |
 | `OpenApiError` | Report invalid or incomplete OpenAPI data used for Siren projection. | — |
 | `SirenClient` | Navigate Siren relations and execute only advertised actions. | `root() -> dict[str, Any]`<br>`follow(document: Mapping[str, Any], relation: str) -> dict[str, Any]`<br>`execute(document: Mapping[str, Any], action_name: str, payload: Mapping[str, Any] | None = None) -> dict[str, Any]`<br>`action(document: Mapping[str, Any], action_name: str) -> Mapping[str, Any]`<br>`collection_item(collection: Mapping[str, Any], identifier: Any, *, identifier_field: str = 'id') -> dict[str, Any]` |
 | `SirenClientError` | Report navigation, affordance, transport, and remote problem failures. | `as_dict() -> dict[str, Any]`<br>`problem(status_code: int, document: Mapping[str, Any]) -> SirenClientError` |
@@ -142,6 +144,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenResponse` | Carry one transport response without coupling Siren to an HTTP library. | — |
 | `SirenTransport` | Execute Siren requests for a client-owned transport lifecycle. | `request(method: str, href: str, payload: Mapping[str, Any] | None = None) -> SirenResponse` |
 | `__version__` | Installed distribution version. | — |
+| `siren_entity` | Turn a controller method's property mapping into a Siren response payload. | — |
 
 ## Executable example
 
@@ -221,7 +224,7 @@ dependency. It composes directly with Ninja Extra's controller and route decorat
 
 ```python
 from ninja_extra import ControllerBase, api_controller, route
-from modwire_siren import ModwireSiren, NinjaExtraSirenController, SirenEntityDecorator
+from modwire_siren import ModwireSiren, NinjaExtraSirenController, siren_entity
 
 @api_controller("/records")
 class RecordController(ControllerBase, NinjaExtraSirenController):
@@ -230,14 +233,18 @@ class RecordController(ControllerBase, NinjaExtraSirenController):
         self.records = records
 
     @route.get("/{record_slug}", operation_id="get_record")
-    @SirenEntityDecorator("record", operations=("revise_record",))
+    @siren_entity(resource="record", operations=("revise_record",))
     def get_record(self, record_slug: str):
         return self.records.get(record_slug)
 ```
 
-The method returns only resource properties. `@SirenEntityDecorator(...)` retains its signature for
-Ninja's parameter inspection, supplies route arguments as path values, supports sync and async
-handlers, and projects the result through the standard `ModwireSiren` composition root.
+The method returns only resource properties. `@siren_entity(...)` retains its signature for Ninja's
+parameter inspection, supplies route arguments as path values, supports sync and async handlers, and
+projects the result through the standard `ModwireSiren` composition root. The decorator returns a
+framework-light `NinjaExtraSirenResponse` with `body`, `status_code`, `headers`, and `content_type`
+fields. Framework code can map those fields onto its response object while preserving non-content
+headers. `SirenEntityDecorator(...)` remains available for controllers that need the plain Siren
+document dictionary instead of a response payload.
 
 ## Development and release
 
