@@ -57,6 +57,24 @@ class OpenApiCatalog(SirenResourceCatalog):
                     f"Resource {resource.name!r} path parameters must explicitly map "
                     f"{sorted(placeholders)}; received {sorted(declared)}"
                 )
+            if resource.identifier not in resource.path_parameters.values():
+                raise OpenApiError(
+                    f"Resource {resource.name!r} identifier {resource.identifier!r} must be resolvable "
+                    "from path-parameters"
+                )
             unknown = {relation.resource for relation in resource.relations} - set(self._resources)
             if unknown:
                 raise OpenApiError(f"Resource {resource.name!r} references unknown resources: {sorted(unknown)}")
+            for operation_id in resource.operations:
+                operation = self.operation(operation_id)
+                if operation.path != resource.path and not operation.path.startswith(f"{resource.path}/"):
+                    raise OpenApiError(
+                        f"Operation {operation_id!r} is not owned by resource {resource.name!r}: {operation.path}"
+                    )
+                operation_placeholders = set(re.findall(r"{([^}]+)}", operation.path))
+                extra = operation_placeholders - placeholders
+                if extra:
+                    raise OpenApiError(
+                        f"Operation {operation_id!r} owned by resource {resource.name!r} has unmapped "
+                        f"path parameters: {sorted(extra)}"
+                    )

@@ -3,17 +3,32 @@ import modwire_siren
 
 def test_root_api_is_intentionally_small_and_complete():
     assert modwire_siren.__all__ == [
+        "CustomPagination",
         "ModwireSiren",
         "ModwireSirenFactory",
         "NinjaExtraSirenController",
+        "NinjaExtraSirenResponse",
+        "NinjaExtraSirenResponseAdapter",
+        "OffsetPagination",
         "OpenApiError",
+        "PaginationLinkInput",
+        "RelatedLinkInput",
         "SirenClient",
         "SirenClientError",
+        "SirenCollectionRequest",
         "SirenEntityDecorator",
         "SirenEntityRequest",
+        "SirenRelationSpec",
+        "SirenResourceSpec",
         "SirenResponse",
         "SirenTransport",
         "__version__",
+        "collect_siren_resources",
+        "inject_siren_resources",
+        "siren_collection",
+        "siren_entity",
+        "siren_resource",
+        "validate_siren_resources",
     ]
 
 

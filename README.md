@@ -6,6 +6,29 @@ Every external boundary is behind a package interface: catalog, href resolution,
 field creation, link creation, resource hrefs, and serialization. `ModwireSirenFactory` is the
 standard composition root; `ModwireSiren` is the small public façade.
 
+## Contents
+
+- [What Siren is](#what-siren-is)
+- [Install](#install)
+- [What this package adds](#what-this-package-adds)
+- [Approved UI profile](#approved-ui-profile)
+- [Following advertised controls](#following-advertised-controls)
+- [Public API](#public-api)
+- [OpenAPI contract](#openapi-contract)
+- [Collection projection](#collection-projection)
+- [Django Ninja Extra](#django-ninja-extra)
+- [Development and release](#development-and-release)
+
+## Install
+
+```sh
+pip install modwire-siren
+```
+
+The package has no runtime Django or Ninja Extra dependency. Framework integrations expose
+framework-light payloads and decorators; the host application decides how those payloads are mapped
+onto concrete HTTP response classes.
+
 ## What Siren is
 
 [Siren](https://github.com/kevinswiber/siren) is a hypermedia specification for representing an
@@ -28,15 +51,16 @@ listed in the [IANA Link Relations registry](https://www.iana.org/assignments/li
 ## What this package adds
 
 OpenAPI describes the API surface; Siren describes the controls available in a particular response.
-`modwire-siren` joins the two: it reads routes, operations, request schemas, and the explicit
-`x-siren-resource` metadata from one OpenAPI document, then projects runtime resource values into a
-typed Siren entity. Applications therefore do not need to maintain a second route map for Siren
-links and actions.
+`modwire-siren` joins the two: it reads routes, operations, request schemas, and explicit
+`x-siren-resource` metadata from one OpenAPI document, then projects runtime values into typed Siren
+entity and collection documents. Applications therefore do not need to maintain a second route map
+for Siren links and actions.
 
-The package intentionally does not decide authorization. Callers pass the operation IDs that are
-legal for the current entity and principal, and only those operations become actions. It also does
-not serve HTTP responses itself; the framework layer remains responsible for content negotiation
-and returning the media type exposed by the profile API when a profile is applied.
+The package intentionally does not decide authorization. Callers pass, or policy hooks select, the
+operation IDs that are legal for the current request and resource; only those operations become
+actions. Core projection stays framework-neutral. The Django Ninja Extra integration adds
+framework-light response payloads with the Siren media type, problem JSON media type, status code,
+headers, and 204 handling ready for an application adapter to map onto the framework response.
 
 ## Approved UI profile
 
@@ -109,20 +133,20 @@ Relative targets are resolved against the configured root and must remain on the
 Missing or malformed affordances raise `SirenClientError`; non-success responses preserve their
 status and complete problem document.
 
-## Useful next improvements
+## Release status
 
-The most valuable additions for this project would be:
+The current package surface covers the release-critical Siren producer workflow:
 
-1. Add framework response adapters that set the Siren content type and handle content negotiation,
-   while keeping the core framework-independent.
-2. Publish a machine-readable schema for `x-siren-resource` and validate it in editor/CI workflows,
-   so mistakes are caught before application startup.
-3. Publish the profile schema at its stable identifier and automate public schema availability
-   checks without changing the package-owned schema source.
-4. Generate a complete example response in this README, not only the construction code, so users
-   can immediately see the resulting wire format.
-5. Document an authorization recipe showing how a policy selects the runtime `operation_ids`
-   without leaking unavailable actions to clients.
+- entity and collection projection from OpenAPI operation/resource metadata;
+- offset and custom collection pagination links;
+- typed `x-siren-resource` declarations, injection, and validation;
+- resource-owned sub-actions for operations below the resource path;
+- dynamic operation and related-link policy hooks; and
+- Django Ninja Extra response payloads for Siren, problem JSON, and 204 responses.
+
+Remaining ecosystem work is intentionally outside this release surface: publishing the resource and
+profile schemas at stable public URLs, adding editor integrations, and adding concrete adapters for
+more web frameworks.
 
 <!-- generated:public-api:start -->
 ## Public API
@@ -131,17 +155,32 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
-| `ModwireSiren` | Project validated entity requests into serialized Siren documents. | `document(request: modwire_siren.contracts.entity.SirenEntityRequest) -> dict[str, typing.Any]` |
+| `CustomPagination` | Use application-provided collection pagination links. | — |
+| `ModwireSiren` | Project validated entity requests into serialized Siren documents. | `document(request: modwire_siren.contracts.entity.SirenEntityRequest) -> dict[str, typing.Any]`<br>`collection(request: modwire_siren.contracts.collection.SirenCollectionRequest) -> dict[str, typing.Any]` |
 | `ModwireSirenFactory` | Build the standard OpenAPI-backed Siren façade. | `standard(schema: dict[str, typing.Any], base_url: str) -> modwire_siren.facade.ModwireSiren` |
-| `NinjaExtraSirenController` | Framework-light base for Ninja Extra controllers that emit Siren documents. | `siren_document(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any], entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = ()) -> dict[str, typing.Any]` |
+| `NinjaExtraSirenController` | Framework-light base for Ninja Extra controllers that emit Siren documents. | `siren_document(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any], entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = (), related_links: tuple[modwire_siren.contracts.related_link.RelatedLinkInput, ...] = ()) -> dict[str, typing.Any]`<br>`siren_response(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], *, operation_ids: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any] = {}, entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = (), related_links: tuple[modwire_siren.contracts.related_link.RelatedLinkInput, ...] = (), status_code: int = 200, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`siren_collection_response(request: modwire_siren.contracts.collection.SirenCollectionRequest, *, status_code: int = 200, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`siren_responses: <class 'modwire_siren.integrations.ninja_extra.adapter.NinjaExtraSirenResponseAdapter'>` |
+| `NinjaExtraSirenResponse` | Framework-light response payload for Ninja Extra adapters. | — |
+| `NinjaExtraSirenResponseAdapter` | Build framework-light response payloads for Ninja Extra controllers. | `entity(resource_name: str, properties: collections.abc.Mapping[str, typing.Any], *, operations: tuple[str, ...], path_values: collections.abc.Mapping[str, typing.Any] = {}, entities: tuple[modwire_siren.contracts.entity.SirenEmbeddedEntity, ...] = (), related_links: tuple[modwire_siren.contracts.related_link.RelatedLinkInput, ...] = (), status_code: int = 200, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`collection(request: modwire_siren.contracts.collection.SirenCollectionRequest, *, status_code: int = 200, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`problem(problem: collections.abc.Mapping[str, typing.Any], *, status_code: int, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse`<br>`no_content(*, headers: collections.abc.Mapping[str, str] = {}) -> modwire_siren.integrations.ninja_extra.response.NinjaExtraSirenResponse` |
+| `OffsetPagination` | Create standard offset pagination links for a collection. | — |
 | `OpenApiError` | Report invalid or incomplete OpenAPI data used for Siren projection. | — |
+| `PaginationLinkInput` | Describe one collection pagination link relative to the collection path. | — |
+| `RelatedLinkInput` | Describe one application-owned related link for Siren projection. | — |
 | `SirenClient` | Navigate Siren relations and execute only advertised actions. | `root() -> dict[str, Any]`<br>`follow(document: Mapping[str, Any], relation: str) -> dict[str, Any]`<br>`execute(document: Mapping[str, Any], action_name: str, payload: Mapping[str, Any] | None = None) -> dict[str, Any]`<br>`action(document: Mapping[str, Any], action_name: str) -> Mapping[str, Any]`<br>`collection_item(collection: Mapping[str, Any], identifier: Any, *, identifier_field: str = 'id') -> dict[str, Any]` |
 | `SirenClientError` | Report navigation, affordance, transport, and remote problem failures. | `as_dict() -> dict[str, Any]`<br>`problem(status_code: int, document: Mapping[str, Any]) -> SirenClientError` |
+| `SirenCollectionRequest` | Describe resource items and controls projected into one Siren collection. | — |
 | `SirenEntityDecorator` | Turn a controller method's property mapping into a Siren entity document. | — |
 | `SirenEntityRequest` | Describe the resource data and allowed operations projected into one entity. | — |
+| `SirenRelationSpec` | Declare one relation in an x-siren-resource extension. | — |
+| `SirenResourceSpec` | Declare one x-siren-resource extension for an OpenAPI path template. | — |
 | `SirenResponse` | Carry one transport response without coupling Siren to an HTTP library. | — |
 | `SirenTransport` | Execute Siren requests for a client-owned transport lifecycle. | `request(method: str, href: str, payload: Mapping[str, Any] | None = None) -> SirenResponse` |
 | `__version__` | Installed distribution version. | — |
+| `collect_siren_resources` | Collect Siren resource declarations attached to controller classes. | — |
+| `inject_siren_resources` | Attach typed Siren resource declarations to an OpenAPI schema copy. | — |
+| `siren_collection` | Turn a controller method's item mappings into a Siren collection response payload. | — |
+| `siren_entity` | Turn a controller method's property mapping into a Siren response payload. | — |
+| `siren_resource` | Attach a typed Siren resource declaration to a Ninja Extra controller class. | — |
+| `validate_siren_resources` | Validate Siren resource metadata with the standard OpenAPI catalog. | — |
 
 ## Executable example
 
@@ -202,17 +241,93 @@ paths:
           rel: section
           resource: section
           many: false
+      operations:
+        - preview_record
     patch:
       operationId: revise_record
       summary: Revise record
+  /records/{record_slug}/preview:
+    post:
+      operationId: preview_record
+      summary: Preview record
 ```
 
 The strict `OpenApiResourceExtension` validates the extension. Unknown resources, incomplete path
 mappings, absent operation IDs, and unknown schema references fail while building the catalog.
+Applications can declare the same metadata without hand-writing extension dictionaries:
+
+```python
+from modwire_siren import SirenRelationSpec, SirenResourceSpec, inject_siren_resources, validate_siren_resources
+
+schema = inject_siren_resources(
+    schema,
+    (
+        SirenResourceSpec(
+            name="record",
+            path="/records/{record_slug}",
+            resource_class="record",
+            identifier="slug",
+            path_parameters={"record_slug": "slug"},
+            relations={
+                "section_slug": SirenRelationSpec(rel="section", resource="section", many=False),
+            },
+        ),
+    ),
+)
+validate_siren_resources(schema, ("record",))
+```
+
+Resource spec paths use OpenAPI template syntax such as `/records/{record_slug}`. Framework route
+converter syntax such as `/{path:record_slug}` is rejected before injection. The base URL still
+belongs to `ModwireSirenFactory.standard(schema, base_url)`; resource declarations describe schema
+paths only and do not carry deployment URLs.
+
+Resource-owned operations allow sub-actions below the resource path. Operations listed in
+`x-siren-resource.operations` may be advertised for that resource even when their OpenAPI path is a
+child path such as `/records/{record_slug}/preview`. Other foreign-path operations remain rejected.
+Owned sub-actions must not introduce extra path placeholders beyond the resource path; projection
+has only the resource path values available when it builds entity actions.
+
+Identifiers may be named `id`, `slug`, or another field, but the identifier must be one of the
+fields mapped by `path-parameters`. Route `path_values` can supply values not present in returned
+properties. Path-like identifiers are URL encoded during href creation, so
+`architecture/aggregate` becomes `architecture%2Faggregate`.
 
 The Pydantic Siren contracts own wire aliases such as `class`, `type`, and `schema`.
 `PydanticSirenSerializer` implements the `SirenSerializer` interface with one model dump; it does
 not redeclare the wire schema.
+
+## Collection projection
+
+Collections use a separate request type but keep OpenAPI as the route and action source of truth:
+
+```python
+from modwire_siren import ModwireSirenFactory, OffsetPagination, SirenCollectionRequest
+
+siren = ModwireSirenFactory.standard(schema, "https://api.example.com/")
+document = siren.collection(
+    SirenCollectionRequest(
+        resource_name="record",
+        items=(
+            {"slug": "architecture", "title": "Architecture"},
+            {"slug": "billing", "title": "Billing"},
+        ),
+        collection_operation_ids=("list_records", "create_record"),
+        item_operation_ids=("get_record",),
+        path_values={},
+        pagination=OffsetPagination(limit=50, offset=0, count=2, has_next=False),
+    )
+)
+```
+
+The resulting Siren document has `class: ["collection", "record"]`, `properties.count`, embedded
+item entities with `rel: ["item"]`, collection actions from the supplied collection operation IDs,
+and item actions from the supplied item operation IDs. Offset pagination emits `self`, `first`,
+`previous` when applicable, and `next` when `has_next` is true. `CustomPagination` lets
+applications provide package-owned pagination link inputs while still requiring an explicit `self`
+link. Collection links are built from the collection operation path plus explicit pagination link
+inputs; if a filtered collection needs query parameters such as `status=active`, include them in
+the pagination inputs so they are preserved in advertised links.
 
 ## Django Ninja Extra
 
@@ -221,8 +336,43 @@ dependency. It composes directly with Ninja Extra's controller and route decorat
 
 ```python
 from ninja_extra import ControllerBase, api_controller, route
-from modwire_siren import ModwireSiren, NinjaExtraSirenController, SirenEntityDecorator
+from modwire_siren import (
+    ModwireSiren,
+    NinjaExtraSirenController,
+    RelatedLinkInput,
+    collect_siren_resources,
+    inject_siren_resources,
+    siren_collection,
+    siren_entity,
+    siren_resource,
+)
 
+class RecordSirenPolicy:
+    def operations_for_entity(self, request, resource_name, properties):
+        operations = ["get_record"]
+        if request.user.can_edit(properties):
+            operations.append("revise_record")
+        return tuple(operations)
+
+    def operations_for_collection(self, request, resource_name):
+        operations = ["list_records"]
+        if request.user.can_create(resource_name):
+            operations.append("create_record")
+        return tuple(operations)
+
+    def related_links_for_entity(self, request, resource_name, properties):
+        if "owner_id" in properties:
+            return (RelatedLinkInput(rel="owner", resource="user", value=properties["owner_id"]),)
+        return ()
+
+@siren_resource(
+    name="record",
+    path="/records/{record_slug}",
+    class_="record",
+    identifier="slug",
+    path_parameters={"record_slug": "slug"},
+    relations={},
+)
 @api_controller("/records")
 class RecordController(ControllerBase, NinjaExtraSirenController):
     def __init__(self, records: RecordService, siren: ModwireSiren):
@@ -230,14 +380,45 @@ class RecordController(ControllerBase, NinjaExtraSirenController):
         self.records = records
 
     @route.get("/{record_slug}", operation_id="get_record")
-    @SirenEntityDecorator("record", operations=("revise_record",))
-    def get_record(self, record_slug: str):
+    @siren_entity(resource="record", policy=RecordSirenPolicy())
+    def get_record(self, request, record_slug: str):
         return self.records.get(record_slug)
+
+    @route.get("", operation_id="list_records")
+    @siren_collection(resource="record", policy=RecordSirenPolicy(), item_operations=("get_record",))
+    def list_records(self, request):
+        return self.records.list()
+
+schema = inject_siren_resources(schema, collect_siren_resources(RecordController))
 ```
 
-The method returns only resource properties. `@SirenEntityDecorator(...)` retains its signature for
-Ninja's parameter inspection, supplies route arguments as path values, supports sync and async
-handlers, and projects the result through the standard `ModwireSiren` composition root.
+The method returns only resource properties. `@siren_entity(...)` retains its signature for Ninja's
+parameter inspection, supplies route arguments as path values, supports sync and async handlers, and
+projects the result through the standard `ModwireSiren` composition root. The decorator returns a
+framework-light `NinjaExtraSirenResponse` with `body`, `status_code`, `headers`, and `content_type`
+fields. Framework code can map those fields onto its response object while preserving non-content
+headers. `SirenEntityDecorator(...)` remains available for controllers that need the plain Siren
+document dictionary instead of a response payload.
+
+Lower-level response APIs are available when decorators do not fit:
+
+```python
+response = controller.siren_responses.entity(
+    "record",
+    {"slug": "architecture", "title": "Architecture"},
+    operations=("get_record", "revise_record"),
+)
+
+problem = controller.siren_responses.problem(
+    {"title": "Missing record", "status": 404},
+    status_code=404,
+)
+
+empty = controller.siren_responses.no_content()
+```
+
+The response factory rejects duplicate `Content-Type` headers and mismatched problem statuses. A
+204 response carries no body and no content type.
 
 ## Development and release
 

@@ -4,6 +4,7 @@ from ..openapi.error import OpenApiError
 from ..profile.projection import ProfileProjector
 from .action import SirenActionFactory
 from .link import SirenLinkFactory
+from .related_link import SirenRelatedLinkFactory
 from .resource import SirenResourceHrefResolver
 
 
@@ -13,19 +14,25 @@ class SirenEntityFactory:
         catalog: SirenResourceCatalog,
         hrefs: SirenResourceHrefResolver,
         links: SirenLinkFactory,
+        related_links: SirenRelatedLinkFactory,
         actions: SirenActionFactory,
         profiles: ProfileProjector,
     ):
         self._catalog = catalog
         self._hrefs = hrefs
         self._links = links
+        self._related_links = related_links
         self._actions = actions
         self._profiles = profiles
 
     def create(self, request: SirenEntityRequest) -> SirenEntity:
         resource = self._catalog.resource(request.resource_name)
         operations = tuple(self._catalog.operation(operation_id) for operation_id in request.operation_ids)
-        foreign = tuple(operation.operation_id for operation in operations if operation.path != resource.path)
+        foreign = tuple(
+            operation.operation_id
+            for operation in operations
+            if operation.path != resource.path and operation.operation_id not in resource.operations
+        )
         if foreign:
             raise OpenApiError(f"Operations {list(foreign)} do not belong to resource {resource.name!r}")
         values = request.properties | request.path_values
@@ -33,7 +40,7 @@ class SirenEntityFactory:
         entity = SirenEntity(
             classes=(resource.resource_class,),
             properties=request.properties,
-            links=self._links.create(resource, values),
+            links=(*self._links.create(resource, values), *self._related_links.create(request.related_links)),
             actions=tuple(
                 self._actions.create(operation.operation_id, operation_values) for operation in operations
             ),

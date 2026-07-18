@@ -17,3 +17,4 @@ class OpenApiResourceExtension(SirenContract):
     identifier: str
     path_parameters: Annotated[dict[str, str], Field(validation_alias="path-parameters")]
     relations: dict[str, OpenApiRelationExtension]
+    operations: tuple[str, ...] = ()

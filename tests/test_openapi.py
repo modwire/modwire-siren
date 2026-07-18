@@ -1,14 +1,6 @@
 import pytest
 
 from modwire_siren import ModwireSirenFactory, OpenApiError, SirenEntityRequest
-from modwire_siren.factories.action import SirenActionFactory
-from modwire_siren.factories.field import OpenApiSirenFieldFactory
-from modwire_siren.openapi.factory import OpenApiCatalogFactory
-from modwire_siren.openapi.href import OpenApiHrefResolver
-from modwire_siren.openapi.resource import OpenApiResourceReader
-from modwire_siren.policies.field_type import OpenApiSirenFieldTypeResolver
-from modwire_siren.profile.document import ProfileDocument
-from modwire_siren.profile.standard import ProfileStandard
 
 SCHEMA = {
     "openapi": "3.1.0",
@@ -53,27 +45,30 @@ SCHEMA = {
         },
     },
 }
-CATALOGS = OpenApiCatalogFactory(
-    OpenApiResourceReader(ProfileDocument(ProfileStandard.load()))
-)
 
 
 def test_openapi_builds_actions_and_explicit_resource_metadata():
-    catalog = CATALOGS.create(SCHEMA)
-    hrefs = OpenApiHrefResolver("https://api.test/")
-    fields = OpenApiSirenFieldFactory(OpenApiSirenFieldTypeResolver())
-
-    action = SirenActionFactory(catalog, hrefs, fields).create(
-        "revise_record", {"record_slug": "architecture/aggregate"}
+    document = ModwireSirenFactory.standard(SCHEMA, "https://api.test/").document(
+        SirenEntityRequest(
+            resource_name="record",
+            properties={"slug": "architecture/aggregate", "section_slug": "architecture"},
+            operation_ids=("revise_record",),
+            path_values={},
+            entities=(),
+        )
     )
-    resource = catalog.resource("record")
 
-    assert action.href == "https://api.test/records/architecture%2Faggregate"
-    assert [field.name for field in action.fields] == ["dry_run", "title", "tags"]
-    assert action.fields[0].type == "checkbox"
-    assert action.fields[2].type == "json"
-    assert resource.identifier == "slug"
-    assert resource.relations[0].field == "section_slug"
+    action = document["actions"][0]
+    assert action["href"] == "https://api.test/records/architecture%2Faggregate"
+    assert [field["name"] for field in action["fields"]] == ["dry_run", "title", "tags"]
+    assert action["fields"][0]["type"] == "checkbox"
+    assert action["fields"][2]["type"] == "json"
+    assert document["links"][1] == {
+        "rel": ["section"],
+        "href": "https://api.test/sections/architecture",
+        "title": "section",
+        "type": "application/vnd.siren+json",
+    }
 
 
 def test_composition_builds_links_and_only_runtime_legal_actions():
@@ -97,9 +92,24 @@ def test_composition_builds_links_and_only_runtime_legal_actions():
     assert [action["name"] for action in document["actions"]] == ["revise_record"]
 
 
+def test_openapi_rejects_singular_relation_iterables():
+    siren = ModwireSirenFactory.standard(SCHEMA, "https://api.test/")
+
+    with pytest.raises(OpenApiError, match="singular value"):
+        siren.document(
+            SirenEntityRequest(
+                resource_name="record",
+                properties={"slug": "architecture", "section_slug": ["architecture", "billing"]},
+                operation_ids=(),
+                path_values={},
+                entities=(),
+            )
+        )
+
+
 def test_openapi_rejects_operations_without_stable_ids():
     with pytest.raises(OpenApiError, match="operationId"):
-        CATALOGS.create({"paths": {"/records": {"get": {}}}})
+        ModwireSirenFactory.standard({"paths": {"/records": {"get": {}}}}, "https://api.test")
 
 
 def test_openapi_requires_explicit_resource_path_parameter_mapping():
@@ -118,7 +128,7 @@ def test_openapi_requires_explicit_resource_path_parameter_mapping():
     }
 
     with pytest.raises(ValueError, match="path-parameters"):
-        CATALOGS.create(schema)
+        ModwireSirenFactory.standard(schema, "https://api.test")
 
 
 def test_openapi_rejects_unknown_schema_references():
@@ -136,4 +146,48 @@ def test_openapi_rejects_unknown_schema_references():
     }
 
     with pytest.raises(OpenApiError, match="Unknown OpenAPI schema reference"):
-        CATALOGS.create(schema)
+        ModwireSirenFactory.standard(schema, "https://api.test")
+
+
+def test_openapi_requires_resource_identifier_to_be_path_resolvable():
+    schema = {
+        "paths": {
+            "/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "id",
+                    "path-parameters": {"record_slug": "slug"},
+                    "relations": {},
+                },
+                "get": {"operationId": "get_record"},
+            }
+        }
+    }
+
+    with pytest.raises(OpenApiError, match=r"identifier 'id'.*path-parameters"):
+        ModwireSirenFactory.standard(schema, "https://api.test")
+
+
+def test_openapi_rejects_resource_owned_sub_actions_with_extra_path_parameters():
+    schema = {
+        "paths": {
+            "/records/{record_id}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "id",
+                    "path-parameters": {"record_id": "id"},
+                    "relations": {},
+                    "operations": ("comment_record",),
+                },
+                "get": {"operationId": "get_record"},
+            },
+            "/records/{record_id}/comments/{comment_id}": {
+                "post": {"operationId": "comment_record"},
+            },
+        }
+    }
+
+    with pytest.raises(OpenApiError, match="comment_id"):
+        ModwireSirenFactory.standard(schema, "https://api.test")

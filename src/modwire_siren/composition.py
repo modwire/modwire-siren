@@ -2,9 +2,12 @@ from typing import Any
 
 from .facade import ModwireSiren
 from .factories.action import SirenActionFactory
+from .factories.collection import SirenCollectionFactory
 from .factories.entity import SirenEntityFactory
 from .factories.field import OpenApiSirenFieldFactory
 from .factories.link import OpenApiSirenLinkFactory
+from .factories.pagination import SirenCollectionPaginationFactory, SirenPaginationHrefFactory
+from .factories.related_link import SirenRelatedLinkFactory
 from .factories.resource import OpenApiSirenResourceHrefResolver
 from .openapi.factory import OpenApiCatalogFactory
 from .openapi.href import OpenApiHrefResolver
@@ -29,6 +32,15 @@ class ModwireSirenFactory:
         fields = OpenApiSirenFieldFactory(OpenApiSirenFieldTypeResolver())
         actions = SirenActionFactory(catalog, hrefs, fields)
         links = OpenApiSirenLinkFactory(catalog, resource_hrefs)
+        related_links = SirenRelatedLinkFactory(catalog, resource_hrefs)
         profile_projector = ProfileProjector(profiles)
-        entities = SirenEntityFactory(catalog, resource_hrefs, links, actions, profile_projector)
-        return ModwireSiren(entities, PydanticSirenSerializer())
+        entities = SirenEntityFactory(catalog, resource_hrefs, links, related_links, actions, profile_projector)
+        collections = SirenCollectionFactory(
+            catalog,
+            hrefs,
+            entities,
+            actions,
+            SirenPaginationHrefFactory(),
+            SirenCollectionPaginationFactory(),
+        )
+        return ModwireSiren(entities, collections, PydanticSirenSerializer())

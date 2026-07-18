@@ -7,6 +7,7 @@ from pydantic import Field, model_serializer
 from .action import SirenAction
 from .base import SirenContract
 from .link import SirenLink
+from .related_link import RelatedLinkInput
 
 
 class SirenEntity(SirenContract):
@@ -34,6 +35,7 @@ class SirenEntityRequest(SirenContract):
     operation_ids: tuple[str, ...]
     path_values: dict[str, Any]
     entities: tuple[SirenEmbeddedEntity, ...]
+    related_links: tuple[RelatedLinkInput, ...] = ()
 
 
 SirenEntity.model_rebuild()

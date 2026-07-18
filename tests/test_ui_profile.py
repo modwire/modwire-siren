@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 from modwire_siren import ModwireSirenFactory, SirenEntityRequest
-from modwire_siren.error import SirenError
 from modwire_siren.profile import SirenProfile
 
 ROOT = Path(__file__).parents[1]
@@ -42,7 +41,7 @@ def test_profile_discovers_every_approved_document_with_progressive_defaults(pat
 
 @pytest.mark.parametrize("path", sorted(INVALID.glob("*.json")), ids=lambda path: path.stem)
 def test_profile_rejects_every_approved_negative_fixture(path: Path):
-    with pytest.raises(SirenError) as raised:
+    with pytest.raises(ValueError) as raised:
         PROFILE.validate(read_json(path))
 
     assert raised.value.kind == "profile.invalid"
@@ -107,7 +106,7 @@ def test_profile_defaults_progressively_complete_nested_metadata():
     ],
 )
 def test_profile_rejects_null_and_empty_contract_values(metadata: dict):
-    with pytest.raises(SirenError, match="JSON Schema"):
+    with pytest.raises(ValueError, match="JSON Schema"):
         PROFILE.validate(metadata)
 
 
@@ -122,7 +121,7 @@ def test_profile_schema_identity_and_media_type_come_from_the_packaged_schema():
 def test_profile_discovery_uses_one_siren_error_contract():
     document = {"class": ["record"], "properties": {}, "entities": [], "actions": [], "links": []}
 
-    with pytest.raises(SirenError) as raised:
+    with pytest.raises(ValueError) as raised:
         PROFILE.discover(document)
 
     assert raised.value.as_dict() == {
@@ -141,7 +140,7 @@ def test_profile_reports_dangling_references_with_json_pointer():
     )
     profile["properties"]["missing"] = {"label": "Missing"}
 
-    with pytest.raises(SirenError) as raised:
+    with pytest.raises(ValueError) as raised:
         PROFILE.discover(document)
 
     assert raised.value.kind == "profile.invalid"

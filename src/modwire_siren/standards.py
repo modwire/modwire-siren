@@ -4,9 +4,14 @@ from enum import StrEnum
 class SirenMediaType(StrEnum):
     ACTION = "application/json"
     ENTITY = "application/vnd.siren+json"
+    PROBLEM = "application/problem+json"
 
 
 class SirenRelationName(StrEnum):
+    FIRST = "first"
+    ITEM = "item"
+    NEXT = "next"
+    PREVIOUS = "previous"
     SELF = "self"
 
 
