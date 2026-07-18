@@ -15,3 +15,4 @@ class SirenResourceSpec:
     path_parameters: Mapping[str, str]
     relations: Mapping[str, SirenRelationSpec]
     operations: tuple[str, ...] = ()
+    collection_operations: tuple[str, ...] = ()

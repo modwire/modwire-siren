@@ -47,9 +47,30 @@ SCHEMA = {
                 "identifier": "slug",
                 "path-parameters": {"record_slug": "slug"},
                 "relations": {},
+                "collection-operations": ("search_records", "import_records"),
             },
             "get": {"operationId": "get_record", "summary": "Get record"},
             "patch": {"operationId": "revise_record", "summary": "Revise record"},
+        },
+        "/records/search": {
+            "post": {
+                "operationId": "search_records",
+                "summary": "Search records",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["query"],
+                                "properties": {"query": {"type": "string"}},
+                            }
+                        }
+                    }
+                },
+            },
+        },
+        "/records/import": {
+            "post": {"operationId": "import_records", "summary": "Import records"},
         },
     },
 }
@@ -102,6 +123,23 @@ def test_collection_defaults_to_current_item_count_and_self_link_without_paginat
     assert document["properties"] == {"count": 1}
     assert document["links"][0]["rel"] == ["self"]
     assert document["links"][0]["href"] == "https://api.test/records"
+
+
+def test_collection_projects_declared_subpath_actions_with_request_schema_fields():
+    document = siren().collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(),
+            collection_operation_ids=("search_records", "list_records"),
+            item_operation_ids=(),
+            path_values={},
+        )
+    )
+
+    assert document["links"][0]["href"] == "https://api.test/records"
+    assert [action["name"] for action in document["actions"]] == ["search_records", "list_records"]
+    assert document["actions"][0]["href"] == "https://api.test/records/search"
+    assert [field["name"] for field in document["actions"][0]["fields"]] == ["query"]
 
 
 def test_collection_supports_custom_pagination_links():
@@ -176,6 +214,55 @@ def test_collection_rejects_mismatched_collection_operation_paths():
                 resource_name="record",
                 items=(),
                 collection_operation_ids=("list_records", "get_record"),
+                item_operation_ids=(),
+                path_values={},
+            )
+        )
+
+
+def test_collection_rejects_undeclared_subpath_collection_operations():
+    with pytest.raises(OpenApiError, match="do not share path"):
+        siren().collection(
+            SirenCollectionRequest(
+                resource_name="record",
+                items=(),
+                collection_operation_ids=("list_records", "revise_record"),
+                item_operation_ids=(),
+                path_values={},
+            )
+        )
+
+
+def test_collection_rejects_declared_subpath_actions_with_missing_path_values():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/workspaces/{workspace_id}/records": {
+                "get": {"operationId": "list_workspace_records"},
+            },
+            "/workspaces/{workspace_id}/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "slug",
+                    "path-parameters": {"workspace_id": "workspace_id", "record_slug": "slug"},
+                    "relations": {},
+                    "collection-operations": ("import_workspace_records",),
+                },
+                "get": {"operationId": "get_workspace_record"},
+            },
+            "/workspaces/{workspace_id}/records/import": {
+                "post": {"operationId": "import_workspace_records"},
+            },
+        },
+    }
+
+    with pytest.raises(OpenApiError, match="workspace_id"):
+        ModwireSirenFactory.standard(schema, "https://api.test").collection(
+            SirenCollectionRequest(
+                resource_name="record",
+                items=(),
+                collection_operation_ids=("list_workspace_records", "import_workspace_records"),
                 item_operation_ids=(),
                 path_values={},
             )

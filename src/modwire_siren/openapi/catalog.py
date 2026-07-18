@@ -78,3 +78,5 @@ class OpenApiCatalog(SirenResourceCatalog):
                         f"Operation {operation_id!r} owned by resource {resource.name!r} has unmapped "
                         f"path parameters: {sorted(extra)}"
                     )
+            for operation_id in resource.collection_operations:
+                self.operation(operation_id)

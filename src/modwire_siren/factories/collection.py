@@ -1,6 +1,7 @@
 from ..contracts.collection import SirenCollectionRequest
 from ..contracts.entity import SirenEmbeddedEntity, SirenEntity, SirenEntityRequest
 from ..contracts.link import SirenLink
+from ..contracts.operation import OpenApiOperation
 from ..openapi.catalog import SirenResourceCatalog
 from ..openapi.error import OpenApiError
 from ..openapi.href import SirenHrefResolver
@@ -35,9 +36,15 @@ class SirenCollectionFactory:
         collection_operations = tuple(
             self._catalog.operation(operation_id) for operation_id in request.collection_operation_ids
         )
-        collection_path = collection_operations[0].path
+        collection_path = self._collection_path(resource.collection_operations, collection_operations)
         foreign = tuple(
-            operation.operation_id for operation in collection_operations if operation.path != collection_path
+            operation.operation_id
+            for operation in collection_operations
+            if operation.path != collection_path
+            and (
+                operation.operation_id not in resource.collection_operations
+                or not operation.path.startswith(f"{collection_path}/")
+            )
         )
         if foreign:
             raise OpenApiError(f"Collection operations do not share path {collection_path!r}: {list(foreign)}")
@@ -74,3 +81,14 @@ class SirenCollectionFactory:
                 for item in items
             ),
         )
+
+    @staticmethod
+    def _collection_path(
+        collection_operation_ids: tuple[str, ...],
+        operations: tuple[OpenApiOperation, ...],
+    ) -> str:
+        collection_owned = set(collection_operation_ids)
+        for operation in operations:
+            if operation.operation_id not in collection_owned:
+                return operation.path
+        return operations[0].path
