@@ -36,7 +36,7 @@ def test_generated_signatures_are_stable_for_postponed_annotations():
 
     operations = generator._operations(SirenClient)
 
-    assert "payload: Mapping[str, Any] | None = None" in operations
+    assert "payload: Mapping[str, typing.Any] | None = None" in operations
     assert "'Mapping[str, Any]" not in operations
 
 
