@@ -1,6 +1,7 @@
 import argparse
 import importlib
 import inspect
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -122,7 +123,10 @@ class DocumentationGenerator:
 
     @staticmethod
     def _annotation(value: object) -> object:
-        return AnnotationText(value) if isinstance(value, str) else value
+        if value is inspect.Signature.empty:
+            return value
+        text = value if isinstance(value, str) else str(value)
+        return AnnotationText(re.sub(r"(?<![.\w])Any(?![\w])", "typing.Any", text))
 
     @staticmethod
     def _default(value: object) -> object:
