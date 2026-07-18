@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   verify:
-    uses: modwire/modwire/.github/workflows/python-package.yml@workflows-v1
+    uses: modwire/modwire-architecture/.github/workflows/python-package.yml@workflows-v1
     with:
       python-versions: '["3.12", "3.13", "3.14"]'
       build-python-version: "3.12"
