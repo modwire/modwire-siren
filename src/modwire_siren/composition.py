@@ -9,6 +9,7 @@ from .factories.link import OpenApiSirenLinkFactory
 from .factories.pagination import SirenCollectionPaginationFactory, SirenPaginationHrefFactory
 from .factories.related_link import SirenRelatedLinkFactory
 from .factories.resource import OpenApiSirenResourceHrefResolver
+from .factories.root import SirenRootFactory
 from .openapi.factory import OpenApiCatalogFactory
 from .openapi.href import OpenApiHrefResolver
 from .openapi.resource import OpenApiResourceReader
@@ -43,4 +44,5 @@ class ModwireSirenFactory:
             SirenPaginationHrefFactory(),
             SirenCollectionPaginationFactory(),
         )
-        return ModwireSiren(entities, collections, PydanticSirenSerializer())
+        roots = SirenRootFactory(catalog, hrefs)
+        return ModwireSiren(entities, collections, roots, PydanticSirenSerializer())
