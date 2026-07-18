@@ -1,7 +1,6 @@
 from ..contracts.collection import SirenCollectionRequest
 from ..contracts.entity import SirenEmbeddedEntity, SirenEntity, SirenEntityRequest
 from ..contracts.link import SirenLink
-from ..contracts.operation import OpenApiOperation
 from ..openapi.catalog import SirenResourceCatalog
 from ..openapi.error import OpenApiError
 from ..openapi.href import SirenHrefResolver
@@ -36,7 +35,7 @@ class SirenCollectionFactory:
         collection_operations = tuple(
             self._catalog.operation(operation_id) for operation_id in request.collection_operation_ids
         )
-        collection_path = self._collection_path(resource.collection_operations, collection_operations)
+        collection_path = self._collection_path(resource.path, resource.collection_only)
         foreign = tuple(
             operation.operation_id
             for operation in collection_operations
@@ -83,12 +82,8 @@ class SirenCollectionFactory:
         )
 
     @staticmethod
-    def _collection_path(
-        collection_operation_ids: tuple[str, ...],
-        operations: tuple[OpenApiOperation, ...],
-    ) -> str:
-        collection_owned = set(collection_operation_ids)
-        for operation in operations:
-            if operation.operation_id not in collection_owned:
-                return operation.path
-        return operations[0].path
+    def _collection_path(path: str, collection_only: bool) -> str:
+        if collection_only:
+            return path
+        parent = path.rstrip("/").rsplit("/", 1)[0]
+        return parent or "/"

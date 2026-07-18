@@ -191,3 +191,43 @@ def test_openapi_rejects_resource_owned_sub_actions_with_extra_path_parameters()
 
     with pytest.raises(OpenApiError, match="comment_id"):
         ModwireSirenFactory.standard(schema, "https://api.test")
+
+
+def test_openapi_accepts_json_array_resource_operation_metadata():
+    schema = {
+        "paths": {
+            "/records": {
+                "get": {"operationId": "list_records"},
+            },
+            "/records/{record_id}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "id",
+                    "path-parameters": {"record_id": "id"},
+                    "relations": {},
+                    "operations": ["archive_record"],
+                    "collection-operations": ["search_records"],
+                },
+                "get": {"operationId": "get_record"},
+            },
+            "/records/{record_id}/archive": {
+                "post": {"operationId": "archive_record"},
+            },
+            "/records/search": {
+                "post": {"operationId": "search_records"},
+            },
+        }
+    }
+
+    document = ModwireSirenFactory.standard(schema, "https://api.test").document(
+        SirenEntityRequest(
+            resource_name="record",
+            properties={"id": "architecture"},
+            operation_ids=("archive_record",),
+            path_values={},
+            entities=(),
+        )
+    )
+
+    assert document["actions"][0]["href"] == "https://api.test/records/architecture/archive"

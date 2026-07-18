@@ -129,6 +129,7 @@ def test_add_siren_components_preserves_existing_components_without_mutating_inp
     assert schema["components"]["schemas"]["SirenEntity"]["properties"]["actions"]["items"] == {
         "$ref": "#/components/schemas/SirenAction"
     }
+    assert schema["components"]["schemas"]["Problem"]["required"] == ["title", "status"]
 
 
 def test_enrich_siren_openapi_rewrites_response_media_types_and_preserves_operation_metadata():
@@ -226,3 +227,30 @@ def test_enrich_siren_openapi_composes_with_inject_siren_resources():
             "schema": {"$ref": "#/components/schemas/SirenEntity"},
         },
     }
+
+
+def test_enrich_siren_openapi_preserves_referenced_response_objects():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/records": {
+                "get": {
+                    "operationId": "list_records",
+                    "responses": {
+                        "200": {"$ref": "#/components/responses/RecordCollection"},
+                        "404": {"$ref": "#/components/responses/MissingRecord"},
+                    },
+                },
+            },
+        },
+        "components": {
+            "responses": {
+                "RecordCollection": {"description": "Records"},
+                "MissingRecord": {"description": "Missing"},
+            },
+        },
+    }
+
+    enriched = enrich_siren_openapi(schema)
+
+    assert enriched["paths"]["/records"]["get"]["responses"] == schema["paths"]["/records"]["get"]["responses"]

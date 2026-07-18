@@ -22,6 +22,16 @@ class RecordingTransport:
         return self.responses[method, href]
 
 
+class FailingTransport:
+    async def request(
+        self,
+        method: str,
+        href: str,
+        payload: Mapping[str, Any] | None = None,
+    ) -> SirenResponse:
+        raise TimeoutError("request timed out")
+
+
 def test_client_follows_relative_relations_and_discovers_collection_items():
     transport = RecordingTransport(
         {
@@ -189,3 +199,40 @@ def test_client_rejects_cross_origin_targets(operation):
             )
 
     assert raised.value.kind == "cross-origin-target"
+
+
+def test_client_accepts_same_origin_links_with_default_https_port():
+    transport = RecordingTransport(
+        {
+            ("GET", "https://api.test:443/records"): SirenResponse(
+                status_code=200,
+                document={"class": ["collection"]},
+            ),
+        }
+    )
+    client = SirenClient("https://api.test/root", transport)
+
+    document = asyncio.run(
+        client.follow(
+            {"links": [{"rel": ["records"], "href": "https://api.test:443/records"}]},
+            "records",
+        )
+    )
+
+    assert document == {"class": ["collection"]}
+    assert transport.requests == [("GET", "https://api.test:443/records", None)]
+
+
+def test_client_reports_transport_failures_with_public_error_contract():
+    client = SirenClient("https://api.test/root", FailingTransport())
+
+    with pytest.raises(SirenClientError) as raised:
+        asyncio.run(client.root())
+
+    assert raised.value.as_dict() == {
+        "kind": "transport-error",
+        "detail": "Siren transport request failed.",
+        "method": "GET",
+        "href": "https://api.test/root",
+    }
+    assert isinstance(raised.value.__cause__, TimeoutError)

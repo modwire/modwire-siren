@@ -93,4 +93,25 @@ class OpenApiCatalog(SirenResourceCatalog):
                         f"path parameters: {sorted(extra)}"
                     )
             for operation_id in resource.collection_operations:
-                self.operation(operation_id)
+                operation = self.operation(operation_id)
+                collection_path = self._collection_path(resource.path, resource.collection_only)
+                if operation.path != collection_path and not operation.path.startswith(f"{collection_path}/"):
+                    raise OpenApiError(
+                        f"Collection operation {operation_id!r} is not owned by resource {resource.name!r}: "
+                        f"{operation.path}"
+                    )
+                collection_placeholders = set(re.findall(r"{([^}]+)}", collection_path))
+                operation_placeholders = set(re.findall(r"{([^}]+)}", operation.path))
+                extra = operation_placeholders - collection_placeholders
+                if extra:
+                    raise OpenApiError(
+                        f"Collection operation {operation_id!r} owned by resource {resource.name!r} has unmapped "
+                        f"path parameters: {sorted(extra)}"
+                    )
+
+    @staticmethod
+    def _collection_path(path: str, collection_only: bool) -> str:
+        if collection_only:
+            return path
+        parent = path.rstrip("/").rsplit("/", 1)[0]
+        return parent or "/"

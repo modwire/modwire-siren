@@ -78,7 +78,15 @@ class SirenClient:
         payload: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         target = self._same_origin(href)
-        response = await self._transport.request(method, target, payload)
+        try:
+            response = await self._transport.request(method, target, payload)
+        except Exception as error:
+            raise SirenClientError(
+                "transport-error",
+                "Siren transport request failed.",
+                method=method,
+                href=target,
+            ) from error
         self._validate_response(response)
         if response.status_code >= 400:
             raise SirenClientError.problem(response.status_code, response.document)
@@ -163,7 +171,14 @@ class SirenClient:
     @staticmethod
     def _url_origin(url: str) -> tuple[str, str, int | None]:
         parsed = urlsplit(url)
-        return parsed.scheme.casefold(), (parsed.hostname or "").casefold(), parsed.port
+        scheme = parsed.scheme.casefold()
+        return scheme, (parsed.hostname or "").casefold(), SirenClient._origin_port(scheme, parsed.port)
+
+    @staticmethod
+    def _origin_port(scheme: str, port: int | None) -> int | None:
+        if port is not None:
+            return port
+        return {"http": 80, "https": 443}.get(scheme)
 
     @staticmethod
     def _contract_error(detail: str) -> SirenClientError:

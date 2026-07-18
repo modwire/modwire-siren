@@ -279,6 +279,15 @@ def test_response_adapter_builds_problem_json_responses():
     assert response.body == {"title": "Missing record", "status": 404}
 
 
+def test_response_adapter_adds_response_status_to_problem_documents():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.problem({"title": "Conflict"}, status_code=409)
+
+    assert response.status_code == 409
+    assert response.body == {"status": 409, "title": "Conflict"}
+
+
 def test_problem_from_exception_preserves_http_status_and_detail():
     problem = problem_from_exception(HttpError(404, "Record not found"))
 

@@ -1,8 +1,17 @@
-from typing import Annotated
+from typing import Annotated, Any
 
-from pydantic import Field
+from pydantic import BeforeValidator, Field
 
 from ..contracts.base import SirenContract
+
+
+def _string_tuple(value: Any) -> Any:
+    if isinstance(value, list | tuple):
+        return tuple(value)
+    return value
+
+
+StringTuple = Annotated[tuple[str, ...], BeforeValidator(_string_tuple)]
 
 
 class OpenApiRelationExtension(SirenContract):
@@ -17,6 +26,6 @@ class OpenApiResourceExtension(SirenContract):
     identifier: str
     path_parameters: Annotated[dict[str, str], Field(validation_alias="path-parameters")]
     relations: dict[str, OpenApiRelationExtension]
-    operations: tuple[str, ...] = ()
-    collection_operations: Annotated[tuple[str, ...], Field(validation_alias="collection-operations")] = ()
+    operations: StringTuple = ()
+    collection_operations: Annotated[StringTuple, Field(validation_alias="collection-operations")] = ()
     collection_only: Annotated[bool, Field(validation_alias="collection-only")] = False
