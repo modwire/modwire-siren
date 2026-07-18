@@ -19,4 +19,5 @@ class SirenResource(SirenContract):
     identifier: str
     path_parameters: dict[str, str]
     relations: tuple[SirenRelation, ...]
+    operations: tuple[str, ...] = ()
     profile: dict[str, Any] = Field(default_factory=dict)

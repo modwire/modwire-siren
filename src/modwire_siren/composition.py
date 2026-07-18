@@ -7,6 +7,7 @@ from .factories.entity import SirenEntityFactory
 from .factories.field import OpenApiSirenFieldFactory
 from .factories.link import OpenApiSirenLinkFactory
 from .factories.pagination import SirenCollectionPaginationFactory, SirenPaginationHrefFactory
+from .factories.related_link import SirenRelatedLinkFactory
 from .factories.resource import OpenApiSirenResourceHrefResolver
 from .openapi.factory import OpenApiCatalogFactory
 from .openapi.href import OpenApiHrefResolver
@@ -31,8 +32,9 @@ class ModwireSirenFactory:
         fields = OpenApiSirenFieldFactory(OpenApiSirenFieldTypeResolver())
         actions = SirenActionFactory(catalog, hrefs, fields)
         links = OpenApiSirenLinkFactory(catalog, resource_hrefs)
+        related_links = SirenRelatedLinkFactory(catalog, resource_hrefs)
         profile_projector = ProfileProjector(profiles)
-        entities = SirenEntityFactory(catalog, resource_hrefs, links, actions, profile_projector)
+        entities = SirenEntityFactory(catalog, resource_hrefs, links, related_links, actions, profile_projector)
         collections = SirenCollectionFactory(
             catalog,
             hrefs,

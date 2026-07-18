@@ -3,6 +3,7 @@ from typing import Any
 
 from ...contracts.collection import SirenCollectionRequest
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
+from ...contracts.related_link import RelatedLinkInput
 from ...facade import ModwireSiren
 from .adapter import NinjaExtraSirenResponseAdapter
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse
@@ -22,6 +23,7 @@ class NinjaExtraSirenController:
         operation_ids: tuple[str, ...],
         path_values: Mapping[str, Any],
         entities: tuple[SirenEmbeddedEntity, ...] = (),
+        related_links: tuple[RelatedLinkInput, ...] = (),
     ) -> dict[str, Any]:
         return self._siren.document(
             SirenEntityRequest(
@@ -30,6 +32,7 @@ class NinjaExtraSirenController:
                 operation_ids=operation_ids,
                 path_values=dict(path_values),
                 entities=entities,
+                related_links=related_links,
             )
         )
 
@@ -41,6 +44,7 @@ class NinjaExtraSirenController:
         operation_ids: tuple[str, ...],
         path_values: Mapping[str, Any] = EMPTY_VALUES,
         entities: tuple[SirenEmbeddedEntity, ...] = (),
+        related_links: tuple[RelatedLinkInput, ...] = (),
         status_code: int = 200,
         headers: Mapping[str, str] = EMPTY_HEADERS,
     ) -> NinjaExtraSirenResponse:
@@ -50,6 +54,7 @@ class NinjaExtraSirenController:
             operations=operation_ids,
             path_values=path_values,
             entities=entities,
+            related_links=related_links,
             status_code=status_code,
             headers=headers,
         )

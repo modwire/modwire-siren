@@ -5,7 +5,7 @@ from .resource_spec import SirenResourceSpec
 
 class SirenResourceSpecSerializer:
     def serialize(self, resource: SirenResourceSpec) -> dict[str, Any]:
-        return {
+        extension = {
             "name": resource.name,
             "class": resource.resource_class,
             "identifier": resource.identifier,
@@ -15,3 +15,6 @@ class SirenResourceSpecSerializer:
                 for field, relation in resource.relations.items()
             },
         }
+        if resource.operations:
+            extension["operations"] = resource.operations
+        return extension

@@ -5,6 +5,7 @@ from .client.facade import SirenClient
 from .composition import ModwireSirenFactory
 from .contracts.collection import CustomPagination, OffsetPagination, PaginationLinkInput, SirenCollectionRequest
 from .contracts.entity import SirenEntityRequest
+from .contracts.related_link import RelatedLinkInput
 from .facade import ModwireSiren
 from .integrations.ninja_extra import (
     NinjaExtraSirenController,
@@ -12,6 +13,7 @@ from .integrations.ninja_extra import (
     NinjaExtraSirenResponseAdapter,
     SirenEntityDecorator,
     collect_siren_resources,
+    siren_collection,
     siren_entity,
     siren_resource,
 )
@@ -30,6 +32,7 @@ __all__ = [
     "OffsetPagination",
     "OpenApiError",
     "PaginationLinkInput",
+    "RelatedLinkInput",
     "SirenClient",
     "SirenClientError",
     "SirenCollectionRequest",
@@ -42,6 +45,7 @@ __all__ = [
     "__version__",
     "collect_siren_resources",
     "inject_siren_resources",
+    "siren_collection",
     "siren_entity",
     "siren_resource",
     "validate_siren_resources",

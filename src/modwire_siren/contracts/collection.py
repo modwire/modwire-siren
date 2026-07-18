@@ -34,6 +34,9 @@ class CustomPagination:
     links: tuple[PaginationLinkInput, ...]
 
 
+DEFAULT_PAGINATION = NoPagination()
+
+
 @dataclass(frozen=True, slots=True)
 class SirenCollectionRequest:
     """Describe resource items and controls projected into one Siren collection."""
@@ -43,4 +46,4 @@ class SirenCollectionRequest:
     collection_operation_ids: tuple[str, ...]
     item_operation_ids: tuple[str, ...]
     path_values: Mapping[str, Any]
-    pagination: NoPagination | OffsetPagination | CustomPagination = NoPagination()
+    pagination: NoPagination | OffsetPagination | CustomPagination = DEFAULT_PAGINATION

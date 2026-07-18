@@ -60,3 +60,9 @@ class OpenApiCatalog(SirenResourceCatalog):
             unknown = {relation.resource for relation in resource.relations} - set(self._resources)
             if unknown:
                 raise OpenApiError(f"Resource {resource.name!r} references unknown resources: {sorted(unknown)}")
+            for operation_id in resource.operations:
+                operation = self.operation(operation_id)
+                if operation.path != resource.path and not operation.path.startswith(f"{resource.path}/"):
+                    raise OpenApiError(
+                        f"Operation {operation_id!r} is not owned by resource {resource.name!r}: {operation.path}"
+                    )

@@ -3,6 +3,7 @@ from typing import Any
 
 from ...contracts.collection import SirenCollectionRequest
 from ...contracts.entity import SirenEmbeddedEntity, SirenEntityRequest
+from ...contracts.related_link import RelatedLinkInput
 from ...facade import ModwireSiren
 from ...standards import SirenMediaType
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse, NinjaExtraSirenResponseFactory
@@ -23,6 +24,7 @@ class NinjaExtraSirenResponseAdapter:
         operations: tuple[str, ...],
         path_values: Mapping[str, Any] = EMPTY_VALUES,
         entities: tuple[SirenEmbeddedEntity, ...] = (),
+        related_links: tuple[RelatedLinkInput, ...] = (),
         status_code: int = 200,
         headers: Mapping[str, str] = EMPTY_HEADERS,
     ) -> NinjaExtraSirenResponse:
@@ -35,6 +37,7 @@ class NinjaExtraSirenResponseAdapter:
                 operation_ids=operations,
                 path_values=dict(path_values),
                 entities=entities,
+                related_links=related_links,
             )
         )
         return self._responses.create(
