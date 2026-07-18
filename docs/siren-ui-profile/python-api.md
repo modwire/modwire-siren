@@ -10,7 +10,7 @@ The supported root imports below are generated from `modwire_siren.profile.__all
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
-| `SirenProfile` | Validate, discover, and apply the Modwire Siren UI Profile. | `identifier: str`<br>`schema_id: str`<br>`media_type: str`<br>`validate(metadata: Mapping[str, Any]) -> dict[str, Any]`<br>`discover(document: Mapping[str, Any]) -> dict[str, Any]`<br>`enhance(document: Mapping[str, Any], metadata: Mapping[str, Any]) -> dict[str, Any]` |
+| `SirenProfile` | Validate, discover, and apply the Modwire Siren UI Profile. | `identifier: str`<br>`schema_id: str`<br>`media_type: str`<br>`validate(metadata: Mapping[str, typing.Any]) -> dict[str, typing.Any]`<br>`discover(document: Mapping[str, typing.Any]) -> dict[str, typing.Any]`<br>`enhance(document: Mapping[str, typing.Any], metadata: Mapping[str, typing.Any]) -> dict[str, typing.Any]` |
 
 ## Executable example
 
