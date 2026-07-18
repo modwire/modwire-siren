@@ -7,28 +7,36 @@ from ...contracts.related_link import RelatedLinkInput
 from ...facade import ModwireSiren
 from .adapter import NinjaExtraSirenResponseAdapter
 from .response import EMPTY_HEADERS, EMPTY_VALUES, NinjaExtraSirenResponse
+from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer
 
 
 class NinjaExtraSirenController:
     """Framework-light base for Ninja Extra controllers that emit Siren documents."""
 
-    def __init__(self, siren: ModwireSiren):
+    def __init__(
+        self,
+        siren: ModwireSiren,
+        *,
+        property_serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
+    ):
         self._siren = siren
-        self._siren_responses = NinjaExtraSirenResponseAdapter(siren)
+        self._properties = property_serializer
+        self._siren_responses = NinjaExtraSirenResponseAdapter(siren, property_serializer=property_serializer)
 
     def siren_document(
         self,
         resource_name: str,
-        properties: Mapping[str, Any],
+        properties: Any,
         operation_ids: tuple[str, ...],
         path_values: Mapping[str, Any],
         entities: tuple[SirenEmbeddedEntity, ...] = (),
         related_links: tuple[RelatedLinkInput, ...] = (),
     ) -> dict[str, Any]:
+        serialized = self._properties.serialize(properties)
         return self._siren.document(
             SirenEntityRequest(
                 resource_name=resource_name,
-                properties=dict(properties),
+                properties=dict(serialized),
                 operation_ids=operation_ids,
                 path_values=dict(path_values),
                 entities=entities,

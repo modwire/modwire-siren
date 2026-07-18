@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from functools import wraps
 from typing import Any, TypeVar, cast
 
@@ -15,6 +15,7 @@ from .no_policy import NO_SIREN_POLICY
 from .response import EMPTY_HEADERS, NinjaExtraSirenResponse
 from .route_invocation import SirenRouteInvocation
 from .route_invocation_factory import SirenRouteInvocationFactory
+from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer, serialize_collection_items
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -30,6 +31,7 @@ class SirenCollectionResponseDecorator:
         pagination: NoPagination | OffsetPagination | CustomPagination = DEFAULT_PAGINATION,
         status_code: int = 200,
         headers: Mapping[str, str] = EMPTY_HEADERS,
+        serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
     ):
         if not resource_name.strip():
             raise ValueError("Siren resource name must not be blank")
@@ -40,6 +42,7 @@ class SirenCollectionResponseDecorator:
         self._pagination = pagination
         self._status_code = status_code
         self._headers = dict(headers)
+        self._serializer = serializer
         self._policies = SirenCollectionPolicyResolver()
 
     def __call__(self, function: F) -> F:
@@ -51,6 +54,7 @@ class SirenCollectionResponseDecorator:
         pagination = self._pagination
         status_code = self._status_code
         headers = self._headers
+        serializer = self._serializer
         policies = self._policies
 
         def response(self, items: Any, invocation: SirenRouteInvocation) -> NinjaExtraSirenResponse:
@@ -60,10 +64,11 @@ class SirenCollectionResponseDecorator:
                 return self.siren_responses.no_content(headers=headers)
             if items is None:
                 raise ValueError("Siren collection responses require items")
+            serialized = serialize_collection_items(serializer, items)
             return self.siren_collection_response(
                 SirenCollectionRequest(
                     resource_name=resource_name,
-                    items=cast(Sequence[Mapping[str, Any]], items),
+                    items=serialized,
                     collection_operation_ids=policies.operations(policy, operations, invocation.request, resource_name),
                     item_operation_ids=item_operations,
                     path_values=invocation.path_values,
@@ -101,6 +106,7 @@ def siren_collection(
     pagination: NoPagination | OffsetPagination | CustomPagination = DEFAULT_PAGINATION,
     status_code: int = 200,
     headers: Mapping[str, str] = EMPTY_HEADERS,
+    serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
 ) -> Callable[[F], F]:
     """Turn a controller method's item mappings into a Siren collection response payload."""
     return SirenCollectionResponseDecorator(
@@ -111,4 +117,5 @@ def siren_collection(
         pagination=pagination,
         status_code=status_code,
         headers=headers,
+        serializer=serializer,
     )

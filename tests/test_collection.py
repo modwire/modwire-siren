@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from modwire_siren import (
@@ -11,6 +13,19 @@ from modwire_siren import (
     SirenCollectionRequest,
     siren_collection,
 )
+
+
+class RecordOrm:
+    def __init__(self, slug: str, title: str):
+        self.slug = slug
+        self.title = title
+
+
+class RecordOrmSerializer:
+    def serialize(self, value: Any) -> dict[str, str]:
+        if not isinstance(value, RecordOrm):
+            raise TypeError(f"Unsupported ORM value: {type(value).__name__}")
+        return {"slug": value.slug, "title": value.title}
 
 SCHEMA = {
     "openapi": "3.1.0",
@@ -361,6 +376,42 @@ def test_ninja_adapter_returns_collection_response():
     assert response.content_type == "application/vnd.siren+json"
     assert response.headers == {"Accept-Ranges": "items"}
     assert response.body["class"] == ["collection", "record"]
+
+
+def test_ninja_adapter_serializes_collection_items_with_adapter_serializer():
+    response = NinjaExtraSirenResponseAdapter(siren(), property_serializer=RecordOrmSerializer()).collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(RecordOrm("architecture", "Architecture"),),
+            collection_operation_ids=("list_records",),
+            item_operation_ids=("get_record",),
+            path_values={},
+        )
+    )
+
+    assert response.body["entities"][0]["properties"] == {"slug": "architecture", "title": "Architecture"}
+    assert response.body["entities"][0]["links"][0]["href"] == "https://api.test/records/architecture"
+
+
+def test_siren_collection_response_serializes_items_with_decorator_serializer():
+    class RecordController(NinjaExtraSirenController):
+        @siren_collection(resource="record", operations=("list_records",), serializer=RecordOrmSerializer())
+        def list_records(self) -> tuple[RecordOrm, ...]:
+            return (RecordOrm("architecture", "Architecture"),)
+
+    response = RecordController(siren()).list_records()
+
+    assert response.body["entities"][0]["properties"] == {"slug": "architecture", "title": "Architecture"}
+
+
+def test_siren_collection_response_reports_clear_item_serialization_failures():
+    class RecordController(NinjaExtraSirenController):
+        @siren_collection(resource="record", operations=("list_records",))
+        def list_records(self) -> tuple[object, ...]:
+            return (object(),)
+
+    with pytest.raises(TypeError, match="Siren property serialization requires"):
+        RecordController(siren()).list_records()
 
 
 def test_siren_collection_response_handles_no_content_status_cleanly():
