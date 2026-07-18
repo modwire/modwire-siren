@@ -17,10 +17,16 @@ def test_root_api_is_intentionally_small_and_complete():
         "SirenCollectionRequest",
         "SirenEntityDecorator",
         "SirenEntityRequest",
+        "SirenRelationSpec",
+        "SirenResourceSpec",
         "SirenResponse",
         "SirenTransport",
         "__version__",
+        "collect_siren_resources",
+        "inject_siren_resources",
         "siren_entity",
+        "siren_resource",
+        "validate_siren_resources",
     ]
 
 

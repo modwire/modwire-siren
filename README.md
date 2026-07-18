@@ -145,10 +145,16 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenCollectionRequest` | Describe resource items and controls projected into one Siren collection. | — |
 | `SirenEntityDecorator` | Turn a controller method's property mapping into a Siren entity document. | — |
 | `SirenEntityRequest` | Describe the resource data and allowed operations projected into one entity. | — |
+| `SirenRelationSpec` | Declare one relation in an x-siren-resource extension. | — |
+| `SirenResourceSpec` | Declare one x-siren-resource extension for an OpenAPI path template. | — |
 | `SirenResponse` | Carry one transport response without coupling Siren to an HTTP library. | — |
 | `SirenTransport` | Execute Siren requests for a client-owned transport lifecycle. | `request(method: str, href: str, payload: Mapping[str, Any] | None = None) -> SirenResponse` |
 | `__version__` | Installed distribution version. | — |
+| `collect_siren_resources` | Collect Siren resource declarations attached to controller classes. | — |
+| `inject_siren_resources` | Attach typed Siren resource declarations to an OpenAPI schema copy. | — |
 | `siren_entity` | Turn a controller method's property mapping into a Siren response payload. | — |
+| `siren_resource` | Attach a typed Siren resource declaration to a Ninja Extra controller class. | — |
+| `validate_siren_resources` | Validate Siren resource metadata with the standard OpenAPI catalog. | — |
 
 ## Executable example
 
@@ -216,6 +222,33 @@ paths:
 
 The strict `OpenApiResourceExtension` validates the extension. Unknown resources, incomplete path
 mappings, absent operation IDs, and unknown schema references fail while building the catalog.
+Applications can declare the same metadata without hand-writing extension dictionaries:
+
+```python
+from modwire_siren import SirenRelationSpec, SirenResourceSpec, inject_siren_resources, validate_siren_resources
+
+schema = inject_siren_resources(
+    schema,
+    (
+        SirenResourceSpec(
+            name="record",
+            path="/records/{record_slug}",
+            resource_class="record",
+            identifier="slug",
+            path_parameters={"record_slug": "slug"},
+            relations={
+                "section_slug": SirenRelationSpec(rel="section", resource="section", many=False),
+            },
+        ),
+    ),
+)
+validate_siren_resources(schema, ("record",))
+```
+
+Resource spec paths use OpenAPI template syntax such as `/records/{record_slug}`. Framework route
+converter syntax such as `/{path:record_slug}` is rejected before injection. The base URL still
+belongs to `ModwireSirenFactory.standard(schema, base_url)`; resource declarations describe schema
+paths only and do not carry deployment URLs.
 
 The Pydantic Siren contracts own wire aliases such as `class`, `type`, and `schema`.
 `PydanticSirenSerializer` implements the `SirenSerializer` interface with one model dump; it does
@@ -228,8 +261,23 @@ dependency. It composes directly with Ninja Extra's controller and route decorat
 
 ```python
 from ninja_extra import ControllerBase, api_controller, route
-from modwire_siren import ModwireSiren, NinjaExtraSirenController, siren_entity
+from modwire_siren import (
+    ModwireSiren,
+    NinjaExtraSirenController,
+    collect_siren_resources,
+    inject_siren_resources,
+    siren_entity,
+    siren_resource,
+)
 
+@siren_resource(
+    name="record",
+    path="/records/{record_slug}",
+    class_="record",
+    identifier="slug",
+    path_parameters={"record_slug": "slug"},
+    relations={},
+)
 @api_controller("/records")
 class RecordController(ControllerBase, NinjaExtraSirenController):
     def __init__(self, records: RecordService, siren: ModwireSiren):
@@ -240,6 +288,8 @@ class RecordController(ControllerBase, NinjaExtraSirenController):
     @siren_entity(resource="record", operations=("revise_record",))
     def get_record(self, record_slug: str):
         return self.records.get(record_slug)
+
+schema = inject_siren_resources(schema, collect_siren_resources(RecordController))
 ```
 
 The method returns only resource properties. `@siren_entity(...)` retains its signature for Ninja's

@@ -11,9 +11,14 @@ from .integrations.ninja_extra import (
     NinjaExtraSirenResponse,
     NinjaExtraSirenResponseAdapter,
     SirenEntityDecorator,
+    collect_siren_resources,
     siren_entity,
+    siren_resource,
 )
 from .openapi.error import OpenApiError
+from .openapi.relation_spec import SirenRelationSpec
+from .openapi.resource_api import inject_siren_resources, validate_siren_resources
+from .openapi.resource_spec import SirenResourceSpec
 
 __all__ = [
     "CustomPagination",
@@ -30,8 +35,14 @@ __all__ = [
     "SirenCollectionRequest",
     "SirenEntityDecorator",
     "SirenEntityRequest",
+    "SirenRelationSpec",
+    "SirenResourceSpec",
     "SirenResponse",
     "SirenTransport",
     "__version__",
+    "collect_siren_resources",
+    "inject_siren_resources",
     "siren_entity",
+    "siren_resource",
+    "validate_siren_resources",
 ]
