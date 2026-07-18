@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ..contracts.collection import CustomPagination, NoPagination, OffsetPagination, PaginationLinkInput
@@ -7,9 +8,18 @@ from ..standards import SirenRelationName
 class SirenPaginationHrefFactory:
     def create(self, base_href: str, link: PaginationLinkInput) -> str:
         parts = urlsplit(base_href)
-        query = dict(parse_qsl(parts.query, keep_blank_values=True))
-        query.update({name: str(value) for name, value in link.query.items()})
-        return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+        base_query = parse_qsl(parts.query, keep_blank_values=True)
+        link_query = self._query_items(link.query)
+        link_names = {name for name, _value in link_query}
+        query = [item for item in base_query if item[0] not in link_names]
+        query.extend(link_query)
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query, doseq=True), parts.fragment))
+
+    @staticmethod
+    def _query_items(query: object) -> list[tuple[str, object]]:
+        if isinstance(query, Mapping):
+            return [(name, value) for name, value in query.items()]
+        return [(name, value) for name, value in query]
 
 
 class SirenCollectionPaginationFactory:

@@ -48,6 +48,8 @@ class SirenRootFactory:
         links: list[dict[str, Any]] = []
         seen: set[tuple[str, str]] = set()
         for resource in self._catalog.resources():
+            if not self._root_visible(resource):
+                continue
             path = self._collection_path(resource, operation_paths)
             if not path:
                 continue
@@ -63,10 +65,16 @@ class SirenRootFactory:
         return tuple(links)
 
     def _collection_path(self, resource: SirenResource, operation_paths: set[str]) -> str:
-        path = resource.path if resource.collection_only else self._parent_path(resource.path)
+        path = resource.path if resource.collection_only or resource.singleton else self._parent_path(resource.path)
         if path not in operation_paths or self._has_placeholders(path):
             return ""
         return path
+
+    @staticmethod
+    def _root_visible(resource: SirenResource) -> bool:
+        if resource.root_visible is not None:
+            return resource.root_visible
+        return not resource.singleton
 
     @staticmethod
     def _parent_path(path: str) -> str:

@@ -2,13 +2,15 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+PaginationQuery = Mapping[str, Any] | Sequence[tuple[str, Any]]
+
 
 @dataclass(frozen=True, slots=True)
 class PaginationLinkInput:
     """Describe one collection pagination link relative to the collection path."""
 
     rel: str
-    query: Mapping[str, Any]
+    query: PaginationQuery
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,3 +49,4 @@ class SirenCollectionRequest:
     item_operation_ids: tuple[str, ...]
     path_values: Mapping[str, Any]
     pagination: NoPagination | OffsetPagination | CustomPagination = DEFAULT_PAGINATION
+    query: PaginationQuery = ()

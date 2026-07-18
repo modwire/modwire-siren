@@ -83,6 +83,7 @@ class NinjaExtraSirenResponseAdapter:
             item_operation_ids=request.item_operation_ids,
             path_values=request.path_values,
             pagination=request.pagination,
+            query=request.query,
         )
         return self._responses.create(
             self._siren.collection(serialized),

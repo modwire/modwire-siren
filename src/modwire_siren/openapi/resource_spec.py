@@ -17,3 +17,5 @@ class SirenResourceSpec:
     operations: tuple[str, ...] = ()
     collection_operations: tuple[str, ...] = ()
     collection_only: bool = False
+    singleton: bool = False
+    root_visible: bool | None = None

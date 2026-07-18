@@ -36,6 +36,23 @@ class Request:
         return f"{self.origin.rstrip('/')}/{path.lstrip('/')}"
 
 
+class QueryParams:
+    def __init__(self, pairs: tuple[tuple[str, Any], ...]):
+        self._pairs = pairs
+
+    def lists(self) -> tuple[tuple[str, tuple[Any, ...]], ...]:
+        grouped: dict[str, list[Any]] = {}
+        for name, value in self._pairs:
+            grouped.setdefault(name, []).append(value)
+        return tuple((name, tuple(values)) for name, values in grouped.items())
+
+
+class RequestWithQuery(Request):
+    def __init__(self, origin: str, pairs: tuple[tuple[str, Any], ...]):
+        super().__init__(origin)
+        self.GET = QueryParams(pairs)
+
+
 SCHEMA = {
     "openapi": "3.1.0",
     "paths": {
@@ -277,6 +294,75 @@ def test_collection_supports_custom_pagination_links():
     ]
 
 
+def test_collection_pagination_preserves_repeated_base_query_values():
+    schema = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/records": {
+                "get": {"operationId": "list_records"},
+            },
+            "/records/{record_slug}": {
+                "x-siren-resource": {
+                    "name": "record",
+                    "class": "record",
+                    "identifier": "slug",
+                    "path-parameters": {"record_slug": "slug"},
+                    "relations": {},
+                },
+                "get": {"operationId": "get_record"},
+            },
+        },
+    }
+
+    document = ModwireSirenFactory.standard(schema, "https://api.test").collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(),
+            collection_operation_ids=("list_records",),
+            item_operation_ids=(),
+            path_values={},
+            pagination=OffsetPagination(limit=2, offset=2, count=10, has_next=True),
+            query=(
+                ("limit", 2),
+                ("offset", 2),
+                ("tag", "alpha"),
+                ("tag", "beta"),
+                ("category", "docs"),
+                ("category", "guide"),
+            ),
+        )
+    )
+
+    assert document["links"][1]["href"] == (
+        "https://api.test/records?tag=alpha&tag=beta&category=docs&category=guide&limit=2&offset=0"
+    )
+    assert document["links"][3]["href"] == (
+        "https://api.test/records?tag=alpha&tag=beta&category=docs&category=guide&limit=2&offset=4"
+    )
+
+
+def test_collection_custom_pagination_accepts_repeated_query_pairs():
+    document = siren().collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(),
+            collection_operation_ids=("list_records",),
+            item_operation_ids=(),
+            path_values={},
+            pagination=CustomPagination(
+                count=500,
+                links=(
+                    PaginationLinkInput(rel="self", query=(("tag", "alpha"), ("tag", "beta"), ("cursor", "abc"))),
+                    PaginationLinkInput(rel="next", query={"tag": ("gamma", "delta"), "cursor": "def"}),
+                ),
+            ),
+        )
+    )
+
+    assert document["links"][0]["href"] == "https://api.test/records?tag=alpha&tag=beta&cursor=abc"
+    assert document["links"][1]["href"] == "https://api.test/records?tag=gamma&tag=delta&cursor=def"
+
+
 def test_collection_requires_custom_pagination_self_link():
     with pytest.raises(ValueError, match="self link"):
         siren().collection(
@@ -458,6 +544,22 @@ def test_ninja_adapter_returns_collection_response():
     assert response.body["class"] == ["collection", "record"]
 
 
+def test_ninja_adapter_preserves_collection_request_query():
+    response = NinjaExtraSirenResponseAdapter(siren()).collection(
+        SirenCollectionRequest(
+            resource_name="record",
+            items=(),
+            collection_operation_ids=("list_records",),
+            item_operation_ids=(),
+            path_values={},
+            pagination=OffsetPagination(limit=2, offset=2, count=10, has_next=True),
+            query=(("tag", "alpha"), ("tag", "beta"), ("offset", 2)),
+        )
+    )
+
+    assert response.body["links"][1]["href"] == "https://api.test/records?tag=alpha&tag=beta&limit=2&offset=0"
+
+
 def test_ninja_adapter_serializes_collection_items_with_adapter_serializer():
     response = NinjaExtraSirenResponseAdapter(siren(), property_serializer=RecordOrmSerializer()).collection(
         SirenCollectionRequest(
@@ -504,6 +606,23 @@ def test_siren_collection_response_serializes_items_with_decorator_serializer():
     response = RecordController(siren()).list_records()
 
     assert response.body["entities"][0]["properties"] == {"slug": "architecture", "title": "Architecture"}
+
+
+def test_siren_collection_response_uses_request_query_for_pagination_links():
+    class RecordController(NinjaExtraSirenController):
+        @siren_collection(
+            resource="record",
+            operations=("list_records",),
+            pagination=OffsetPagination(limit=2, offset=2, count=10, has_next=True),
+        )
+        def list_records(self, request: Any) -> tuple[dict[str, str], ...]:
+            return ()
+
+    response = RecordController(siren()).list_records(
+        RequestWithQuery("https://api.test", (("tag", "alpha"), ("tag", "beta"), ("offset", 2)))
+    )
+
+    assert response.body["links"][1]["href"] == "https://api.test/records?tag=alpha&tag=beta&limit=2&offset=0"
 
 
 def test_siren_collection_response_reports_clear_item_serialization_failures():

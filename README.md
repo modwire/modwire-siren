@@ -293,6 +293,12 @@ fields mapped by `path-parameters`. Route `path_values` can supply values not pr
 properties. Path-like identifiers are URL encoded during href creation, so
 `architecture/aggregate` becomes `architecture%2Faggregate`.
 
+Static command-result resources and singleton subresources can set `singleton=True` on
+`SirenResourceSpec` or `singleton: true` in `x-siren-resource`. Singleton resources can omit an
+identifier field from returned properties and still emit a `self` link when route `path_values`
+resolve the path. Singleton resources are not advertised from the root document by default; set
+`root_visible=True` or `root-visible: true` to expose an explicit root link.
+
 The Pydantic Siren contracts own wire aliases such as `class`, `type`, and `schema`.
 `PydanticSirenSerializer` implements the `SirenSerializer` interface with one model dump; it does
 not redeclare the wire schema.
@@ -326,8 +332,9 @@ and item actions from the supplied item operation IDs. Offset pagination emits `
 `previous` when applicable, and `next` when `has_next` is true. `CustomPagination` lets
 applications provide package-owned pagination link inputs while still requiring an explicit `self`
 link. Collection links are built from the collection operation path plus explicit pagination link
-inputs; if a filtered collection needs query parameters such as `status=active`, include them in
-the pagination inputs so they are preserved in advertised links.
+inputs. Existing request query values can be supplied through `SirenCollectionRequest.query`; link
+query values such as `offset` override only that key, preserving unrelated repeated filters such as
+`tag=alpha&tag=beta`.
 
 ## Django Ninja Extra
 

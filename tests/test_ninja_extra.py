@@ -75,6 +75,30 @@ SCHEMA = {
             },
             "get": {"operationId": "get_record"},
             "patch": {"operationId": "revise_record"},
+        },
+        "/records/search": {
+            "x-siren-resource": {
+                "name": "record_search",
+                "class": "record-search",
+                "identifier": "",
+                "path-parameters": {},
+                "relations": {},
+                "operations": ("search_records",),
+                "singleton": True,
+            },
+            "post": {"operationId": "search_records"},
+        },
+        "/records/{record_slug}/schema": {
+            "x-siren-resource": {
+                "name": "record_schema",
+                "class": "record-schema",
+                "identifier": "",
+                "path-parameters": {"record_slug": "record_slug"},
+                "relations": {},
+                "operations": ("get_record_schema",),
+                "singleton": True,
+            },
+            "get": {"operationId": "get_record_schema"},
         }
     }
 }
@@ -224,6 +248,34 @@ def test_response_adapter_for_request_uses_request_base_url_resolver():
     response = adapter.entity("record", {"slug": "architecture"}, operations=())
 
     assert response.body["links"][0]["href"] == "https://tenant.test/api/records/architecture"
+
+
+def test_response_adapter_projects_static_singleton_entity_with_self_link():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.entity(
+        "record_search",
+        {"results": []},
+        operations=("search_records",),
+    )
+
+    assert response.body["class"] == ["record-search"]
+    assert response.body["links"][0]["href"] == "https://api.test/records/search"
+    assert [action["name"] for action in response.body["actions"]] == ["search_records"]
+
+
+def test_response_adapter_projects_singleton_subresource_from_path_values():
+    adapter = NinjaExtraSirenResponseAdapter(ModwireSirenFactory.standard(SCHEMA, "https://api.test"))
+
+    response = adapter.entity(
+        "record_schema",
+        {"fields": []},
+        operations=("get_record_schema",),
+        path_values={"record_slug": "architecture"},
+    )
+
+    assert response.body["class"] == ["record-schema"]
+    assert response.body["links"][0]["href"] == "https://api.test/records/architecture/schema"
 
 
 def test_web_factory_accepts_static_base_url_resolver():

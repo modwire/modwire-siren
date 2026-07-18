@@ -19,7 +19,29 @@ SCHEMA = {
             "get": {"operationId": "get_record"},
         },
         "/records/search": {
+            "x-siren-resource": {
+                "name": "record_search",
+                "class": "record-search",
+                "identifier": "",
+                "path-parameters": {},
+                "relations": {},
+                "operations": ("search_records",),
+                "singleton": True,
+            },
             "post": {"operationId": "search_records"},
+        },
+        "/records/validate": {
+            "x-siren-resource": {
+                "name": "record_validation",
+                "class": "record-validation",
+                "identifier": "",
+                "path-parameters": {},
+                "relations": {},
+                "operations": ("validate_records",),
+                "singleton": True,
+                "root-visible": True,
+            },
+            "post": {"operationId": "validate_records"},
         },
         "/languages": {
             "x-siren-resource": {
@@ -74,6 +96,11 @@ def test_root_builds_api_entry_point_from_openapi_resources():
                 "type": "application/vnd.siren+json",
             },
             {
+                "rel": ["validate"],
+                "href": "https://api.test/api/records/validate",
+                "type": "application/vnd.siren+json",
+            },
+            {
                 "rel": ["languages"],
                 "href": "https://api.test/api/languages",
                 "type": "application/vnd.siren+json",
@@ -96,7 +123,7 @@ def test_root_omits_optional_metadata_and_service_description():
     )
 
     assert document["properties"] == {}
-    assert [link["rel"] for link in document["links"]] == [["self"], ["records"], ["languages"]]
+    assert [link["rel"] for link in document["links"]] == [["self"], ["records"], ["validate"], ["languages"]]
 
 
 def test_root_rejects_invalid_extra_links():

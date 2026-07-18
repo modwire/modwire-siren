@@ -1,4 +1,4 @@
-from ..contracts.collection import SirenCollectionRequest
+from ..contracts.collection import PaginationLinkInput, SirenCollectionRequest
 from ..contracts.entity import SirenEmbeddedEntity, SirenEntity, SirenEntityRequest
 from ..contracts.link import SirenLink
 from ..openapi.catalog import SirenResourceCatalog
@@ -47,7 +47,10 @@ class SirenCollectionFactory:
         )
         if foreign:
             raise OpenApiError(f"Collection operations do not share path {collection_path!r}: {list(foreign)}")
-        collection_href = self._hrefs.resolve(collection_path, request.path_values)
+        collection_href = self._pagination_hrefs.create(
+            self._hrefs.resolve(collection_path, request.path_values),
+            PaginationLinkInput(rel="self", query=request.query),
+        )
         items = tuple(dict(item) for item in request.items)
         return SirenEntity(
             classes=("collection", resource.resource_class),
