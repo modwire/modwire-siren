@@ -22,6 +22,9 @@ SCHEMA = {
             "get": {"operationId": "get_record"},
             "patch": {"operationId": "update_record"},
         },
+        "/records/search": {
+            "post": {"operationId": "search_records"},
+        },
     },
 }
 
@@ -34,6 +37,7 @@ def record_spec() -> SirenResourceSpec:
         identifier="id",
         path_parameters={"record_id": "id"},
         relations={"owner_id": SirenRelationSpec(rel="owner", resource="user", many=False)},
+        collection_operations=("search_records",),
     )
 
 
@@ -58,6 +62,7 @@ def test_inject_siren_resources_returns_schema_copy_with_typed_extensions():
         "identifier": "id",
         "path-parameters": {"record_id": "id"},
         "relations": {"owner_id": {"rel": "owner", "resource": "user", "many": False}},
+        "collection-operations": ("search_records",),
     }
 
 
@@ -125,6 +130,7 @@ def test_siren_resource_decorator_collects_controller_specs_and_accepts_relation
         identifier="id",
         path_parameters={"record_id": "id"},
         relations={"owner_id": {"rel": "owner", "resource": "user", "many": False}},
+        collection_operations=("search_records",),
     )
     class RecordController:
         pass

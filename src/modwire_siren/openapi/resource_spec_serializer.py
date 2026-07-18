@@ -17,4 +17,6 @@ class SirenResourceSpecSerializer:
         }
         if resource.operations:
             extension["operations"] = resource.operations
+        if resource.collection_operations:
+            extension["collection-operations"] = resource.collection_operations
         return extension

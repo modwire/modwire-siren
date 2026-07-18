@@ -45,5 +45,6 @@ class OpenApiResourceReader(OpenApiResourceSource):
                 SirenRelation(field=field, **relation.model_dump()) for field, relation in extension.relations.items()
             ),
             operations=extension.operations,
+            collection_operations=extension.collection_operations,
             profile=self._profiles.validate(raw_profile) if raw_profile else {},
         )

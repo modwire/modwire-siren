@@ -19,6 +19,7 @@ class SirenResourceDecorator:
         path_parameters: Mapping[str, str],
         relations: Mapping[str, SirenRelationSpec | Mapping[str, Any]],
         operations: tuple[str, ...] = (),
+        collection_operations: tuple[str, ...] = (),
     ):
         relation_inputs = SirenRelationInputFactory()
         self._spec = SirenResourceSpec(
@@ -29,6 +30,7 @@ class SirenResourceDecorator:
             path_parameters=dict(path_parameters),
             relations={field: relation_inputs.create(relation) for field, relation in relations.items()},
             operations=operations,
+            collection_operations=collection_operations,
         )
 
     def __call__(self, controller: T) -> T:
@@ -46,6 +48,7 @@ def siren_resource(
     path_parameters: Mapping[str, str],
     relations: Mapping[str, SirenRelationSpec | Mapping[str, Any]],
     operations: tuple[str, ...] = (),
+    collection_operations: tuple[str, ...] = (),
 ) -> SirenResourceDecorator:
     """Attach a typed Siren resource declaration to a Ninja Extra controller class."""
     return SirenResourceDecorator(
@@ -56,4 +59,5 @@ def siren_resource(
         path_parameters=path_parameters,
         relations=relations,
         operations=operations,
+        collection_operations=collection_operations,
     )
