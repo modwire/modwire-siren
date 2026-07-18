@@ -1,6 +1,7 @@
 import json
 from contextlib import suppress
 
+from .ninja_extra.problem import exception_problem_response, problem_from_exception, validation_problem_response
 from .ninja_extra.response import NinjaExtraSirenResponse
 
 CONTENT_LENGTH = "content-length"
@@ -40,4 +41,19 @@ def _delete_header(response, name: str) -> None:
         del response[name]
 
 
-__all__ = ["to_django_response"]
+def django_problem_response(error: BaseException, **kwargs) -> NinjaExtraSirenResponse:
+    """Build a framework-light problem response payload from a Django/Ninja exception."""
+    return exception_problem_response(error, **kwargs)
+
+
+def django_validation_problem_response(errors, **kwargs) -> NinjaExtraSirenResponse:
+    """Build a framework-light problem response payload from Django/Ninja validation errors."""
+    return validation_problem_response(errors, **kwargs)
+
+
+__all__ = [
+    "django_problem_response",
+    "django_validation_problem_response",
+    "problem_from_exception",
+    "to_django_response",
+]
