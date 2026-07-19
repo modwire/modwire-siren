@@ -1,7 +1,0 @@
-{
-  "profile": "https://raw.githubusercontent.com/modwire/modwire-siren/main/docs/siren-ui-profile/README.md",
-  "presentation": {
-    "role": "detail",
-    "component": "MaterialRecordCard"
-  }
-}
