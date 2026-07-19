@@ -18,6 +18,7 @@ class SirenEngine:
         if context.scope == "root":
             return self._root(context)
         resource = self._resource(context)
+        self._validate_capabilities(resource, context)
         if context.scope == "collection":
             return self._collection(resource, context)
         return self._entity(resource, context.value, context, ())
@@ -102,6 +103,13 @@ class SirenEngine:
             return self._resources[context.resource]
         except KeyError as error:
             raise ValueError(f"Siren context references unknown resource: {context.resource}") from error
+
+    @staticmethod
+    def _validate_capabilities(resource: SirenResource, context: SirenContext) -> None:
+        supported = set(resource.collection_operations) | set(resource.entity_operations)
+        unknown = sorted(context.capabilities - supported)
+        if unknown:
+            raise ValueError(f"Siren context declares unsupported capabilities for {resource.name!r}: {unknown}")
 
     @staticmethod
     def _href(
