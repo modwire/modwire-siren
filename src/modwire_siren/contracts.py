@@ -75,8 +75,10 @@ class SirenApi(Contract):
 
 class SirenContext(Contract):
     base_url: str
-    resource: str
-    value: Mapping[str, JsonValue]
+    scope: Literal["root", "collection", "entity"] = "entity"
+    resource: str | None = None
+    value: Mapping[str, JsonValue] = Field(default_factory=dict)
+    items: tuple[Mapping[str, JsonValue], ...] = ()
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
     query: tuple[tuple[str, JsonValue], ...] = ()
     capabilities: frozenset[str] = frozenset()
