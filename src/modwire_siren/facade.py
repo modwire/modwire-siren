@@ -11,7 +11,6 @@ from .serialization import SirenSerializer
 
 
 class ModwireSiren:
-    """Project validated entity requests into serialized Siren documents."""
 
     def __init__(
         self,
@@ -26,11 +25,9 @@ class ModwireSiren:
         self._serializer = serializer
 
     def document(self, request: SirenEntityRequest) -> dict[str, Any]:
-        """Build and serialize one Siren entity document."""
         return self._serializer.serialize(self._entities.create(request))
 
     def collection(self, request: SirenCollectionRequest) -> dict[str, Any]:
-        """Build and serialize one Siren collection document."""
         return self._serializer.serialize(self._collections.create(request))
 
     def root(
@@ -42,7 +39,6 @@ class ModwireSiren:
         service_desc_href: str = "",
         extra_links: tuple[Mapping[str, Any], ...] = (),
     ) -> dict[str, Any]:
-        """Build one Siren API entry-point document."""
         return self._roots.create(
             SirenRootRequest(
                 self_href=self_href,

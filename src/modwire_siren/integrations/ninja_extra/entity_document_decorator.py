@@ -11,7 +11,6 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 class SirenEntityDecorator:
-    """Turn a controller method's property mapping into a Siren entity document."""
 
     def __init__(
         self,

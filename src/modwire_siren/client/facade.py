@@ -9,7 +9,6 @@ from .error import SirenClientError
 
 
 class SirenClient:
-    """Navigate Siren relations and execute only advertised actions."""
 
     def __init__(self, root_url: str, transport: SirenTransport):
         self.root_url = self._absolute_root(root_url)

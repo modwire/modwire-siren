@@ -20,7 +20,6 @@ def siren_entity(
     headers: Mapping[str, str] = EMPTY_HEADERS,
     serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
 ) -> Callable[[F], F]:
-    """Turn a controller method's property mapping into a Siren response payload."""
     return SirenEntityResponseDecorator(
         resource,
         operations=operations,

@@ -5,7 +5,6 @@ from typing import Any
 
 
 class SirenClientError(RuntimeError):
-    """Report navigation, affordance, transport, and remote problem failures."""
 
     def __init__(self, kind: str, detail: str, **context: Any):
         self.kind = kind

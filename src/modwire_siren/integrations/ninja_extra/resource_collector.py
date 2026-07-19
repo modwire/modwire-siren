@@ -13,5 +13,4 @@ class SirenResourceCollector:
 
 
 def collect_siren_resources(*controllers: Any) -> tuple[SirenResourceSpec, ...]:
-    """Collect Siren resource declarations attached to controller classes."""
     return SirenResourceCollector().collect(controllers)

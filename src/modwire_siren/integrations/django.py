@@ -9,7 +9,6 @@ CONTENT_TYPE = "content-type"
 
 
 def to_django_response(response: NinjaExtraSirenResponse):
-    """Map a framework-light Siren response payload to Django HttpResponse."""
     if any(name.lower() == CONTENT_TYPE for name in response.headers):
         raise ValueError("Pass response media type through content_type, not headers")
     try:
@@ -42,12 +41,10 @@ def _delete_header(response, name: str) -> None:
 
 
 def django_problem_response(error: BaseException, **kwargs) -> NinjaExtraSirenResponse:
-    """Build a framework-light problem response payload from a Django/Ninja exception."""
     return exception_problem_response(error, **kwargs)
 
 
 def django_validation_problem_response(errors, **kwargs) -> NinjaExtraSirenResponse:
-    """Build a framework-light problem response payload from Django/Ninja validation errors."""
     return validation_problem_response(errors, **kwargs)
 
 
