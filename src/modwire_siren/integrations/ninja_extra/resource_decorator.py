@@ -59,7 +59,6 @@ def siren_resource(
     singleton: bool = False,
     root_visible: bool | None = None,
 ) -> SirenResourceDecorator:
-    """Attach a typed Siren resource declaration to a Ninja Extra controller class."""
     return SirenResourceDecorator(
         name=name,
         path=path,

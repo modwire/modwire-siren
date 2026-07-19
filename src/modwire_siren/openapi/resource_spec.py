@@ -6,7 +6,6 @@ from .relation_spec import SirenRelationSpec
 
 @dataclass(frozen=True, slots=True)
 class SirenResourceSpec:
-    """Declare one x-siren-resource extension for an OpenAPI path template."""
 
     name: str
     path: str

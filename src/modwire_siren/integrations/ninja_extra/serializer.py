@@ -4,14 +4,12 @@ from typing import Any, Protocol
 
 
 class SirenPropertySerializer(Protocol):
-    """Serialize framework return values into Siren property mappings."""
 
     def serialize(self, value: Any) -> Mapping[str, Any]:
         raise NotImplementedError
 
 
 class DefaultSirenPropertySerializer:
-    """Serialize common framework-neutral property containers."""
 
     def serialize(self, value: Any) -> Mapping[str, Any]:
         if isinstance(value, Mapping):

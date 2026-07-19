@@ -15,7 +15,6 @@ def problem_document(
     errors: tuple[Mapping[str, Any], ...] = (),
     extra: Mapping[str, Any] = EMPTY_VALUES,
 ) -> dict[str, Any]:
-    """Build one RFC 7807-style problem document."""
     document: dict[str, Any] = {"title": title, "status": status}
     if type_:
         document["type"] = type_
@@ -38,7 +37,6 @@ def validation_problem(
     type_: str = "",
     instance: str = "",
 ) -> dict[str, Any]:
-    """Build a problem document for framework validation errors."""
     return problem_document(
         title=title,
         status=status,
@@ -58,7 +56,6 @@ def problem_from_exception(
     type_: str = "",
     instance: str = "",
 ) -> dict[str, Any]:
-    """Build a problem document from a framework or application exception."""
     resolved_status = _status(error, status)
     resolved_title = title or _title(error, resolved_status)
     resolved_detail = detail or _detail(error)
@@ -86,7 +83,6 @@ def problem_response(
     *,
     headers: Mapping[str, str] = EMPTY_HEADERS,
 ) -> NinjaExtraSirenResponse:
-    """Build a framework-light problem response payload."""
     status = problem.get("status")
     if not isinstance(status, int):
         raise ValueError("Problem document status must be an integer")
@@ -108,7 +104,6 @@ def exception_problem_response(
     instance: str = "",
     headers: Mapping[str, str] = EMPTY_HEADERS,
 ) -> NinjaExtraSirenResponse:
-    """Build a problem response payload from an exception."""
     return problem_response(
         problem_from_exception(
             error,
@@ -132,7 +127,6 @@ def validation_problem_response(
     instance: str = "",
     headers: Mapping[str, str] = EMPTY_HEADERS,
 ) -> NinjaExtraSirenResponse:
-    """Build a problem response payload from validation errors."""
     return problem_response(
         validation_problem(
             errors,

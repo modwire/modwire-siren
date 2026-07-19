@@ -109,7 +109,6 @@ def siren_collection(
     headers: Mapping[str, str] = EMPTY_HEADERS,
     serializer: SirenPropertySerializer = DEFAULT_PROPERTY_SERIALIZER,
 ) -> Callable[[F], F]:
-    """Turn a controller method's item mappings into a Siren collection response payload."""
     return SirenCollectionResponseDecorator(
         resource,
         operations=operations,

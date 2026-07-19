@@ -13,7 +13,6 @@ def enrich_siren_openapi(
     success_media_type: str = SirenMediaType.ENTITY,
     problem_media_type: str = SirenMediaType.PROBLEM,
 ) -> dict[str, Any]:
-    """Add Siren/problem schemas and rewrite operation response media types."""
     return rewrite_problem_responses(
         rewrite_siren_responses(
             add_siren_components(schema),
@@ -24,7 +23,6 @@ def enrich_siren_openapi(
 
 
 def add_siren_components(schema: dict[str, Any]) -> dict[str, Any]:
-    """Add package-owned Siren and problem JSON Schema components."""
     document = deepcopy(schema)
     schemas = document.setdefault("components", {}).setdefault("schemas", {})
     for name, component in _components().items():
@@ -37,7 +35,6 @@ def rewrite_siren_responses(
     *,
     success_media_type: str = SirenMediaType.ENTITY,
 ) -> dict[str, Any]:
-    """Rewrite non-204 2xx operation responses to Siren response content."""
     document = deepcopy(schema)
     for response in _responses(document):
         status_code, response_document = response
@@ -55,7 +52,6 @@ def rewrite_problem_responses(
     *,
     problem_media_type: str = SirenMediaType.PROBLEM,
 ) -> dict[str, Any]:
-    """Rewrite non-2xx operation responses to problem JSON response content."""
     document = deepcopy(schema)
     for status_code, response in _responses(document):
         if "$ref" in response:

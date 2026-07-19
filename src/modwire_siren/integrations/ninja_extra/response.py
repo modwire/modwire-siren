@@ -6,7 +6,6 @@ from ...standards import SirenMediaType
 
 
 class EmptyMapping(Mapping[str, Any]):
-    """Immutable empty mapping for non-null default arguments."""
 
     def __getitem__(self, key: str) -> Any:
         raise KeyError(key)
@@ -27,7 +26,6 @@ EMPTY_VALUES: Mapping[str, Any] = EmptyMapping()
 
 @dataclass(frozen=True, slots=True)
 class NinjaExtraSirenResponse:
-    """Framework-light response payload for Ninja Extra adapters."""
 
     body: dict[str, Any] | None
     status_code: int = 200

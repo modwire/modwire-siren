@@ -1,10 +1,8 @@
 # modwire-siren
 
-Typed Siren documents projected from OpenAPI without application-owned route maps.
-
-Every external boundary is behind a package interface: catalog, href resolution, field policy,
-field creation, link creation, resource hrefs, and serialization. `ModwireSirenFactory` is the
-standard composition root; `ModwireSiren` is the small public façade.
+Typed Siren documents projected from one OpenAPI API graph. There is no Siren route map and no
+per-controller Siren declaration: either the API names its resources coherently or composition
+fails before serving a misleading hypermedia document.
 
 ## Contents
 
@@ -16,7 +14,7 @@ standard composition root; `ModwireSiren` is the small public façade.
 - [Public API](#public-api)
 - [OpenAPI contract](#openapi-contract)
 - [Collection projection](#collection-projection)
-- [Django Ninja Extra](#django-ninja-extra)
+- [API graph contract](#api-graph-contract)
 - [Development and release](#development-and-release)
 
 ## Install
@@ -25,9 +23,8 @@ standard composition root; `ModwireSiren` is the small public façade.
 pip install modwire-siren
 ```
 
-The package has no runtime Django or Ninja Extra dependency. Framework integrations expose
-framework-light payloads and decorators; the host application decides how those payloads are mapped
-onto concrete HTTP response classes.
+The engine has no framework dependency. OpenAPI is its structural input; framework integration is
+only responsible for obtaining that final OpenAPI document and mapping rendered HTTP responses.
 
 ## What Siren is
 
@@ -51,16 +48,13 @@ listed in the [IANA Link Relations registry](https://www.iana.org/assignments/li
 ## What this package adds
 
 OpenAPI describes the API surface; Siren describes the controls available in a particular response.
-`modwire-siren` joins the two: it reads routes, operations, request schemas, and explicit
-`x-siren-resource` metadata from one OpenAPI document, then projects runtime values into typed Siren
-entity and collection documents. Applications therefore do not need to maintain a second route map
-for Siren links and actions.
+`modwire-siren` reads routes, operations, and request schemas from that one document, derives the
+resource catalog from the route grammar, then projects runtime values into entity and collection
+documents. Applications do not maintain a second route map or resource registry.
 
-The package intentionally does not decide authorization. Callers pass, or policy hooks select, the
-operation IDs that are legal for the current request and resource; only those operations become
-actions. Core projection stays framework-neutral. The Django Ninja Extra integration adds
-framework-light response payloads with the Siren media type, problem JSON media type, status code,
-headers, and 204 handling ready for an application adapter to map onto the framework response.
+The route graph determines candidate actions. Authorization and resource state determine which of
+those candidates are advertised for a particular response; that decision remains application data,
+not route metadata.
 
 ## Approved UI profile
 

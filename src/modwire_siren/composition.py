@@ -24,11 +24,9 @@ BaseUrlResolver = str | Callable[[Any], str]
 
 
 class ModwireSirenFactory:
-    """Build the standard OpenAPI-backed Siren façade."""
 
     @classmethod
     def standard(cls, schema: dict[str, Any], base_url: str) -> ModwireSiren:
-        """Create a ready-to-use façade from an OpenAPI schema and API base URL."""
         profiles = ProfileDocument(ProfileStandard.load())
         catalog = OpenApiCatalogFactory(OpenApiResourceReader(profiles)).create(schema)
         hrefs = OpenApiHrefResolver(base_url)
@@ -52,12 +50,10 @@ class ModwireSirenFactory:
 
     @classmethod
     def web(cls, schema: dict[str, Any], *, base_url_resolver: BaseUrlResolver) -> "RequestAwareModwireSirenFactory":
-        """Create a request-aware factory for web integrations."""
         return RequestAwareModwireSirenFactory(schema, base_url_resolver)
 
 
 class RequestAwareModwireSirenFactory:
-    """Build Siren façades from the current web request."""
 
     def __init__(self, schema: dict[str, Any], base_url_resolver: BaseUrlResolver):
         self._schema = schema

@@ -4,6 +4,7 @@ from typing import Any
 from ..contracts.resource import SirenRelation, SirenResource
 from ..profile.document import ProfileDocument
 from ..standards import SirenOpenApiExtension
+from .discovery import discover_resources
 from .contracts import OpenApiResourceExtension
 
 
@@ -18,7 +19,7 @@ class OpenApiResourceReader(OpenApiResourceSource):
         self._profiles = profiles
 
     def read(self, paths: dict[str, Any]) -> tuple[SirenResource, ...]:
-        return tuple(
+        explicit = tuple(
             self._resource(
                 path,
                 raw_extension,
@@ -27,6 +28,9 @@ class OpenApiResourceReader(OpenApiResourceSource):
             for path, path_item in paths.items()
             if (raw_extension := path_item.get(SirenOpenApiExtension.RESOURCE))
         )
+        if explicit:
+            return explicit
+        return discover_resources(paths)
 
     def _resource(
         self,

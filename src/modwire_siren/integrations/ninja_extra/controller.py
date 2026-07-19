@@ -11,7 +11,6 @@ from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer
 
 
 class NinjaExtraSirenController:
-    """Framework-light base for Ninja Extra controllers that emit Siren documents."""
 
     def __init__(
         self,

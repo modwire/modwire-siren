@@ -5,7 +5,6 @@ from typing import Any
 
 @dataclass(frozen=True, slots=True)
 class SirenRootRequest:
-    """Describe metadata and links for an API entry-point document."""
 
     self_href: str
     title: str = ""

@@ -28,7 +28,6 @@ class SirenEmbeddedEntity(SirenContract):
 
 
 class SirenEntityRequest(SirenContract):
-    """Describe the resource data and allowed operations projected into one entity."""
 
     resource_name: str
     properties: dict[str, Any]

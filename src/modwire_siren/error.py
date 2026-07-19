@@ -2,7 +2,6 @@ from typing import Any
 
 
 class SirenError(ValueError):
-    """Report one invalid Siren contract with structured issue details."""
 
     def __init__(
         self,
@@ -17,5 +16,4 @@ class SirenError(ValueError):
         super().__init__(detail)
 
     def as_dict(self) -> dict[str, Any]:
-        """Serialize the complete Siren error for API and MCP boundaries."""
         return {"kind": self.kind, "detail": self.detail, "issues": list(self.issues)}

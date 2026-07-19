@@ -12,7 +12,6 @@ from .serializer import DEFAULT_PROPERTY_SERIALIZER, SirenPropertySerializer, se
 
 
 class NinjaExtraSirenResponseAdapter:
-    """Build framework-light response payloads for Ninja Extra controllers."""
 
     def __init__(
         self,
