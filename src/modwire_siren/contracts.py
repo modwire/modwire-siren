@@ -70,6 +70,19 @@ class SirenApi(Contract):
         )
         if unknown_resources:
             raise ValueError(f"Siren operations reference unknown resources: {unknown_resources}")
+        resources = {resource.name: resource for resource in self.resources}
+        unowned = sorted(
+            operation.name
+            for operation in self.operations
+            if operation.name
+            not in (
+                resources[operation.resource].collection_operations
+                if operation.scope == "collection"
+                else resources[operation.resource].entity_operations
+            )
+        )
+        if unowned:
+            raise ValueError(f"Siren operations are not owned by their declared resource scope: {unowned}")
         return self
 
 
@@ -82,3 +95,11 @@ class SirenContext(Contract):
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
     query: tuple[tuple[str, JsonValue], ...] = ()
     capabilities: frozenset[str] = frozenset()
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> "SirenContext":
+        if self.scope == "root" and self.resource is not None:
+            raise ValueError("Siren root context cannot declare a resource")
+        if self.scope != "root" and self.resource is None:
+            raise ValueError(f"Siren {self.scope} context requires a resource")
+        return self
