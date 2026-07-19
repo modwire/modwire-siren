@@ -55,7 +55,12 @@ class SirenEngine:
             "links": [
                 {
                     "rel": ["self"],
-                    "href": self._href(resource.entity.path if resource.entity else resource.collection.path, context, resource, value),
+                    "href": self._href(
+                        resource.entity.path if resource.entity else resource.collection.path,
+                        context,
+                        resource,
+                        value,
+                    ),
                 }
             ],
         }
@@ -71,7 +76,11 @@ class SirenEngine:
         value: Mapping[str, Any],
     ) -> list[dict[str, Any]]:
         names = resource.collection_operations if scope == "collection" else resource.entity_operations
-        return [self._action(self._operations[name], context, resource, value) for name in names if name in context.capabilities]
+        return [
+            self._action(self._operations[name], context, resource, value)
+            for name in names
+            if name in context.capabilities
+        ]
 
     def _action(
         self,

@@ -13,7 +13,10 @@ class SirenApiService:
     def build(self, schema: dict[str, Any]) -> SirenApi:
         return self._build(self._merge(tuple(source.load(schema) for source in self._sources)))
 
-    def _merge(self, apis: tuple[SirenApi, ...]) -> tuple[SirenRoot, tuple[SirenResource, ...], tuple[SirenOperation, ...]]:
+    def _merge(
+        self,
+        apis: tuple[SirenApi, ...],
+    ) -> tuple[SirenRoot, tuple[SirenResource, ...], tuple[SirenOperation, ...]]:
         root = SirenRoot()
         resources: dict[str, SirenResource] = {}
         operations: dict[str, SirenOperation] = {}

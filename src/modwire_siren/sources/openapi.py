@@ -89,14 +89,18 @@ class OpenApiSource(SirenSource):
             and self._parameters(path) == self._parameters(resource.entity_path)
         ):
             return "entity"
-        if (
-            (path == resource.collection_path or path.startswith(f"{resource.collection_path}/"))
-            and self._parameters(path) == self._parameters(resource.collection_path)
-        ):
+        if (path == resource.collection_path or path.startswith(f"{resource.collection_path}/")) and self._parameters(
+            path
+        ) == self._parameters(resource.collection_path):
             return "collection"
         return None
 
-    def _fields(self, path_item: dict[str, Any], operation: dict[str, Any], schemas: dict[str, Any]) -> tuple["_Field", ...]:
+    def _fields(
+        self,
+        path_item: dict[str, Any],
+        operation: dict[str, Any],
+        schemas: dict[str, Any],
+    ) -> tuple["_Field", ...]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
         fields = tuple(
             _Field(
