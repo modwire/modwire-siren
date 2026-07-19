@@ -139,7 +139,9 @@ class SirenBuilderService:
                 raise ValueError(f"Siren operation already exists: {operation.name}")
             resource = resources.get(operation.resource)
             if resource is None:
-                raise ValueError(f"Siren operation {operation.name!r} references unknown resource {operation.resource!r}")
+                raise ValueError(
+                    f"Siren operation {operation.name!r} references unknown resource {operation.resource!r}"
+                )
             if operation.scope not in {"collection", "entity"}:
                 raise ValueError(f"Siren operation {operation.name!r} has invalid scope {operation.scope!r}")
             self._validate_operation_path(operation, resource)
@@ -153,7 +155,9 @@ class SirenBuilderService:
                 raise ValueError(f"Siren resource {resource.name!r} has no entity path")
             valid = operation.path == resource.entity_path or operation.path.startswith(f"{resource.entity_path}/")
         else:
-            valid = operation.path == resource.collection_path or operation.path.startswith(f"{resource.collection_path}/")
+            valid = operation.path == resource.collection_path or operation.path.startswith(
+                f"{resource.collection_path}/"
+            )
             if resource.entity_path and (
                 operation.path == resource.entity_path or operation.path.startswith(f"{resource.entity_path}/")
             ):
