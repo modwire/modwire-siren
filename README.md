@@ -1,16 +1,87 @@
 # modwire-siren
 
-`modwire-siren` compiles a conventional OpenAPI document into a validated Siren API graph and
-projects runtime contexts into Siren documents.
+`modwire-siren` compiles a complete OpenAPI 3.1 document into a reusable Siren engine. At request
+time, the engine turns application data and permissions into a Siren response with concrete links
+and authorized actions.
 
-Version 2.0.0 is a complete breaking rewrite. Read [MIGRATION.md](MIGRATION.md) before upgrading
-from version 1.
+Requires Python 3.12 or later.
+
+## Install
+
+```bash
+python -m pip install modwire-siren
+```
+
+For local development:
+
+```bash
+uv sync --all-groups --frozen
+make verify
+```
+
+Version 2 is a breaking rewrite. See [MIGRATION.md](MIGRATION.md) when upgrading from version 1.
+
+<!-- generated:public-api:start -->
+## Usage
+
+This section is generated from the docstrings of the supported root imports. Run `make docs` after changing a public API example or its guidance.
+
+### `siren`
+
+Compile a complete OpenAPI 3.1 document into a reusable Siren engine.
+
+Call this once during application startup, then call `engine.project(context)` for each
+negotiated Siren response. OpenAPI defines links, methods, and candidate fields; the context's
+capabilities decide which candidate actions are present in that response.
+
+#### Example
 
 ```python
 from modwire_siren import SirenContext, siren
 
-engine = siren(openapi)
+openapi = {
+    "openapi": "3.1.1",
+    "info": {"title": "Records API", "version": "1.0"},
+    "paths": {
+        "/records": {
+            "get": {
+                "operationId": "list_records",
+                "responses": {"200": {"description": "OK"}},
+            }
+        },
+        "/records/{record_id}": {
+            "parameters": [
+                {
+                    "name": "record_id",
+                    "in": "path",
+                    "required": True,
+                    "schema": {"type": "string"},
+                }
+            ],
+            "get": {
+                "operationId": "get_record",
+                "responses": {"200": {"description": "OK"}},
+            },
+            "patch": {
+                "operationId": "rename_record",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["title"],
+                                "properties": {"title": {"type": "string"}},
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "OK"}},
+            },
+        },
+    },
+}
 
+engine = siren(openapi)
 document = engine.project(
     SirenContext(
         base_url="https://api.example.com",
@@ -19,15 +90,22 @@ document = engine.project(
         capabilities=frozenset({"get_record", "rename_record"}),
     )
 )
+
+assert document["actions"] == [
+    {"name": "get_record", "href": "https://api.example.com/records/42", "method": "GET"},
+    {
+        "name": "rename_record",
+        "href": "https://api.example.com/records/42",
+        "method": "PATCH",
+        "fields": [{"name": "title", "type": "string", "required": True}],
+    },
+]
 ```
 
-The generated document contains concrete links and only the actions named in `capabilities`.
+#### OpenAPI requirements
 
-## OpenAPI contract
-
-Routes use a framework-neutral, segment-based grammar. A resource collection ends in a plural
-static segment; its entity route adds one path parameter. Prefixes and nested collections are
-allowed, and parameter names are not prescribed:
+The final plural static segment of a route is a collection; adding one path parameter forms
+its entity route. Prefixes and nested collections are supported, including:
 
 ```text
 /api/v1/records
@@ -35,70 +113,106 @@ allowed, and parameter names are not prescribed:
 /accounts/{account}/records/{record}
 ```
 
-The singular resource name is derived from that final collection segment. A collection route may
-stand alone. Operations on its exact path or static subpaths belong to its collection; operations
-on an entity path or static subpaths belong to its entity. Nested resources take ownership over a
-parent subpath, so `/accounts/{account}/records` belongs to `record`, not to `account`. Parameter
-segments must be unchanged from the owning route: adding, removing, renaming, or reordering one
-is unsupported. The longest matching route owns an operation; any tie is rejected.
+Every non-root HTTP operation needs a unique `operationId`. Operations on collection or
+entity paths, including their static subpaths, belong to that resource. The longest matching
+route wins, so a nested resource owns `/accounts/{account}/records` rather than `account`.
+Parameters must be unchanged from the owning route: adding, removing, renaming, or reordering
+them is unsupported. Ambiguous or unsupported routes, duplicate resource names, missing
+operation IDs, and invalid OpenAPI fail compilation explicitly.
 
-`/` is the Siren entry point, not a resource route, so OpenAPI operations declared there are
-unsupported. Every OpenAPI operation must have exactly one owner and an `operationId`; unsupported
-or ambiguous routes and duplicate derived resource names fail compilation explicitly.
+Local `#/components/parameters`, `#/components/requestBodies`, and `#/components/schemas`
+references are resolved for actions. External and path-item references
+are unsupported. Action fields come from query parameters and JSON request-body properties;
+path parameters remain routing values. Header and cookie parameters are unsupported. If a
+request body declares content, it must include `application/json`.
 
-```yaml
-paths:
-  /records:
-    get:
-      operationId: list_records
-  /records/{record_id}:
-    get:
-      operationId: get_record
-    patch:
-      operationId: rename_record
-```
+#### Framework integration is one startup call
 
-`OpenApiSource` reads this structure into `SirenApi`. `SirenApiService` combines one or more
-compatible sources. `siren(openapi)` accepts a complete, valid OpenAPI 3.1 document and validates
-it before projection. `SirenEngine` projects root, collection, and entity contexts.
-
-The compiler follows local `#/components/parameters`, `#/components/requestBodies`, and
-`#/components/schemas` references used by projected actions. External references are intentionally
-outside the supplier contract.
-
-Action fields use only `path` and `query` parameters. Parameter identity is `(name, in)`;
-operation-level declarations replace matching path-level declarations, while `path` parameters
-remain routing values rather than action fields. Header and cookie parameters are unsupported.
-Request bodies must offer `application/json` when they declare media content; it is selected even
-when other media types appear. This keeps the observable Siren field contract deterministic.
-
-`SirenContext.query` supplies ordered query pairs for projected self and action links. Repeated
-keys are preserved, keys and scalar values are percent-encoded, and empty or `None` values render
-as `key=`. Query values must be scalar; mappings and sequences are rejected. Root resource links
-do not inherit the root self-link query state.
-
-## Advanced use
-
-The root package exports the normal application API:
+Do not recreate your framework's routes, actions, or OpenAPI document in Siren-specific code.
+Give the framework-generated document directly to `siren()` once, after routes are registered:
 
 ```python
-from modwire_siren import SirenContext, siren
+# FastAPI
+engine = siren(app.openapi())
+
+# Django Ninja / Django Ninja Extra
+engine = siren(api.get_openapi_schema())
 ```
 
-The application compiles its OpenAPI document once at startup. For a mounted Siren entry point,
-pass its path explicitly:
+That is the integration point: `siren()` derives the graph from the same contract your
+framework already exposes. At response time, only supply the request-specific data and allowed
+operation IDs in `SirenContext`, then return `engine.project(context)` as
+`application/vnd.siren+json`. No builder, resource registration, route duplication, or
+framework adapter is required.
+
+#### Mounted entry point
+
+Set `root_path` when the Siren entry point is mounted away from `/`:
 
 ```python
-engine = siren(openapi, root_path="/siren/")
+engine = siren(app.openapi(), root_path="/siren/")
 ```
 
-Framework adapters are intentionally outside the package. A FastAPI or Django Ninja Extra
-application obtains its generated OpenAPI document, creates an engine with `siren(openapi)`,
-builds a `SirenContext` from the request and result, then returns `engine.project(context)` when
-Siren is negotiated. The conformance suite compiles schemas generated directly from FastAPI routes
-and Django Ninja Extra controller classes.
+Framework adapters are intentionally outside this package because the integration is already
+the small startup call shown above.
 
-<!-- generated:public-api:start -->
+### `SirenContext`
+
+Supply runtime state used to project a Siren document.
+
+Use the default `"entity"` scope for one resource, `"collection"` for a list, and `"root"`
+for an API entry point. A resource is required outside root scope and is the singular name
+derived from the collection route: `"record"` for `/records`.
+
+#### Collection example
+
+```python
+context = SirenContext(
+    base_url="https://api.example.com",
+    scope="collection",
+    resource="record",
+    items=(
+        {"id": "42", "title": "Architecture"},
+        {"id": "43", "title": "Systems"},
+    ),
+    query=(("page", 2),),
+    capabilities=frozenset({"list_records"}),
+)
+document = engine.project(context)
+
+assert document["links"] == [
+    {"rel": ["self"], "href": "https://api.example.com/records?page=2"}
+]
+```
+
+| Field | Purpose |
+| --- | --- |
+| `base_url` | Public origin joined with OpenAPI paths, for example `https://api.example.com`. |
+| `scope` | `"root"`, `"collection"`, or `"entity"`. Root contexts have no resource. |
+| `resource` | Derived singular resource name. Required outside the root. |
+| `value` | Entity properties or collection-level properties. Also supplies entity path parameters. |
+| `items` | Tuple of entity mappings for a collection. |
+| `path_values` | Path parameters missing from `value`, such as a parent resource ID. |
+| `query` | Ordered `(name, value)` pairs added to self and action links. |
+| `capabilities` | Permitted OpenAPI `operationId` values to advertise as Siren actions. |
+
+#### Nested routes and queries
+
+For `/accounts/{account}/records/{record}`, supply the parent parameter separately:
+
+```python
+context = SirenContext(
+    base_url="https://api.example.com",
+    resource="record",
+    path_values={"account": "acme"},
+    value={"record": "42", "title": "Architecture"},
+)
+```
+
+Path values are percent-encoded. Query pairs retain their order and repeated keys. Query
+values must be scalar; booleans become lowercase `true` or `false`, and `None` becomes
+an empty value. The root self link receives its query pairs, while root resource links do not.
+
 ## Public API
 
 The supported root imports below are generated from `modwire_siren.__all__`.
@@ -106,5 +220,5 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
-| `siren` | Compile an OpenAPI document into a reusable Siren engine. | — |
+| `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->
