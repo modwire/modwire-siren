@@ -48,7 +48,12 @@ paths:
 ```
 
 `OpenApiSource` reads this structure into `SirenApi`. `SirenApiService` combines one or more
-compatible sources. `SirenEngine` projects root, collection, and entity contexts.
+compatible sources. `siren(openapi)` accepts a complete, valid OpenAPI 3.1 document and validates
+it before projection. `SirenEngine` projects root, collection, and entity contexts.
+
+The compiler follows local `#/components/parameters`, `#/components/requestBodies`, and
+`#/components/schemas` references used by projected actions. External references are intentionally
+outside the supplier contract.
 
 ## Advanced use
 
