@@ -1,0 +1,36 @@
+name: Publish PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing Git release tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: modwire/modwire-architecture/.github/workflows/python-release-build.yml@workflows-v1
+    with:
+      release-tag: ${{ inputs.release_tag }}
+      python-version: "3.12"
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/modwire-siren/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
