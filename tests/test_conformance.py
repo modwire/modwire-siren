@@ -48,6 +48,7 @@ def test_public_facade_compiles_a_fastapi_controller_openapi_document():
             "name": "rename_widget",
             "href": "https://api.example.com/api/v1/widgets/42",
             "method": "PATCH",
+            "type": "application/json",
             "fields": [{"name": "title", "type": "string", "required": True}],
         }
     ]
@@ -98,6 +99,7 @@ def test_public_facade_compiles_a_django_ninja_extra_controller_openapi_document
             "name": "rename_widget",
             "href": "https://api.example.com/api/v1/widgets/42",
             "method": "PATCH",
+            "type": "application/json",
             "fields": [{"name": "title", "type": "string", "required": True}],
         }
     ]

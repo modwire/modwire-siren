@@ -24,6 +24,7 @@ class SirenOperation(Contract):
     scope: Literal["collection", "entity"]
     method: Literal["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
     route: SirenRoute
+    media_type: str | None = None
     fields: tuple[SirenField, ...] = ()
 
 

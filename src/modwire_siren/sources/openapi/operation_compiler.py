@@ -41,11 +41,12 @@ class OperationCompiler:
                 if ownership is None:
                     continue
                 resource, scope = ownership
-                self.builder.add_operation(resource.reference, scope, name, method.upper(), path)
-                for field in self.fields(path_item, operation):
+                fields, media_type = self.fields(path_item, operation)
+                self.builder.add_operation(resource.reference, scope, name, method.upper(), path, media_type)
+                for field in fields:
                     self.builder.add_field(name, field.name, field.definition, field.required)
 
-    def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[Field, ...]:
+    def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[tuple[Field, ...], str | None]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
         parameter_index: dict[tuple[str, str], dict[str, Any]] = {}
         for parameter in parameters:
@@ -80,8 +81,12 @@ class OperationCompiler:
         definition = self.components.schema(schema)
         properties = definition.get("properties", {}) if isinstance(definition, dict) else {}
         required = set(definition.get("required", ())) if isinstance(definition, dict) else set()
-        return fields + tuple(
-            Field(name=name, definition=self.components.schema(value), required=name in required)
-            for name, value in properties.items()
-            if isinstance(name, str) and isinstance(value, dict)
+        return (
+            fields
+            + tuple(
+                Field(name=name, definition=self.components.schema(value), required=name in required)
+                for name, value in properties.items()
+                if isinstance(name, str) and isinstance(value, dict)
+            ),
+            "application/json" if content else None,
         )

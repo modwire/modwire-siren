@@ -79,6 +79,7 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
             "name": "rename_record",
             "href": "https://api.example.com/records/42",
             "method": "PATCH",
+            "type": "application/json",
             "fields": [{"name": "title", "type": "string", "required": True}],
         },
     ]
@@ -110,7 +111,8 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     references are resolved for actions. External and path-item references
     are unsupported. Action fields come from query parameters and JSON request-body properties;
     path parameters remain routing values. Header and cookie parameters are unsupported. If a
-    request body declares content, it must include `application/json`.
+    request body declares content, it must include `application/json`; that media type is projected
+    as the Siren action's `type`.
 
     #### Framework integration is one startup call
 
