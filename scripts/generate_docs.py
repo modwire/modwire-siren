@@ -33,14 +33,27 @@ class DocumentationGenerator:
     @classmethod
     def render(cls, package: PackageDocumentation) -> str:
         module = importlib.import_module(package.module)
+        definitions = tuple((name, getattr(module, name)) for name in module.__all__)
         rows = []
-        for name in module.__all__:
-            purpose = cls._purpose(name, getattr(module, name))
-            operations = cls._operations(getattr(module, name))
+        guides = []
+        for name, value in definitions:
+            purpose = cls._purpose(name, value)
+            operations = cls._operations(value)
             rows.append(f"| `{name}` | {purpose} | {operations} |")
+        for name, value in reversed(definitions):
+            documentation = inspect.getdoc(value)
+            if not documentation:
+                raise ValueError(f"Public symbol {name} must have a docstring")
+            guides.extend((f"### `{name}`", "", documentation, ""))
         return "\n".join(
             (
                 START,
+                "## Usage",
+                "",
+                "This section is generated from the docstrings of the supported root imports. "
+                "Run `make docs` after changing a public API example or its guidance.",
+                "",
+                *guides,
                 "## Public API",
                 "",
                 f"The supported root imports below are generated from `{package.module}.__all__`.",

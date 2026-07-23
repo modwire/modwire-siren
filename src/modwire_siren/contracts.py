@@ -87,7 +87,61 @@ class SirenApi(Contract):
 
 
 class SirenContext(Contract):
-    """Supply runtime state used to project a Siren document."""
+    """Supply runtime state used to project a Siren document.
+
+    Use the default `"entity"` scope for one resource, `"collection"` for a list, and `"root"`
+    for an API entry point. A resource is required outside root scope and is the singular name
+    derived from the collection route: `"record"` for `/records`.
+
+    #### Collection example
+
+    ```python
+    context = SirenContext(
+        base_url="https://api.example.com",
+        scope="collection",
+        resource="record",
+        items=(
+            {"id": "42", "title": "Architecture"},
+            {"id": "43", "title": "Systems"},
+        ),
+        query=(("page", 2),),
+        capabilities=frozenset({"list_records"}),
+    )
+    document = engine.project(context)
+
+    assert document["links"] == [
+        {"rel": ["self"], "href": "https://api.example.com/records?page=2"}
+    ]
+    ```
+
+    | Field | Purpose |
+    | --- | --- |
+    | `base_url` | Public origin joined with OpenAPI paths, for example `https://api.example.com`. |
+    | `scope` | `"root"`, `"collection"`, or `"entity"`. Root contexts have no resource. |
+    | `resource` | Derived singular resource name. Required outside the root. |
+    | `value` | Entity properties or collection-level properties. Also supplies entity path parameters. |
+    | `items` | Tuple of entity mappings for a collection. |
+    | `path_values` | Path parameters missing from `value`, such as a parent resource ID. |
+    | `query` | Ordered `(name, value)` pairs added to self and action links. |
+    | `capabilities` | Permitted OpenAPI `operationId` values to advertise as Siren actions. |
+
+    #### Nested routes and queries
+
+    For `/accounts/{account}/records/{record}`, supply the parent parameter separately:
+
+    ```python
+    context = SirenContext(
+        base_url="https://api.example.com",
+        resource="record",
+        path_values={"account": "acme"},
+        value={"record": "42", "title": "Architecture"},
+    )
+    ```
+
+    Path values are percent-encoded. Query pairs retain their order and repeated keys. Query
+    values must be scalar; booleans become lowercase `true` or `false`, and `None` becomes
+    an empty value. The root self link receives its query pairs, while root resource links do not.
+    """
 
     base_url: str
     scope: Literal["root", "collection", "entity"] = "entity"
