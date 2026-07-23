@@ -11,6 +11,7 @@ Scope = Literal["collection", "entity"]
 
 @dataclass
 class _ResourceDraft:
+    reference: str
     name: str
     resource_class: str
     collection_path: str
@@ -52,13 +53,16 @@ class SirenBuilderService:
 
     def add_resource(
         self,
+        reference: str,
         name: str,
         resource_class: str,
         collection_path: str,
         entity_path: str | None = None,
         identifier: str = "id",
     ) -> "SirenBuilderService":
-        self._resources.append(_ResourceDraft(name, resource_class, collection_path, entity_path, identifier))
+        self._resources.append(
+            _ResourceDraft(reference, name, resource_class, collection_path, entity_path, identifier)
+        )
         return self
 
     def add_operation(
@@ -90,6 +94,7 @@ class SirenBuilderService:
             root=SirenRoot(route=SirenRoute(path=self._root_path), title=self._root_title, version=self._root_version),
             resources=tuple(
                 SirenResource(
+                    reference=resource.reference,
                     name=resource.name,
                     resource_class=resource.resource_class,
                     identifier=resource.identifier,
@@ -98,12 +103,12 @@ class SirenBuilderService:
                     collection_operations=tuple(
                         operation.name
                         for operation in operations.values()
-                        if operation.resource == resource.name and operation.scope == "collection"
+                        if operation.resource == resource.reference and operation.scope == "collection"
                     ),
                     entity_operations=tuple(
                         operation.name
                         for operation in operations.values()
-                        if operation.resource == resource.name and operation.scope == "entity"
+                        if operation.resource == resource.reference and operation.scope == "entity"
                     ),
                 )
                 for resource in resources.values()
@@ -127,9 +132,9 @@ class SirenBuilderService:
     def _resource_index(self) -> dict[str, _ResourceDraft]:
         index: dict[str, _ResourceDraft] = {}
         for resource in self._resources:
-            if resource.name in index:
-                raise ValueError(f"Siren resource already exists: {resource.name}")
-            index[resource.name] = resource
+            if resource.reference in index:
+                raise ValueError(f"Siren resource already exists: {resource.reference}")
+            index[resource.reference] = resource
         return index
 
     def _operation_index(self, resources: Mapping[str, _ResourceDraft]) -> dict[str, _OperationDraft]:

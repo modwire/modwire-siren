@@ -28,11 +28,11 @@ class SirenApiService:
                     raise ValueError("Siren sources define conflicting roots")
                 root = api.root
             for resource in api.resources:
-                existing = resources.get(resource.name)
+                existing = resources.get(resource.reference)
                 if existing is None:
-                    resources[resource.name] = resource
+                    resources[resource.reference] = resource
                 else:
-                    resources[resource.name] = self._merge_resource(existing, resource)
+                    resources[resource.reference] = self._merge_resource(existing, resource)
             for operation in api.operations:
                 existing = operations.get(operation.name)
                 if existing is None:
@@ -44,12 +44,14 @@ class SirenApiService:
     @staticmethod
     def _merge_resource(existing: SirenResource, incoming: SirenResource) -> SirenResource:
         if (
-            existing.resource_class != incoming.resource_class
+            existing.name != incoming.name
+            or existing.reference != incoming.reference
+            or existing.resource_class != incoming.resource_class
             or existing.identifier != incoming.identifier
             or existing.collection != incoming.collection
             or existing.entity != incoming.entity
         ):
-            raise ValueError(f"Siren sources define conflicting resource: {existing.name}")
+            raise ValueError(f"Siren sources define conflicting resource: {existing.reference}")
         return existing.model_copy(
             update={
                 "collection_operations": tuple(
@@ -64,6 +66,7 @@ class SirenApiService:
         builder = SirenBuilderService().set_root(root.route.path, root.title, root.version)
         for resource in resources:
             builder.add_resource(
+                resource.reference,
                 resource.name,
                 resource.resource_class,
                 resource.collection.path,

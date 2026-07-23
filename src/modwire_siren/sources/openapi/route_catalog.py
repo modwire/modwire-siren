@@ -13,7 +13,7 @@ class RouteCatalog:
 
     def compile_resources(self) -> tuple[Resource, ...]:
         candidates: dict[str, Resource] = {}
-        names: dict[str, str] = {}
+        names: dict[tuple[str, tuple[str, ...]], str] = {}
         for path in self.paths:
             segments = self.segments(path)
             collection_path: str | None = None
@@ -26,17 +26,26 @@ class RouteCatalog:
             if collection_path is None:
                 continue
             name = self.singular(segments[-1] if entity_path is None else segments[-2])
-            existing_path = names.get(name)
+            selection = name, self.parameters(collection_path)
+            existing_path = names.get(selection)
             if existing_path is not None and existing_path != collection_path:
                 raise ValueError(
                     f"OpenAPI routes derive duplicate resource {name!r}: {existing_path!r} and {collection_path!r}"
                 )
-            names[name] = collection_path
+            names[selection] = collection_path
             existing = candidates.get(collection_path)
             if existing is None:
-                candidates[collection_path] = Resource(name, name.replace("_", "-"), collection_path, entity_path, "id")
+                candidates[collection_path] = Resource(
+                    collection_path,
+                    name,
+                    name.replace("_", "-"),
+                    collection_path,
+                    entity_path,
+                    "id",
+                )
             elif entity_path is not None:
                 candidates[collection_path] = Resource(
+                    existing.reference,
                     existing.name,
                     existing.resource_class,
                     existing.collection_path,
@@ -68,9 +77,10 @@ class RouteCatalog:
     def segments(self, path: str) -> tuple[str, ...]:
         if path == "/":
             return ()
-        if not isinstance(path, str) or not path.startswith("/") or path.endswith("/"):
+        if not isinstance(path, str) or not path.startswith("/"):
             raise ValueError(f"OpenAPI route is unsupported: {path!r}")
-        segments = tuple(path[1:].split("/"))
+        normalized = path[:-1] if path.endswith("/") else path
+        segments = tuple(normalized[1:].split("/"))
         if any(
             not segment or (("{" in segment or "}" in segment) and not self.is_parameter(segment))
             for segment in segments

@@ -28,6 +28,7 @@ class SirenOperation(Contract):
 
 
 class SirenResource(Contract):
+    reference: str
     name: str
     resource_class: str
     identifier: str = "id"
@@ -50,10 +51,10 @@ class SirenApi(Contract):
 
     @model_validator(mode="after")
     def validate_graph(self) -> "SirenApi":
-        resource_names = tuple(resource.name for resource in self.resources)
+        resource_references = tuple(resource.reference for resource in self.resources)
         operation_names = tuple(operation.name for operation in self.operations)
-        if len(resource_names) != len(set(resource_names)):
-            raise ValueError("Siren resource names must be unique")
+        if len(resource_references) != len(set(resource_references)):
+            raise ValueError("Siren resource references must be unique")
         if len(operation_names) != len(set(operation_names)):
             raise ValueError("Siren operation names must be unique")
         unknown = {
@@ -64,13 +65,13 @@ class SirenApi(Contract):
         }
         if unknown:
             raise ValueError(f"Siren resources reference unknown operations: {sorted(unknown)}")
-        resource_names_set = set(resource_names)
+        resource_references_set = set(resource_references)
         unknown_resources = sorted(
-            {operation.resource for operation in self.operations if operation.resource not in resource_names_set}
+            {operation.resource for operation in self.operations if operation.resource not in resource_references_set}
         )
         if unknown_resources:
             raise ValueError(f"Siren operations reference unknown resources: {unknown_resources}")
-        resources = {resource.name: resource for resource in self.resources}
+        resources = {resource.reference: resource for resource in self.resources}
         unowned = sorted(
             operation.name
             for operation in self.operations
@@ -91,7 +92,8 @@ class SirenContext(Contract):
 
     Use the default `"entity"` scope for one resource, `"collection"` for a list, and `"root"`
     for an API entry point. A resource is required outside root scope and is the singular name
-    derived from the collection route: `"record"` for `/records`.
+    derived from the collection route: `"record"` for `/records`. If the same resource appears
+    in multiple nested routes, `path_values` selects the route with matching parent parameters.
 
     #### Collection example
 
