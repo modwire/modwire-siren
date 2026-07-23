@@ -2,20 +2,20 @@ from copy import deepcopy
 from typing import Any
 
 
-class _ComponentResolver:
+class ComponentResolver:
     def __init__(self, components: Any) -> None:
-        self._components = components if isinstance(components, dict) else {}
+        self.components = components if isinstance(components, dict) else {}
 
     def parameter(self, definition: Any) -> dict[str, Any]:
-        return self._resolve(definition, "parameters")
+        return self.resolve(definition, "parameters")
 
     def request_body(self, definition: Any) -> dict[str, Any]:
-        return self._resolve(definition, "requestBodies")
+        return self.resolve(definition, "requestBodies")
 
     def schema(self, definition: Any) -> dict[str, Any]:
-        return self._resolve(definition, "schemas")
+        return self.resolve(definition, "schemas")
 
-    def _resolve(self, definition: Any, kind: str, trail: tuple[str, ...] = ()) -> dict[str, Any]:
+    def resolve(self, definition: Any, kind: str, trail: tuple[str, ...] = ()) -> dict[str, Any]:
         if not isinstance(definition, dict):
             return {}
         result = deepcopy(definition)
@@ -26,15 +26,14 @@ class _ComponentResolver:
             raise ValueError("OpenAPI component reference must be a string")
         if reference in trail:
             raise ValueError(f"OpenAPI component reference cycle: {' -> '.join((*trail, reference))}")
-        component_kind, name = self._address(reference, kind)
-        collection = self._components.get(component_kind)
+        component_kind, name = self.address(reference, kind)
+        collection = self.components.get(component_kind)
         target = collection.get(name) if isinstance(collection, dict) else None
         if not isinstance(target, dict):
             raise ValueError(f"OpenAPI component reference is unknown: {reference}")
-        return self._resolve(target, kind, (*trail, reference)) | result
+        return self.resolve(target, kind, (*trail, reference)) | result
 
-    @staticmethod
-    def _address(reference: str, expected_kind: str) -> tuple[str, str]:
+    def address(self, reference: str, expected_kind: str) -> tuple[str, str]:
         prefix = "#/components/"
         if not reference.startswith(prefix):
             raise ValueError(f"OpenAPI component reference is unsupported: {reference}")
@@ -47,10 +46,9 @@ class _ComponentResolver:
                 f"OpenAPI component reference {reference!r} must target components/{expected_kind}, "
                 f"not components/{kind}"
             )
-        return kind, _ComponentResolver._decode(encoded_name, reference)
+        return kind, self.decode(encoded_name, reference)
 
-    @staticmethod
-    def _decode(token: str, reference: str) -> str:
+    def decode(self, token: str, reference: str) -> str:
         decoded = ""
         index = 0
         while index < len(token):
