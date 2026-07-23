@@ -3,8 +3,8 @@
 `modwire-siren` compiles a conventional OpenAPI document into a validated Siren API graph and
 projects runtime contexts into Siren documents.
 
-Version 2 is a complete breaking rewrite. Read [MIGRATION.md](MIGRATION.md) before upgrading from
-version 1.
+Version 2.0.0 is a complete breaking rewrite. Read [MIGRATION.md](MIGRATION.md) before upgrading
+from version 1.
 
 ```python
 from modwire_siren import SirenContext

@@ -11,3 +11,10 @@ Generated README regions project root `__all__` and public docstrings. Edit thos
 uv sync --all-groups --frozen
 make verify
 ```
+
+## Releases
+
+Hatch derives the distribution version from an exact `vX.Y.Z` Git tag. After the release PR has
+merged, update local `main`, create the annotated release tag on that commit, push the tag, and
+verify that `uv build` produces matching wheel and source-distribution versions. Never tag a pull
+request head.
