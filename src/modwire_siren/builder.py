@@ -26,6 +26,7 @@ class _OperationDraft:
     name: str
     method: str
     path: str
+    media_type: str | None
 
 
 @dataclass
@@ -72,8 +73,9 @@ class SirenBuilderService:
         name: str,
         method: str,
         path: str,
+        media_type: str | None = None,
     ) -> "SirenBuilderService":
-        self._operations.append(_OperationDraft(resource, scope, name, method, path))
+        self._operations.append(_OperationDraft(resource, scope, name, method, path, media_type))
         return self
 
     def add_field(
@@ -120,6 +122,7 @@ class SirenBuilderService:
                     scope=operation.scope,
                     method=operation.method,
                     route=SirenRoute(path=operation.path),
+                    media_type=operation.media_type,
                     fields=tuple(
                         SirenField(name=item.name, definition=item.definition, required=item.required)
                         for item in fields.get(operation.name, ())

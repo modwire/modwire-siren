@@ -99,6 +99,8 @@ class SirenEngine:
             "href": self._href(operation.route.path, context, resource, value),
             "method": operation.method,
         }
+        if operation.media_type is not None:
+            action["type"] = operation.media_type
         if operation.fields:
             action["fields"] = [
                 {

@@ -80,6 +80,7 @@ class SirenApiService:
                 operation.name,
                 operation.method,
                 operation.route.path,
+                operation.media_type,
             )
             for field in operation.fields:
                 builder.add_field(operation.name, field.name, field.definition, field.required)

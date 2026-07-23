@@ -16,6 +16,12 @@ def test_public_facade_projects_an_entity_with_concrete_links_and_allowed_action
 
     assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/records/42"}]
     assert [action["name"] for action in document["actions"]] == ["get_record", "rename_record"]
+    assert document["actions"][0] == {
+        "name": "get_record",
+        "href": "https://api.example.com/records/42",
+        "method": "GET",
+    }
+    assert document["actions"][1]["type"] == "application/json"
     assert document["actions"][1]["fields"][0] == {"name": "title", "type": "string", "required": True}
 
 
