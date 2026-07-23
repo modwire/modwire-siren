@@ -40,23 +40,27 @@ Remove all use of these version 1 APIs:
 
 ## OpenAPI requirements
 
-Version 2 derives a resource from canonical routes:
+Version 2 derives resources from conventional OpenAPI route segments. A collection ends in a
+plural static segment; its entity route adds one path parameter. Prefixes, nested collections,
+and arbitrary parameter names are supported:
 
 ```text
-/records
-/records/{record_id}
+/api/v1/records
+/accounts/{account}/records
+/accounts/{account}/records/{record}
 ```
 
-The collection segment is plural. The entity parameter is the singular resource name followed by
-`_id`. Operations require unique `operationId` values. Child entity actions may extend the entity
-path without introducing another path parameter.
+The resource name is derived from the final collection segment. Operations require unique
+`operationId` values. Exact routes and static subpaths belong to their matching collection or
+entity; a nested resource owns the longest matching route. Unsupported or ambiguous routes fail
+at startup rather than silently omitting an operation.
 
 ```yaml
 paths:
   /records:
     get:
       operationId: list_records
-  /records/{record_id}:
+  /records/{record}:
     get:
       operationId: get_record
     patch:

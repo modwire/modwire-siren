@@ -16,5 +16,10 @@ make verify
 
 Hatch derives the distribution version from an exact `vX.Y.Z` Git tag. After the release PR has
 merged, update local `main`, create the annotated release tag on that commit, push the tag, and
-verify that `uv build` produces matching wheel and source-distribution versions. Never tag a pull
-request head.
+verify that `uv build` and `uv run twine check dist/*` produce valid matching wheel and
+source-distribution versions. Never tag a pull request head.
+
+After separately approving the artifacts, create the GitHub Release from that exact tag. The
+release workflow builds and attaches release assets; it does not publish to PyPI. PyPI publication
+is a second, explicit approval: manually dispatch **Publish PyPI** with the existing release tag.
+That workflow rebuilds the tagged source and requires the `pypi` environment gate.
