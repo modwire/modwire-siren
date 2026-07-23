@@ -6,7 +6,7 @@ from pydantic import JsonValue
 
 from .contracts import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
 
-Scope = Literal["collection", "entity"]
+Scope = Literal["root", "collection", "entity"]
 
 
 @dataclass
@@ -21,7 +21,7 @@ class _ResourceDraft:
 
 @dataclass
 class _OperationDraft:
-    resource: str
+    resource: str | None
     scope: str
     name: str
     method: str
@@ -45,6 +45,7 @@ class SirenBuilderService:
     _resources: list[_ResourceDraft] = field(default_factory=list)
     _operations: list[_OperationDraft] = field(default_factory=list)
     _fields: list[_FieldDraft] = field(default_factory=list)
+    _root_operations: list[str] = field(default_factory=list)
 
     def set_root(self, path: str = "/", title: str = "", version: str = "") -> "SirenBuilderService":
         self._root_path = path
@@ -68,7 +69,7 @@ class SirenBuilderService:
 
     def add_operation(
         self,
-        resource: str,
+        resource: str | None,
         scope: Scope,
         name: str,
         method: str,
@@ -76,6 +77,10 @@ class SirenBuilderService:
         media_type: str | None = None,
     ) -> "SirenBuilderService":
         self._operations.append(_OperationDraft(resource, scope, name, method, path, media_type))
+        return self
+
+    def add_root_operation(self, name: str) -> "SirenBuilderService":
+        self._root_operations.append(name)
         return self
 
     def add_field(
@@ -93,7 +98,12 @@ class SirenBuilderService:
         operations = self._operation_index(resources)
         fields = self._field_index(operations)
         return SirenApi(
-            root=SirenRoot(route=SirenRoute(path=self._root_path), title=self._root_title, version=self._root_version),
+            root=SirenRoot(
+                route=SirenRoute(path=self._root_path),
+                title=self._root_title,
+                version=self._root_version,
+                operations=tuple(dict.fromkeys(self._root_operations)),
+            ),
             resources=tuple(
                 SirenResource(
                     reference=resource.reference,
@@ -145,14 +155,18 @@ class SirenBuilderService:
         for operation in self._operations:
             if operation.name in index:
                 raise ValueError(f"Siren operation already exists: {operation.name}")
-            resource = resources.get(operation.resource)
-            if resource is None:
-                raise ValueError(
-                    f"Siren operation {operation.name!r} references unknown resource {operation.resource!r}"
-                )
-            if operation.scope not in {"collection", "entity"}:
+            if operation.scope not in {"root", "collection", "entity"}:
                 raise ValueError(f"Siren operation {operation.name!r} has invalid scope {operation.scope!r}")
-            self._validate_operation_path(operation, resource)
+            if operation.scope == "root":
+                if operation.resource is not None:
+                    raise ValueError(f"Siren root operation {operation.name!r} cannot reference a resource")
+            else:
+                resource = resources.get(operation.resource)
+                if resource is None:
+                    raise ValueError(
+                        f"Siren operation {operation.name!r} references unknown resource {operation.resource!r}"
+                    )
+                self._validate_operation_path(operation, resource)
             index[operation.name] = operation
         return index
 

@@ -117,13 +117,13 @@ its entity route. Prefixes and nested collections are supported, including:
 Every non-root HTTP operation needs a unique `operationId`. Operations on collection or
 entity paths, including their static subpaths, belong to that resource. The longest matching
 route wins, so a nested resource owns `/accounts/{account}/records` rather than `account`.
-Standalone endpoints whose final segment is static, such as
-`/scaffoldings/converge` or `/scaffoldings/{scaffolding_id}/preview`, are accepted as
-documented commands when no resource owns them. They are outside the Siren resource graph,
-so they are not projected as actions or accepted as capabilities. Parameters must be unchanged
-from the owning route: adding, removing, renaming, or reordering them is unsupported.
-Ambiguous routes, unowned routes ending in a parameter, duplicate resource names, missing
-operation IDs, and invalid OpenAPI fail compilation explicitly.
+The root document links only static collections with an input-free `GET` operation. Static
+collection operations needing input or using another method, and standalone commands without
+path parameters, are root actions when their operation IDs appear in the root context's
+capabilities. Contextual operations remain on their owning collection or entity. Parameters
+must be unchanged from the owning route: adding, removing, renaming, or reordering them is
+unsupported. Ambiguous routes, unowned routes ending in a parameter, duplicate resource names,
+missing operation IDs, and invalid OpenAPI fail compilation explicitly.
 
 Local `#/components/parameters`, `#/components/requestBodies`, and `#/components/schemas`
 references are resolved for actions. External and path-item references
