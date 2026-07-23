@@ -7,8 +7,7 @@ Version 2.0.0 is a complete breaking rewrite. Read [MIGRATION.md](MIGRATION.md) 
 from version 1.
 
 ```python
-from modwire_siren import SirenContext
-from modwire_siren.extras import siren
+from modwire_siren import SirenContext, siren
 
 engine = siren(openapi)
 
@@ -56,15 +55,14 @@ compatible sources. `SirenEngine` projects root, collection, and entity contexts
 The root package exports the normal application API:
 
 ```python
-from modwire_siren import SirenApiService, SirenContext
+from modwire_siren import SirenContext, siren
 ```
 
-Advanced construction is available by direct import:
+The application compiles its OpenAPI document once at startup. For a mounted Siren entry point,
+pass its path explicitly:
 
 ```python
-from modwire_siren.builder import SirenBuilderService
-from modwire_siren.engine import SirenEngine
-from modwire_siren.sources import OpenApiSource, SirenSource
+engine = siren(openapi, root_path="/siren/")
 ```
 
 Framework adapters are intentionally outside the package. A Django or Ninja application obtains
@@ -78,6 +76,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
-| `SirenApiService` | Build a validated Siren API graph from one or more sources. | `build(schema: dict[str, typing.Any]) -> <class 'modwire_siren.contracts.SirenApi'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
+| `siren` | Compile an OpenAPI document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

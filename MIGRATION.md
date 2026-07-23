@@ -13,8 +13,7 @@ Version 2 treats OpenAPI as the structural contract. It derives resources from c
 compiles one immutable `SirenApi`, and projects a `SirenContext` at runtime.
 
 ```python
-from modwire_siren import SirenContext
-from modwire_siren.extras import siren
+from modwire_siren import SirenContext, siren
 
 engine = siren(openapi)
 document = engine.project(

@@ -12,12 +12,16 @@ _METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 
 
 class OpenApiSource(SirenSource):
+    def __init__(self, root_path: str = "/") -> None:
+        self._root_path = root_path
+
     def load(self, schema: dict[str, Any]) -> SirenApi:
         paths = schema.get("paths")
         if not isinstance(paths, dict):
             raise ValueError("OpenAPI schema requires an object-valued paths field")
         info = schema.get("info", {})
         builder = SirenBuilderService().set_root(
+            path=self._root_path,
             title=str(info.get("title", "")) if isinstance(info, dict) else "",
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
