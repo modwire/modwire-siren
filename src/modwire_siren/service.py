@@ -7,6 +7,8 @@ from .sources.base import SirenSource
 
 
 class SirenApiService:
+    """Build a validated Siren API graph from one or more sources."""
+
     def __init__(self, sources: Sequence[SirenSource]):
         self._sources = tuple(sources)
 

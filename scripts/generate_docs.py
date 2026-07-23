@@ -19,22 +19,12 @@ class AnnotationText(str):
 class PackageDocumentation:
     module: str
     readme: Path
-    example: Path
-    example_link: str
 
 
 PACKAGES = (
     PackageDocumentation(
         "modwire_siren",
         ROOT / "README.md",
-        ROOT / "examples/build_document.py",
-        "examples/build_document.py",
-    ),
-    PackageDocumentation(
-        "modwire_siren.profile",
-        ROOT / "docs/siren-ui-profile/python-api.md",
-        ROOT / "examples/profile.py",
-        "../../examples/profile.py",
     ),
 )
 
@@ -48,7 +38,6 @@ class DocumentationGenerator:
             purpose = cls._purpose(name, getattr(module, name))
             operations = cls._operations(getattr(module, name))
             rows.append(f"| `{name}` | {purpose} | {operations} |")
-        example = package.example.read_text().rstrip()
         return "\n".join(
             (
                 START,
@@ -59,15 +48,6 @@ class DocumentationGenerator:
                 "| Symbol | Purpose | Primary API |",
                 "| --- | --- | --- |",
                 *rows,
-                "",
-                "## Executable example",
-                "",
-                f"Source: [`{package.example.name}`]({package.example_link}). "
-                "This file is executed by the test suite.",
-                "",
-                "```python",
-                example,
-                "```",
                 END,
             )
         )

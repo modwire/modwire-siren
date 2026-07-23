@@ -70,3 +70,14 @@ from modwire_siren.sources import OpenApiSource, SirenSource
 Framework adapters are intentionally outside the package. A Django or Ninja application obtains
 its generated OpenAPI document, creates an engine with `siren(openapi)`, builds a `SirenContext`
 from the request and result, then returns `engine.project(context)` when Siren is negotiated.
+
+<!-- generated:public-api:start -->
+## Public API
+
+The supported root imports below are generated from `modwire_siren.__all__`.
+
+| Symbol | Purpose | Primary API |
+| --- | --- | --- |
+| `SirenApiService` | Build a validated Siren API graph from one or more sources. | `build(schema: dict[str, typing.Any]) -> <class 'modwire_siren.contracts.SirenApi'>` |
+| `SirenContext` | Supply runtime state used to project a Siren document. | — |
+<!-- generated:public-api:end -->

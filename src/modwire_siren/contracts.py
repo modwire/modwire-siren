@@ -87,6 +87,8 @@ class SirenApi(Contract):
 
 
 class SirenContext(Contract):
+    """Supply runtime state used to project a Siren document."""
+
     base_url: str
     scope: Literal["root", "collection", "entity"] = "entity"
     resource: str | None = None
@@ -97,7 +99,7 @@ class SirenContext(Contract):
     capabilities: frozenset[str] = frozenset()
 
     @model_validator(mode="after")
-    def validate_scope(self) -> "SirenContext":
+    def _validate_scope(self) -> "SirenContext":
         if self.scope == "root" and self.resource is not None:
             raise ValueError("Siren root context cannot declare a resource")
         if self.scope != "root" and self.resource is None:
