@@ -72,6 +72,11 @@ remain routing values rather than action fields. Header and cookie parameters ar
 Request bodies must offer `application/json` when they declare media content; it is selected even
 when other media types appear. This keeps the observable Siren field contract deterministic.
 
+`SirenContext.query` supplies ordered query pairs for projected self and action links. Repeated
+keys are preserved, keys and scalar values are percent-encoded, and empty or `None` values render
+as `key=`. Query values must be scalar; mappings and sequences are rejected. Root resource links
+do not inherit the root self-link query state.
+
 ## Advanced use
 
 The root package exports the normal application API:

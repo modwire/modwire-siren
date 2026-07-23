@@ -26,7 +26,10 @@ class SirenEngine:
     def _root(self, context: SirenContext) -> dict[str, Any]:
         links = [{"rel": ["self"], "href": self._href(self._api.root.route.path, context, None)}]
         links.extend(
-            {"rel": [resource.name], "href": self._href(resource.collection.path, context, resource)}
+            {
+                "rel": [resource.name],
+                "href": self._href(resource.collection.path, context, resource, include_query=False),
+            }
             for resource in self._api.resources
             if not _PARAMETER.search(resource.collection.path)
         )
@@ -126,6 +129,7 @@ class SirenEngine:
         context: SirenContext,
         resource: SirenResource | None,
         value: Mapping[str, Any] | None = None,
+        include_query: bool = True,
     ) -> str:
         values = dict(context.value)
         values.update(context.path_values)
@@ -140,4 +144,17 @@ class SirenEngine:
                 raise ValueError(f"Siren link requires path value: {parameter}")
             return quote(str(path_value), safe="")
 
-        return f"{context.base_url.rstrip('/')}{_PARAMETER.sub(replace, path)}"
+        href = f"{context.base_url.rstrip('/')}{_PARAMETER.sub(replace, path)}"
+        if not include_query or not context.query:
+            return href
+        query_items = []
+        for name, query_value in context.query:
+            if query_value is None:
+                value = ""
+            elif isinstance(query_value, bool):
+                value = str(query_value).lower()
+            else:
+                value = str(query_value)
+            query_items.append(f"{quote(name, safe='')}={quote(value, safe='')}")
+        query = "&".join(query_items)
+        return f"{href}?{query}"

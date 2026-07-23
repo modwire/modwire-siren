@@ -104,4 +104,6 @@ class SirenContext(Contract):
             raise ValueError("Siren root context cannot declare a resource")
         if self.scope != "root" and self.resource is None:
             raise ValueError(f"Siren {self.scope} context requires a resource")
+        if any(isinstance(value, (dict, list)) for _, value in self.query):
+            raise ValueError("Siren query values must be scalar")
         return self
