@@ -5,3 +5,9 @@ After the user accepts completed work, update the linked GitHub issue and Projec
 # Public-contract testing
 
 The live `mcp__modwire__modwire` tool is a reference consumer: inspect advertised links and actions before executing them. Test this package only through its published `modwire_siren` imports and observable Siren documents; never cross the castle walls with private-module imports or assertions about internal state. Apply Auntie order: adversarial boundary, invariant, interruption, cleanup, and recovery cases come before the happy path.
+
+# Design rules
+
+- Use OOP: one class per file.
+- Do not add helper or pseudo-private functions.
+- Functions are allowed only when they define the package public API (for example, `siren()`).

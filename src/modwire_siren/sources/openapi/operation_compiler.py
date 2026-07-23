@@ -15,22 +15,19 @@ class OperationCompiler:
         self.components = components
 
     def compile(self) -> None:
-        for resource in self.routes.resources():
-            for path, path_item in self.routes.paths.items():
-                if not isinstance(path_item, dict):
+        for path, path_item in self.routes.paths.items():
+            if not isinstance(path_item, dict):
+                continue
+            for method, operation in path_item.items():
+                if method.lower() not in self.methods or not isinstance(operation, dict):
                     continue
-                scope = self.routes.scope(resource, path)
-                if scope is None:
-                    continue
-                for method, operation in path_item.items():
-                    if method.lower() not in self.methods or not isinstance(operation, dict):
-                        continue
-                    name = operation.get("operationId")
-                    if not isinstance(name, str) or not name:
-                        raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
-                    self.builder.add_operation(resource.name, scope, name, method.upper(), path)
-                    for field in self.fields(path_item, operation):
-                        self.builder.add_field(name, field.name, field.definition, field.required)
+                resource, scope = self.routes.ownership(path)
+                name = operation.get("operationId")
+                if not isinstance(name, str) or not name:
+                    raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
+                self.builder.add_operation(resource.name, scope, name, method.upper(), path)
+                for field in self.fields(path_item, operation):
+                    self.builder.add_field(name, field.name, field.definition, field.required)
 
     def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[Field, ...]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
