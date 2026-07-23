@@ -31,24 +31,40 @@ class OperationCompiler:
 
     def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[Field, ...]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
-        fields = []
+        parameter_index: dict[tuple[str, str], dict[str, Any]] = {}
         for parameter in parameters:
             definition = self.components.parameter(parameter)
-            if definition.get("in") == "query" and isinstance(definition.get("name"), str):
-                fields.append(
-                    Field(
-                        name=definition["name"],
-                        definition=self.components.schema(definition.get("schema", {})),
-                        required=bool(definition.get("required", False)),
-                    )
-                )
+            name = definition.get("name")
+            location = definition.get("in")
+            if not isinstance(name, str) or not isinstance(location, str):
+                raise ValueError("OpenAPI parameter requires string name and location")
+            if location not in {"path", "query"}:
+                raise ValueError(f"OpenAPI parameter location is unsupported: {location}")
+            schema = definition.get("schema")
+            if not isinstance(schema, dict):
+                raise ValueError(f"OpenAPI parameter schema is required: {name}")
+            parameter_index[name, location] = definition
+        fields = tuple(
+            Field(
+                name=name,
+                definition=self.components.schema(definition["schema"]),
+                required=bool(definition.get("required", False)),
+            )
+            for (name, location), definition in parameter_index.items()
+            if location == "query"
+        )
         body = self.components.request_body(operation.get("requestBody", {}))
         content = body.get("content", {}) if isinstance(body, dict) else {}
-        media = next(iter(content.values()), {}) if isinstance(content, dict) else {}
-        definition = self.components.schema(media.get("schema", {})) if isinstance(media, dict) else {}
+        if content and (not isinstance(content, dict) or not isinstance(content.get("application/json"), dict)):
+            raise ValueError("OpenAPI request body must provide application/json")
+        media = content.get("application/json", {}) if isinstance(content, dict) else {}
+        schema = media.get("schema", {}) if isinstance(media, dict) else {}
+        if content and not isinstance(schema, dict):
+            raise ValueError("OpenAPI request body schema is required")
+        definition = self.components.schema(schema)
         properties = definition.get("properties", {}) if isinstance(definition, dict) else {}
         required = set(definition.get("required", ())) if isinstance(definition, dict) else set()
-        return tuple(fields) + tuple(
+        return fields + tuple(
             Field(name=name, definition=self.components.schema(value), required=name in required)
             for name, value in properties.items()
             if isinstance(name, str) and isinstance(value, dict)

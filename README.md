@@ -66,6 +66,12 @@ The compiler follows local `#/components/parameters`, `#/components/requestBodie
 `#/components/schemas` references used by projected actions. External references are intentionally
 outside the supplier contract.
 
+Action fields use only `path` and `query` parameters. Parameter identity is `(name, in)`;
+operation-level declarations replace matching path-level declarations, while `path` parameters
+remain routing values rather than action fields. Header and cookie parameters are unsupported.
+Request bodies must offer `application/json` when they declare media content; it is selected even
+when other media types appear. This keeps the observable Siren field contract deterministic.
+
 ## Advanced use
 
 The root package exports the normal application API:
