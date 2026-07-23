@@ -1,7 +1,7 @@
 from .contracts import SirenContext
-from .service import SirenApiService
+from .extras import siren
 
 __all__ = [
-    "SirenApiService",
     "SirenContext",
+    "siren",
 ]

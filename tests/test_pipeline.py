@@ -1,9 +1,7 @@
 import pytest
 
-from modwire_siren import SirenApiService, SirenContext
-from modwire_siren.builder import SirenBuilderService
-from modwire_siren.extras import siren
-from modwire_siren.sources import OpenApiSource, SirenSource
+import modwire_siren
+from modwire_siren import SirenContext, siren
 
 SCHEMA = {
     "info": {"title": "Modwire", "version": "2"},
@@ -32,15 +30,11 @@ SCHEMA = {
 }
 
 
-def test_openapi_source_compiles_the_api_graph():
-    api = SirenApiService((OpenApiSource(),)).build(SCHEMA)
-
-    assert api.root.title == "Modwire"
-    assert api.resources[0].entity_operations == ("get_record", "rename_record")
-    assert api.operations[2].fields[0].name == "title"
+def test_public_facade_exports_only_runtime_context_and_siren():
+    assert modwire_siren.__all__ == ["SirenContext", "siren"]
 
 
-def test_extra_projects_an_entity_with_concrete_links_and_allowed_actions():
+def test_public_facade_projects_an_entity_with_concrete_links_and_allowed_actions():
     engine = siren(SCHEMA)
 
     document = engine.project(
@@ -71,28 +65,21 @@ def test_engine_rejects_a_capability_outside_the_resource_contract():
         )
 
 
-class RecordsSource(SirenSource):
-    def load(self, schema):
-        return (
-            SirenBuilderService()
-            .add_resource("record", "record", "/records", "/records/{record_id}")
-            .add_operation("record", "collection", "list_records", "GET", "/records")
-            .build()
-        )
+def test_public_facade_uses_an_explicit_mounted_root_path():
+    document = siren(SCHEMA, root_path="/siren/").project(
+        SirenContext(base_url="https://api.example.com", scope="root")
+    )
+
+    assert document["links"][0] == {"rel": ["self"], "href": "https://api.example.com/siren/"}
 
 
-class RenameSource(SirenSource):
-    def load(self, schema):
-        return (
-            SirenBuilderService()
-            .add_resource("record", "record", "/records", "/records/{record_id}")
-            .add_operation("record", "entity", "rename_record", "PATCH", "/records/{record_id}")
-            .build()
-        )
-
-
-def test_service_merges_compatible_source_contributions():
-    api = SirenApiService((RecordsSource(), RenameSource())).build({})
-
-    assert api.resources[0].collection_operations == ("list_records",)
-    assert api.resources[0].entity_operations == ("rename_record",)
+@pytest.mark.parametrize(
+    ("openapi", "root_path", "error", "message"),
+    [
+        ([], "/", TypeError, "OpenAPI document must be a mapping"),
+        (SCHEMA, "siren", ValueError, "Siren root path must start"),
+    ],
+)
+def test_public_facade_rejects_invalid_inputs_before_the_happy_path(openapi, root_path, error, message):
+    with pytest.raises(error, match=message):
+        siren(openapi, root_path=root_path)
