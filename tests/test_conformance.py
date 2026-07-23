@@ -40,14 +40,14 @@ def test_built_wheel_supports_the_documented_public_consumer_flow(tmp_path: Path
     )
     wheel = next(artifacts.glob("*.whl"))
     subprocess.run(
-        ("uv", "venv", str(environment)),
+        (sys.executable, "-m", "venv", "--system-site-packages", str(environment)),
         check=True,
         capture_output=True,
         text=True,
     )
     consumer = environment / "bin" / "python"
     subprocess.run(
-        ("uv", "pip", "install", "--python", str(consumer), str(wheel)),
+        (str(consumer), "-m", "pip", "install", str(wheel)),
         cwd=tmp_path,
         check=True,
         capture_output=True,
