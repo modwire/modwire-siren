@@ -25,15 +25,26 @@ The generated document contains concrete links and only the actions named in `ca
 
 ## OpenAPI contract
 
-Resources use canonical collection and entity paths:
+Routes use a framework-neutral, segment-based grammar. A resource collection ends in a plural
+static segment; its entity route adds one path parameter. Prefixes and nested collections are
+allowed, and parameter names are not prescribed:
 
 ```text
-/records
-/records/{record_id}
+/api/v1/records
+/accounts/{account}/records
+/accounts/{account}/records/{record}
 ```
 
-The singular resource name is derived from the collection path. Entity parameters use the same
-name followed by `_id`. Every supported operation requires an `operationId`.
+The singular resource name is derived from that final collection segment. A collection route may
+stand alone. Operations on its exact path or static subpaths belong to its collection; operations
+on an entity path or static subpaths belong to its entity. Nested resources take ownership over a
+parent subpath, so `/accounts/{account}/records` belongs to `record`, not to `account`. Parameter
+segments must be unchanged from the owning route: adding, removing, renaming, or reordering one
+is unsupported. The longest matching route owns an operation; any tie is rejected.
+
+`/` is the Siren entry point, not a resource route, so OpenAPI operations declared there are
+unsupported. Every OpenAPI operation must have exactly one owner and an `operationId`; unsupported
+or ambiguous routes and duplicate derived resource names fail compilation explicitly.
 
 ```yaml
 paths:

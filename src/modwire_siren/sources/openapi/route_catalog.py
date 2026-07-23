@@ -1,61 +1,102 @@
-import re
 from typing import Any
 
 from .resource import Resource
 
 
 class RouteCatalog:
-    entity_path = re.compile(r"^(?P<collection>.+)/\{(?P<parameter>[^}]+)\}$")
-    parameters = re.compile(r"\{([^}]+)\}")
-
     def __init__(self, paths: dict[str, Any]) -> None:
         self.paths = paths
+        self.resource_list = self.compile_resources()
 
     def resources(self) -> tuple[Resource, ...]:
-        resources = tuple(self.entity_resource(path) for path in self.paths if self.entity_path.match(path))
-        entity_collections = {resource.collection_path for resource in resources}
-        return resources + tuple(
-            self.collection_resource(path)
-            for path in self.paths
-            if self.collection_path(path) and path not in entity_collections
-        )
+        return self.resource_list
 
-    def scope(self, resource: Resource, path: str) -> str | None:
-        if resource.entity_path and (
-            (path == resource.entity_path or path.startswith(f"{resource.entity_path}/"))
-            and self.path_parameters(path) == self.path_parameters(resource.entity_path)
+    def compile_resources(self) -> tuple[Resource, ...]:
+        candidates: dict[str, Resource] = {}
+        names: dict[str, str] = {}
+        for path in self.paths:
+            segments = self.segments(path)
+            collection_path: str | None = None
+            entity_path: str | None = None
+            if self.is_collection(segments):
+                collection_path = path
+            elif self.is_entity(segments):
+                collection_path = "/" + "/".join(segments[:-1])
+                entity_path = path
+            if collection_path is None:
+                continue
+            name = self.singular(segments[-1] if entity_path is None else segments[-2])
+            existing_path = names.get(name)
+            if existing_path is not None and existing_path != collection_path:
+                raise ValueError(
+                    f"OpenAPI routes derive duplicate resource {name!r}: {existing_path!r} and {collection_path!r}"
+                )
+            names[name] = collection_path
+            existing = candidates.get(collection_path)
+            if existing is None:
+                candidates[collection_path] = Resource(name, name.replace("_", "-"), collection_path, entity_path, "id")
+            elif entity_path is not None:
+                candidates[collection_path] = Resource(
+                    existing.name,
+                    existing.resource_class,
+                    existing.collection_path,
+                    entity_path,
+                    existing.identifier,
+                )
+        return tuple(candidates.values())
+
+    def ownership(self, path: str) -> tuple[Resource, str]:
+        candidates: list[tuple[int, Resource, str]] = []
+        for resource in self.resource_list:
+            if resource.entity_path and self.belongs(path, resource.entity_path):
+                candidates.append((len(self.segments(resource.entity_path)), resource, "entity"))
+            if self.belongs(path, resource.collection_path):
+                candidates.append((len(self.segments(resource.collection_path)), resource, "collection"))
+        if not candidates:
+            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+        longest = max(candidate[0] for candidate in candidates)
+        owners = [(resource, scope) for length, resource, scope in candidates if length == longest]
+        if len(owners) != 1:
+            raise ValueError(f"OpenAPI route ownership is ambiguous: {path!r}")
+        return owners[0]
+
+    def belongs(self, path: str, base: str) -> bool:
+        path_segments = self.segments(path)
+        base_segments = self.segments(base)
+        return path_segments[: len(base_segments)] == base_segments and self.parameters(path) == self.parameters(base)
+
+    def segments(self, path: str) -> tuple[str, ...]:
+        if path == "/":
+            return ()
+        if not isinstance(path, str) or not path.startswith("/") or path.endswith("/"):
+            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+        segments = tuple(path[1:].split("/"))
+        if any(
+            not segment or (("{" in segment or "}" in segment) and not self.is_parameter(segment))
+            for segment in segments
         ):
-            return "entity"
-        collection_matches = path == resource.collection_path or path.startswith(f"{resource.collection_path}/")
-        if collection_matches and self.path_parameters(path) == self.path_parameters(resource.collection_path):
-            return "collection"
-        return None
+            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+        return segments
 
-    def entity_resource(self, path: str) -> Resource:
-        match = self.entity_path.match(path)
-        assert match is not None
-        collection_path = match.group("collection")
-        name = self.singular(collection_path.rsplit("/", 1)[-1])
-        parameter = match.group("parameter")
-        expected = f"{name}_id"
-        if parameter != expected:
-            raise ValueError(f"OpenAPI entity path {path!r} requires parameter {expected!r}")
-        return Resource(name, name.replace("_", "-"), collection_path, path, "id")
+    def is_collection(self, segments: tuple[str, ...]) -> bool:
+        return bool(segments) and not self.is_parameter(segments[-1]) and self.is_plural(segments[-1])
 
-    def collection_resource(self, path: str) -> Resource:
-        name = self.singular(path.strip("/"))
-        return Resource(name, name.replace("_", "-"), path, None, "id")
+    def is_entity(self, segments: tuple[str, ...]) -> bool:
+        return len(segments) > 1 and self.is_parameter(segments[-1]) and self.is_plural(segments[-2])
 
-    def collection_path(self, path: str) -> bool:
-        return path.startswith("/") and path.count("/") == 1 and "{" not in path and path.strip("/").endswith("s")
+    def is_parameter(self, segment: str) -> bool:
+        return len(segment) > 2 and segment.startswith("{") and segment.endswith("}")
+
+    def parameters(self, path: str) -> tuple[str, ...]:
+        return tuple(segment[1:-1] for segment in self.segments(path) if self.is_parameter(segment))
+
+    def is_plural(self, value: str) -> bool:
+        return value.endswith("s") and len(value) > 1
 
     def singular(self, value: str) -> str:
         normalized = value.replace("-", "_")
         if normalized.endswith("ies"):
             return f"{normalized[:-3]}y"
-        if normalized.endswith("s") and len(normalized) > 1:
+        if self.is_plural(normalized):
             return normalized[:-1]
         raise ValueError(f"OpenAPI collection path must be plural: {value!r}")
-
-    def path_parameters(self, path: str) -> set[str]:
-        return set(self.parameters.findall(path))
