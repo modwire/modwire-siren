@@ -98,8 +98,12 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     Every non-root HTTP operation needs a unique `operationId`. Operations on collection or
     entity paths, including their static subpaths, belong to that resource. The longest matching
     route wins, so a nested resource owns `/accounts/{account}/records` rather than `account`.
-    Parameters must be unchanged from the owning route: adding, removing, renaming, or reordering
-    them is unsupported. Ambiguous or unsupported routes, duplicate resource names, missing
+    Standalone endpoints whose final segment is static, such as
+    `/scaffoldings/converge` or `/scaffoldings/{scaffolding_id}/preview`, are accepted as
+    documented commands when no resource owns them. They are outside the Siren resource graph,
+    so they are not projected as actions or accepted as capabilities. Parameters must be unchanged
+    from the owning route: adding, removing, renaming, or reordering them is unsupported.
+    Ambiguous routes, unowned routes ending in a parameter, duplicate resource names, missing
     operation IDs, and invalid OpenAPI fail compilation explicitly.
 
     Local `#/components/parameters`, `#/components/requestBodies`, and `#/components/schemas`
