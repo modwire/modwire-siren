@@ -25,10 +25,28 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["build>=1.3", "fastapi>=0.115,<1", "packaging>=25", "pytest>=9", "ruff>=0.14", "twine>=6"]
+dev = [
+    "build>=1.3",
+    "django>=5.1,<6.1",
+    "django-ninja-extra>=0.30,<1",
+    "fastapi>=0.115,<1",
+    "packaging>=25",
+    "pytest>=9",
+    "ruff>=0.14",
+    "twine>=6",
+]
 
 [dependency-groups]
-dev = ["build>=1.3", "fastapi>=0.115,<1", "packaging>=25", "pytest>=9", "ruff>=0.14", "twine>=6"]
+dev = [
+    "build>=1.3",
+    "django>=5.1,<6.1",
+    "django-ninja-extra>=0.30,<1",
+    "fastapi>=0.115,<1",
+    "packaging>=25",
+    "pytest>=9",
+    "ruff>=0.14",
+    "twine>=6",
+]
 
 [project.urls]
 Repository = "https://github.com/modwire/modwire-siren"
@@ -46,7 +64,7 @@ version-file = "src/modwire_siren/_version.py"
 packages = ["src/modwire_siren"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "README.md", "MIGRATION.md", "pyproject.toml"]
+include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

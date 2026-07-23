@@ -92,9 +92,11 @@ pass its path explicitly:
 engine = siren(openapi, root_path="/siren/")
 ```
 
-Framework adapters are intentionally outside the package. A Django or Ninja application obtains
-its generated OpenAPI document, creates an engine with `siren(openapi)`, builds a `SirenContext`
-from the request and result, then returns `engine.project(context)` when Siren is negotiated.
+Framework adapters are intentionally outside the package. A FastAPI or Django Ninja Extra
+application obtains its generated OpenAPI document, creates an engine with `siren(openapi)`,
+builds a `SirenContext` from the request and result, then returns `engine.project(context)` when
+Siren is negotiated. The conformance suite compiles schemas generated directly from FastAPI routes
+and Django Ninja Extra controller classes.
 
 <!-- generated:public-api:start -->
 ## Public API

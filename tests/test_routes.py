@@ -97,3 +97,34 @@ def test_public_facade_rejects_duplicate_derived_resources_and_missing_path_valu
         siren(ROUTE_POLICY_SCHEMA).project(
             SirenContext(base_url="https://api.example.com", scope="collection", resource="record")
         )
+
+
+def test_public_facade_rejects_path_item_references_and_trace_operations_without_losing_operations():
+    referenced = deepcopy(SCHEMA)
+    referenced["paths"]["/records"] = {"$ref": "#/components/pathItems/Records"}
+    referenced["components"] = {
+        "pathItems": {
+            "Records": {"get": {"operationId": "list_records", "responses": {"200": {"description": "OK"}}}}
+        }
+    }
+
+    with pytest.raises(ValueError, match="OpenAPI path item reference is unsupported"):
+        siren(referenced)
+
+    traced = deepcopy(SCHEMA)
+    traced["paths"]["/records"]["trace"] = {
+        "operationId": "trace_records",
+        "responses": {"200": {"description": "OK"}},
+    }
+
+    with pytest.raises(ValueError, match="OpenAPI operation method is unsupported: TRACE /records"):
+        siren(traced)
+
+    assert siren(SCHEMA).project(
+        SirenContext(
+            base_url="https://api.example.com",
+            scope="collection",
+            resource="record",
+            capabilities=frozenset({"list_records"}),
+        )
+    )["actions"] == [{"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}]
