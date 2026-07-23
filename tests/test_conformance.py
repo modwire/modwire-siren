@@ -31,6 +31,7 @@ def test_built_wheel_supports_the_documented_public_consumer_flow(tmp_path: Path
     project = Path(__file__).parents[1]
     artifacts = tmp_path / "artifacts"
     environment = tmp_path / "consumer"
+    fixture = project / "tests" / "fixtures" / "wheel_consumer.py"
     subprocess.run(
         (sys.executable, "-m", "build", "--wheel", "--outdir", str(artifacts)),
         cwd=project,
@@ -53,25 +54,8 @@ def test_built_wheel_supports_the_documented_public_consumer_flow(tmp_path: Path
         capture_output=True,
         text=True,
     )
-    program = "\n".join(
-        (
-            "from modwire_siren import SirenContext, siren",
-            "import modwire_siren",
-            "schema = {'openapi': '3.1.1', 'info': {'title': 'Consumer', 'version': '1'}, 'paths': {}}",
-            "schema['paths']['/widgets'] = {}",
-            "response = {'200': {'description': 'OK'}}",
-            "schema['paths']['/widgets']['get'] = {'operationId': 'list_widgets', 'responses': response}",
-            "context_values = {'base_url': 'https://api.example.com', 'scope': 'collection'}",
-            "context_values['resource'] = 'widget'",
-            "context_values['capabilities'] = frozenset({'list_widgets'})",
-            "context = SirenContext(**context_values)",
-            "document = siren(schema).project(context)",
-            "assert document['links'] == [{'rel': ['self'], 'href': 'https://api.example.com/widgets'}]",
-            "print(modwire_siren.__file__)",
-        )
-    )
     result = subprocess.run(
-        (str(consumer), "-c", program),
+        (str(consumer), str(fixture)),
         cwd=tmp_path,
         capture_output=True,
         text=True,
