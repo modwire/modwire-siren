@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "modwire-siren"
 dynamic = ["version"]
-description = "Siren hypermedia and OpenAPI integration for Modwire."
+description = "Compile OpenAPI API graphs into Siren hypermedia documents."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -19,10 +19,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-dependencies = ["jsonschema>=4.25", "pydantic>=2.12"]
+dependencies = ["pydantic>=2.12"]
 
 [project.optional-dependencies]
-django = ["django>=4.2"]
 dev = ["build>=1.3", "packaging>=25", "pytest>=9", "ruff>=0.14", "twine>=6"]
 
 [dependency-groups]
@@ -44,7 +43,7 @@ version-file = "src/modwire_siren/_version.py"
 packages = ["src/modwire_siren"]
 
 [tool.hatch.build.targets.sdist]
-include = ["docs", "examples", "src", "tests", "README.md", "pyproject.toml"]
+include = ["src", "tests", "README.md", "MIGRATION.md", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
