@@ -20,6 +20,5 @@ verify that `uv build` and `uv run twine check dist/*` produce valid matching wh
 source-distribution versions. Never tag a pull request head.
 
 After separately approving the artifacts, create the GitHub Release from that exact tag. The
-release workflow builds and attaches release assets; it does not publish to PyPI. PyPI publication
-is a second, explicit approval: manually dispatch **Publish PyPI** with the existing release tag.
-That workflow rebuilds the tagged source and requires the `pypi` environment gate.
+release workflow builds and attaches release assets, then publishes them to PyPI through the
+`pypi` environment gate.
