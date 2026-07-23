@@ -1,7 +1,7 @@
-# Migration to 2.0
+# Migration to 2.0.0
 
-Version 2 replaces the version 1 projection library with a small OpenAPI-to-Siren engine. This is
-a breaking release; version 1 imports, decorators, resource extensions, profiles, client, and
+Version 2.0.0 replaces the version 1 projection library with a small OpenAPI-to-Siren engine. This
+is a breaking release; version 1 imports, decorators, resource extensions, profiles, client, and
 framework integrations no longer exist.
 
 ## What changed
