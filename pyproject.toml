@@ -19,7 +19,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-dependencies = ["pydantic>=2.12"]
+dependencies = [
+    "openapi-spec-validator>=0.9,<1",
+    "pydantic>=2.12",
+]
 
 [project.optional-dependencies]
 dev = ["build>=1.3", "packaging>=25", "pytest>=9", "ruff>=0.14", "twine>=6"]

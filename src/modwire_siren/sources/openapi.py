@@ -26,7 +26,7 @@ class OpenApiSource(SirenSource):
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
         resources = self._add_resources(builder, paths)
-        self._add_operations(builder, paths, resources, schema.get("components", {}))
+        self._add_operations(builder, paths, resources, _ComponentResolver(schema.get("components", {})))
         return builder.build()
 
     def _add_resources(self, builder: SirenBuilderService, paths: dict[str, Any]) -> tuple["_Resource", ...]:
@@ -52,9 +52,8 @@ class OpenApiSource(SirenSource):
         builder: SirenBuilderService,
         paths: dict[str, Any],
         resources: tuple["_Resource", ...],
-        components: Any,
+        resolver: "_ComponentResolver",
     ) -> None:
-        schemas = components.get("schemas", {}) if isinstance(components, dict) else {}
         for resource in resources:
             for path, path_item in paths.items():
                 if not isinstance(path_item, dict):
@@ -69,7 +68,7 @@ class OpenApiSource(SirenSource):
                     if not isinstance(name, str) or not name:
                         raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
                     builder.add_operation(resource.name, scope, name, method.upper(), path)
-                    for field in self._fields(path_item, operation, schemas):
+                    for field in self._fields(path_item, operation, resolver):
                         builder.add_field(name, field.name, field.definition, field.required)
 
     def _entity_resource(self, path: str) -> "_Resource":
@@ -103,42 +102,31 @@ class OpenApiSource(SirenSource):
         self,
         path_item: dict[str, Any],
         operation: dict[str, Any],
-        schemas: dict[str, Any],
+        resolver: "_ComponentResolver",
     ) -> tuple["_Field", ...]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
-        fields = tuple(
-            _Field(
-                name=parameter["name"],
-                definition=self._resolve(parameter.get("schema", {}), schemas),
-                required=bool(parameter.get("required", False)),
-            )
-            for parameter in parameters
-            if isinstance(parameter, dict) and parameter.get("in") == "query" and isinstance(parameter.get("name"), str)
-        )
-        body = operation.get("requestBody", {})
+        fields = []
+        for parameter in parameters:
+            definition = resolver.parameter(parameter)
+            if definition.get("in") == "query" and isinstance(definition.get("name"), str):
+                fields.append(
+                    _Field(
+                        name=definition["name"],
+                        definition=resolver.schema(definition.get("schema", {})),
+                        required=bool(definition.get("required", False)),
+                    )
+                )
+        body = resolver.request_body(operation.get("requestBody", {}))
         content = body.get("content", {}) if isinstance(body, dict) else {}
         media = next(iter(content.values()), {}) if isinstance(content, dict) else {}
-        definition = self._resolve(media.get("schema", {}), schemas) if isinstance(media, dict) else {}
+        definition = resolver.schema(media.get("schema", {})) if isinstance(media, dict) else {}
         properties = definition.get("properties", {}) if isinstance(definition, dict) else {}
         required = set(definition.get("required", ())) if isinstance(definition, dict) else set()
-        return fields + tuple(
-            _Field(name=name, definition=self._resolve(value, schemas), required=name in required)
+        return tuple(fields) + tuple(
+            _Field(name=name, definition=resolver.schema(value), required=name in required)
             for name, value in properties.items()
             if isinstance(name, str) and isinstance(value, dict)
         )
-
-    def _resolve(self, definition: Any, schemas: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(definition, dict):
-            return {}
-        result = deepcopy(definition)
-        reference = result.pop("$ref", None)
-        if not isinstance(reference, str):
-            return result
-        name = reference.rsplit("/", 1)[-1]
-        target = schemas.get(name)
-        if not isinstance(target, dict):
-            raise ValueError(f"OpenAPI schema reference is unknown: {reference}")
-        return self._resolve(target | result, schemas)
 
     @staticmethod
     def _is_collection_path(path: str) -> bool:
@@ -156,6 +144,70 @@ class OpenApiSource(SirenSource):
     @staticmethod
     def _parameters(path: str) -> set[str]:
         return set(_PARAMETERS.findall(path))
+
+
+class _ComponentResolver:
+    def __init__(self, components: Any) -> None:
+        self._components = components if isinstance(components, dict) else {}
+
+    def parameter(self, definition: Any) -> dict[str, Any]:
+        return self._resolve(definition, "parameters")
+
+    def request_body(self, definition: Any) -> dict[str, Any]:
+        return self._resolve(definition, "requestBodies")
+
+    def schema(self, definition: Any) -> dict[str, Any]:
+        return self._resolve(definition, "schemas")
+
+    def _resolve(self, definition: Any, kind: str, trail: tuple[str, ...] = ()) -> dict[str, Any]:
+        if not isinstance(definition, dict):
+            return {}
+        result = deepcopy(definition)
+        reference = result.pop("$ref", None)
+        if reference is None:
+            return result
+        if not isinstance(reference, str):
+            raise ValueError("OpenAPI component reference must be a string")
+        if reference in trail:
+            raise ValueError(f"OpenAPI component reference cycle: {' -> '.join((*trail, reference))}")
+        component_kind, name = self._address(reference, kind)
+        collection = self._components.get(component_kind)
+        target = collection.get(name) if isinstance(collection, dict) else None
+        if not isinstance(target, dict):
+            raise ValueError(f"OpenAPI component reference is unknown: {reference}")
+        return self._resolve(target, kind, (*trail, reference)) | result
+
+    @staticmethod
+    def _address(reference: str, expected_kind: str) -> tuple[str, str]:
+        prefix = "#/components/"
+        if not reference.startswith(prefix):
+            raise ValueError(f"OpenAPI component reference is unsupported: {reference}")
+        parts = reference[len(prefix) :].split("/")
+        if len(parts) != 2:
+            raise ValueError(f"OpenAPI component reference is invalid: {reference}")
+        kind, encoded_name = parts
+        if kind != expected_kind:
+            raise ValueError(
+                f"OpenAPI component reference {reference!r} must target components/{expected_kind}, "
+                f"not components/{kind}"
+            )
+        return kind, _ComponentResolver._decode(encoded_name, reference)
+
+    @staticmethod
+    def _decode(token: str, reference: str) -> str:
+        decoded = ""
+        index = 0
+        while index < len(token):
+            character = token[index]
+            if character != "~":
+                decoded += character
+                index += 1
+                continue
+            if index + 1 == len(token) or token[index + 1] not in {"0", "1"}:
+                raise ValueError(f"OpenAPI component reference is invalid: {reference}")
+            decoded += "~" if token[index + 1] == "0" else "/"
+            index += 2
+        return decoded
 
 
 class _Resource:
