@@ -24,9 +24,18 @@ class SirenApiService:
         operations: dict[str, SirenOperation] = {}
         for api in apis:
             if api.root != SirenRoot():
-                if root != SirenRoot() and root != api.root:
+                if (
+                    root != SirenRoot()
+                    and (
+                        root.route != api.root.route
+                        or root.title != api.root.title
+                        or root.version != api.root.version
+                    )
+                ):
                     raise ValueError("Siren sources define conflicting roots")
-                root = api.root
+                root = api.root.model_copy(
+                    update={"operations": tuple(dict.fromkeys((*root.operations, *api.root.operations)))}
+                )
             for resource in api.resources:
                 existing = resources.get(resource.reference)
                 if existing is None:
@@ -84,4 +93,6 @@ class SirenApiService:
             )
             for field in operation.fields:
                 builder.add_field(operation.name, field.name, field.definition, field.required)
+        for operation in root.operations:
+            builder.add_root_operation(operation)
         return builder.build()

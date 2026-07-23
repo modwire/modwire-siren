@@ -34,8 +34,23 @@ class SirenEngine:
             }
             for resource in self._api.resources
             if not _PARAMETER.search(resource.collection.path)
+            and any(
+                operation.scope == "collection"
+                and operation.route.path == resource.collection.path
+                and operation.method == "GET"
+                and not any(field.required for field in operation.fields)
+                for operation in self._operations.values()
+            )
         )
-        return {"class": ["api", "entry-point"], "links": links}
+        document: dict[str, Any] = {"class": ["api", "entry-point"], "links": links}
+        actions = [
+            self._action(self._operations[name], context, None, {}, include_query=False)
+            for name in self._api.root.operations
+            if name in context.capabilities
+        ]
+        if actions:
+            document["actions"] = actions
+        return document
 
     def _collection(self, resource: SirenResource, context: SirenContext) -> dict[str, Any]:
         return {
@@ -91,12 +106,13 @@ class SirenEngine:
         self,
         operation: SirenOperation,
         context: SirenContext,
-        resource: SirenResource,
+        resource: SirenResource | None,
         value: Mapping[str, Any],
+        include_query: bool = True,
     ) -> dict[str, Any]:
         action: dict[str, Any] = {
             "name": operation.name,
-            "href": self._href(operation.route.path, context, resource, value),
+            "href": self._href(operation.route.path, context, resource, value, include_query),
             "method": operation.method,
         }
         if operation.media_type is not None:

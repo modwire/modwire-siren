@@ -38,13 +38,26 @@ class OperationCompiler:
                 if not isinstance(name, str) or not name:
                     raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
                 ownership = self.routes.ownership(path)
+                if ownership is None and self.routes.parameters(path):
+                    continue
+                fields, media_type = self.fields(path_item, operation)
                 if ownership is None:
+                    self.builder.add_operation(None, "root", name, method.upper(), path, media_type)
+                    self.builder.add_root_operation(name)
+                    for field in fields:
+                        self.builder.add_field(name, field.name, field.definition, field.required)
                     continue
                 resource, scope = ownership
-                fields, media_type = self.fields(path_item, operation)
                 self.builder.add_operation(resource.reference, scope, name, method.upper(), path, media_type)
                 for field in fields:
                     self.builder.add_field(name, field.name, field.definition, field.required)
+                if (
+                    scope == "collection"
+                    and path == resource.collection_path
+                    and not self.routes.parameters(path)
+                    and (method.lower() != "get" or any(field.required for field in fields))
+                ):
+                    self.builder.add_root_operation(name)
 
     def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[tuple[Field, ...], str | None]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
