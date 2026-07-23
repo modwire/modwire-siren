@@ -18,7 +18,11 @@ class OperationCompiler:
         for path, path_item in self.routes.paths.items():
             if not isinstance(path_item, dict):
                 continue
+            if "$ref" in path_item:
+                raise ValueError(f"OpenAPI path item reference is unsupported: {path}")
             for method, operation in path_item.items():
+                if method.lower() == "trace":
+                    raise ValueError(f"OpenAPI operation method is unsupported: TRACE {path}")
                 if method.lower() not in self.methods or not isinstance(operation, dict):
                     continue
                 resource, scope = self.routes.ownership(path)
