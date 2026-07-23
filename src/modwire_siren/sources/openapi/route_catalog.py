@@ -54,7 +54,7 @@ class RouteCatalog:
                 )
         return tuple(candidates.values())
 
-    def ownership(self, path: str) -> tuple[Resource, str]:
+    def ownership(self, path: str) -> tuple[Resource, str] | None:
         candidates: list[tuple[int, Resource, str]] = []
         for resource in self.resource_list:
             if resource.entity_path and self.belongs(path, resource.entity_path):
@@ -62,6 +62,9 @@ class RouteCatalog:
             if self.belongs(path, resource.collection_path):
                 candidates.append((len(self.segments(resource.collection_path)), resource, "collection"))
         if not candidates:
+            segments = self.segments(path)
+            if segments and not self.is_parameter(segments[-1]):
+                return None
             raise ValueError(f"OpenAPI route is unsupported: {path!r}")
         longest = max(candidate[0] for candidate in candidates)
         owners = [(resource, scope) for length, resource, scope in candidates if length == longest]

@@ -34,10 +34,13 @@ class OperationCompiler:
                     raise ValueError(f"OpenAPI operation method is unsupported: TRACE {path}")
                 if method.lower() not in self.methods or not isinstance(operation, dict):
                     continue
-                resource, scope = self.routes.ownership(path)
                 name = operation.get("operationId")
                 if not isinstance(name, str) or not name:
                     raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
+                ownership = self.routes.ownership(path)
+                if ownership is None:
+                    continue
+                resource, scope = ownership
                 self.builder.add_operation(resource.reference, scope, name, method.upper(), path)
                 for field in self.fields(path_item, operation):
                     self.builder.add_field(name, field.name, field.definition, field.required)

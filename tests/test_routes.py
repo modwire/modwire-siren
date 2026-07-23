@@ -54,6 +54,61 @@ def test_public_facade_uses_plural_static_subpaths_as_nested_resource_ownership(
     assert [action["name"] for action in document["actions"]] == ["list_record_reports"]
 
 
+def test_public_facade_ignores_standalone_static_command_endpoints_without_losing_resource_actions():
+    schema = deepcopy(SCHEMA)
+    schema["paths"].update(
+        {
+            "/scaffoldings/converge": {
+                "post": {"operationId": "converge_scaffoldings", "responses": {"200": {"description": "OK"}}}
+            },
+            "/scaffoldings/{scaffolding_id}/schema": {
+                "parameters": [
+                    {
+                        "name": "scaffolding_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "get": {"operationId": "get_scaffolding_schema", "responses": {"200": {"description": "OK"}}},
+            },
+            "/scaffoldings/{scaffolding_id}/bundle": {
+                "parameters": [
+                    {
+                        "name": "scaffolding_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "post": {"operationId": "bundle_scaffolding", "responses": {"200": {"description": "OK"}}},
+            },
+            "/scaffoldings/{scaffolding_id}/preview": {
+                "parameters": [
+                    {
+                        "name": "scaffolding_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "get": {"operationId": "preview_scaffolding", "responses": {"200": {"description": "OK"}}},
+            },
+        }
+    )
+
+    document = siren(schema).project(
+        SirenContext(
+            base_url="https://api.example.com",
+            scope="collection",
+            resource="record",
+            capabilities=frozenset({"list_records"}),
+        )
+    )
+
+    assert document["actions"] == [{"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}]
+
+
 @pytest.mark.parametrize(
     ("path", "parameters", "message"),
     [
