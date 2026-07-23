@@ -11,7 +11,9 @@ _PARAMETER = re.compile(r"\{([^}]+)\}")
 class SirenEngine:
     def __init__(self, api: SirenApi):
         self._api = api
-        self._resources = {resource.name: resource for resource in api.resources}
+        self._resources: dict[str, list[SirenResource]] = {}
+        for resource in api.resources:
+            self._resources.setdefault(resource.name, []).append(resource)
         self._operations = {operation.name: operation for operation in api.operations}
 
     def project(self, context: SirenContext) -> dict[str, Any]:
@@ -111,10 +113,26 @@ class SirenEngine:
     def _resource(self, context: SirenContext) -> SirenResource:
         if context.resource is None:
             raise ValueError(f"Siren {context.scope} context requires a resource")
-        try:
-            return self._resources[context.resource]
-        except KeyError as error:
-            raise ValueError(f"Siren context references unknown resource: {context.resource}") from error
+        candidates = self._resources.get(context.resource)
+        if candidates is None:
+            raise ValueError(f"Siren context references unknown resource: {context.resource}")
+        if len(candidates) == 1:
+            return candidates[0]
+        values = set(context.value) | set(context.path_values)
+        matches = [
+            resource
+            for resource in candidates
+            if set(_PARAMETER.findall(resource.collection.path)).issubset(values)
+        ]
+        if not matches:
+            raise ValueError(f"Siren context cannot select resource {context.resource!r}: provide parent path values")
+        longest = max(len(_PARAMETER.findall(resource.collection.path)) for resource in matches)
+        selected = [resource for resource in matches if len(_PARAMETER.findall(resource.collection.path)) == longest]
+        if len(selected) != 1:
+            raise ValueError(
+                f"Siren context cannot select resource {context.resource!r}: matching routes are ambiguous"
+            )
+        return selected[0]
 
     @staticmethod
     def _validate_capabilities(resource: SirenResource, context: SirenContext) -> None:

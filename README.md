@@ -162,7 +162,8 @@ Supply runtime state used to project a Siren document.
 
 Use the default `"entity"` scope for one resource, `"collection"` for a list, and `"root"`
 for an API entry point. A resource is required outside root scope and is the singular name
-derived from the collection route: `"record"` for `/records`.
+derived from the collection route: `"record"` for `/records`. If the same resource appears
+in multiple nested routes, `path_values` selects the route with matching parent parameters.
 
 #### Collection example
 

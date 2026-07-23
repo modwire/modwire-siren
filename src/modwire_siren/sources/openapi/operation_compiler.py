@@ -20,6 +20,15 @@ class OperationCompiler:
                 continue
             if "$ref" in path_item:
                 raise ValueError(f"OpenAPI path item reference is unsupported: {path}")
+            segments = self.routes.segments(path)
+            if (
+                path.endswith("/")
+                and segments
+                and all(
+                    not self.routes.is_parameter(segment) and not self.routes.is_plural(segment) for segment in segments
+                )
+            ):
+                continue
             for method, operation in path_item.items():
                 if method.lower() == "trace":
                     raise ValueError(f"OpenAPI operation method is unsupported: TRACE {path}")
@@ -29,7 +38,7 @@ class OperationCompiler:
                 name = operation.get("operationId")
                 if not isinstance(name, str) or not name:
                     raise ValueError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
-                self.builder.add_operation(resource.name, scope, name, method.upper(), path)
+                self.builder.add_operation(resource.reference, scope, name, method.upper(), path)
                 for field in self.fields(path_item, operation):
                     self.builder.add_field(name, field.name, field.definition, field.required)
 

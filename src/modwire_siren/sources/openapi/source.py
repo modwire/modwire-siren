@@ -25,6 +25,7 @@ class OpenApiSource(SirenSource):
         routes = RouteCatalog(paths)
         for resource in routes.resources():
             builder.add_resource(
+                resource.reference,
                 resource.name,
                 resource.resource_class,
                 resource.collection_path,
