@@ -8,6 +8,7 @@ from ...document import SirenAction, SirenField
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
+from ...vocabulary import SirenScope
 from ..contracts import SirenActionDocumentService
 
 
@@ -20,11 +21,11 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         self,
         api: SirenApi,
         resource: SirenResource,
-        scope: str,
+        scope: SirenScope,
         context: SirenContext,
         value: Mapping[str, Any],
     ) -> list[SirenAction]:
-        names = resource.collection_operations if scope == "collection" else resource.entity_operations
+        names = resource.collection_operations if scope == SirenScope.COLLECTION else resource.entity_operations
         operations = {operation.name: operation for operation in api.operations}
         return [
             self.action(operations[name], context, resource, value)

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
+from .....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenScope
 from ....assembly.state import SirenBuilder
 from ..values import Field
 from .components import ComponentResolver
@@ -9,7 +10,15 @@ from .routes import RouteCatalog
 
 @dataclass(frozen=True)
 class OpenApiOperationCompiler:
-    methods: ClassVar[frozenset[str]] = frozenset({"get", "post", "put", "patch", "delete"})
+    methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
+        {
+            SirenHttpMethod.DELETE,
+            SirenHttpMethod.GET,
+            SirenHttpMethod.PATCH,
+            SirenHttpMethod.POST,
+            SirenHttpMethod.PUT,
+        }
+    )
     builder: SirenBuilder
     routes: RouteCatalog
     components: ComponentResolver
@@ -32,9 +41,15 @@ class OpenApiOperationCompiler:
                 continue
             for method, operation in path_item.items():
                 method_name = method.lower()
-                if method_name in {"head", "options", "trace"}:
+                if method_name == "trace":
                     raise ValueError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
-                if method_name not in self.methods or not isinstance(operation, dict):
+                try:
+                    operation_method = SirenHttpMethod(method.upper())
+                except ValueError:
+                    continue
+                if operation_method in {SirenHttpMethod.HEAD, SirenHttpMethod.OPTIONS}:
+                    raise ValueError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                if operation_method not in self.methods or not isinstance(operation, dict):
                     continue
                 name = operation.get("operationId")
                 if not isinstance(name, str) or not name:
@@ -44,20 +59,20 @@ class OpenApiOperationCompiler:
                     continue
                 fields, media_type = self.fields(path_item, operation)
                 if ownership is None:
-                    self.builder.add_operation(None, "root", name, method.upper(), path, media_type)
+                    self.builder.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
                     self.builder.add_root_operation(name)
                     for field in fields:
                         self.builder.add_field(name, field.name, field.type)
                     continue
                 resource, scope = ownership
-                self.builder.add_operation(resource.reference, scope, name, method.upper(), path, media_type)
+                self.builder.add_operation(resource.reference, scope, name, operation_method, path, media_type)
                 for field in fields:
                     self.builder.add_field(name, field.name, field.type)
                 if (
-                    scope == "collection"
+                    scope == SirenScope.COLLECTION
                     and path == resource.collection_path
                     and not self.routes.parameters(path)
-                    and method_name != "get"
+                    and operation_method != SirenHttpMethod.GET
                 ):
                     self.builder.add_root_operation(name)
 
@@ -105,24 +120,24 @@ class OpenApiOperationCompiler:
             fields.append(Field(name=name, type=self.field_type(name, self.components.schema(value))))
         return tuple(fields), "application/json" if content else None
 
-    def field_type(self, name: str, definition: dict[str, Any]) -> str:
+    def field_type(self, name: str, definition: dict[str, Any]) -> SirenFieldType:
         unsupported = {"allOf", "anyOf", "const", "contains", "enum", "if", "items", "not", "oneOf", "prefixItems"}
         if unsupported & definition.keys() or definition.get("nullable") is True:
             raise ValueError(f"OpenAPI field schema is unsupported: {name}")
         schema_type = definition.get("type")
         if schema_type == "string":
             formats = {
-                "date": "date",
-                "date-time": "datetime-local",
-                "email": "email",
-                "time": "time",
-                "uri": "url",
+                "date": SirenFieldType.DATE,
+                "date-time": SirenFieldType.DATETIME_LOCAL,
+                "email": SirenFieldType.EMAIL,
+                "time": SirenFieldType.TIME,
+                "uri": SirenFieldType.URL,
             }
-            field_type = formats.get(definition.get("format"), "text")
-            if definition.get("format") is None or field_type != "text":
+            field_type = formats.get(definition.get("format"), SirenFieldType.TEXT)
+            if definition.get("format") is None or field_type != SirenFieldType.TEXT:
                 return field_type
         if schema_type in {"integer", "number"}:
-            return "number"
+            return SirenFieldType.NUMBER
         if schema_type == "boolean":
-            return "checkbox"
+            return SirenFieldType.CHECKBOX
         raise ValueError(f"OpenAPI field schema is unsupported: {name}")

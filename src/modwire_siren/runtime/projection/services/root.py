@@ -5,20 +5,21 @@ from wireup import injectable
 
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
+from ...vocabulary import SirenHttpMethod, SirenScope
 from ..contracts import SirenActionDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")
 
 
-@injectable(as_type=SirenScopeProjector, qualifier="root")
+@injectable(as_type=SirenScopeProjector, qualifier=SirenScope.ROOT)
 @dataclass(frozen=True)
 class SirenRootScopeProjector(SirenScopeProjector):
     actions: SirenActionDocumentService
     hrefs: SirenHrefService
 
-    def supports(self, scope: str) -> bool:
-        return scope == "root"
+    def supports(self, scope: SirenScope) -> bool:
+        return scope == SirenScope.ROOT
 
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
         operations = {operation.name: operation for operation in request.api.operations}
@@ -31,9 +32,9 @@ class SirenRootScopeProjector(SirenScopeProjector):
             for resource in request.api.resources
             if not _PARAMETER.search(resource.collection.path)
             and any(
-                operation.scope == "collection"
+                operation.scope == SirenScope.COLLECTION
                 and operation.route.path == resource.collection.path
-                and operation.method == "GET"
+                and operation.method == SirenHttpMethod.GET
                 for operation in request.api.operations
             )
         )

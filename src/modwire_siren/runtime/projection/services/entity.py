@@ -8,6 +8,7 @@ from ...document import SirenDocument, SirenEmbeddedRepresentation, SirenLink
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
+from ...vocabulary import SirenScope
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService
 
 
@@ -28,7 +29,7 @@ class SirenDefaultEntityDocumentService(SirenEntityDocumentService):
         fields = {
             "class_": (resource.resource_class,),
             "properties": value,
-            "actions": tuple(self.actions.actions(api, resource, "entity", context, value)) or None,
+            "actions": tuple(self.actions.actions(api, resource, SirenScope.ENTITY, context, value)) or None,
             "links": (
                 SirenLink(
                     rel=("self",),

@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
+from ....runtime.vocabulary import SirenHttpMethod, SirenScope
+
 
 @dataclass(frozen=True)
 class OperationDraft:
     resource: str | None
-    scope: str
+    scope: SirenScope
     name: str
-    method: str
+    method: SirenHttpMethod
     path: str
     media_type: str | None
