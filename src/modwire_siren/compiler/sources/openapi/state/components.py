@@ -5,6 +5,7 @@ from typing import Any
 class ComponentResolver:
     def __init__(self, components: Any) -> None:
         self.components = components if isinstance(components, dict) else {}
+        self.reference_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
     def parameter(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "parameters")
@@ -27,11 +28,17 @@ class ComponentResolver:
         if reference in trail:
             raise ValueError(f"OpenAPI component reference cycle: {' -> '.join((*trail, reference))}")
         component_kind, name = self.address(reference, kind)
+        cache_key = component_kind, name
+        cached = self.reference_cache.get(cache_key)
+        if cached is not None:
+            return deepcopy(cached) | result
         collection = self.components.get(component_kind)
         target = collection.get(name) if isinstance(collection, dict) else None
         if not isinstance(target, dict):
             raise ValueError(f"OpenAPI component reference is unknown: {reference}")
-        return self.resolve(target, kind, (*trail, reference)) | result
+        resolved = self.resolve(target, kind, (*trail, reference))
+        self.reference_cache[cache_key] = resolved
+        return deepcopy(resolved) | result
 
     def address(self, reference: str, expected_kind: str) -> tuple[str, str]:
         prefix = "#/components/"
