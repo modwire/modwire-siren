@@ -9,6 +9,8 @@
 - Put every `@injectable` class in its feature's `services` package and re-export it from that package's
   `__init__.py`; `wiring.py` discovers only those packages. Stateless services are singletons, mutable
   operation state is factory-created or transient, and request values remain ordinary method arguments.
+- Model injectable services as frozen dataclasses, including stateless services with no fields; this gives
+  Wireup a declarative constructor without handwritten initialization plumbing.
 - Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
   `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.

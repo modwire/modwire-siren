@@ -1,4 +1,3 @@
-from .openapi import OpenApiSource
-from .siren_api_service import SirenApiService
+from .assembly import SirenApiService
 
-__all__ = ["OpenApiSource", "SirenApiService"]
+__all__ = ["SirenApiService"]

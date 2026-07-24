@@ -4,7 +4,6 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..compiler import OpenApiSource, SirenApiService
 from ..runtime import SirenEngine
 from ..wiring import SirenApplicationContainer
 
@@ -97,5 +96,6 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
         raise ValueError("OpenAPI document is invalid: cyclic reference") from error
     except Exception as error:
         raise ValueError(f"OpenAPI document is invalid: {error}") from error
-    api = SirenApiService((OpenApiSource(root_path=root_path),)).build(document)
-    return SirenApplicationContainer().engine_factory().create(api)
+    container = SirenApplicationContainer()
+    api = container.api_service().build(document, root_path)
+    return container.engine_factory().create(api)

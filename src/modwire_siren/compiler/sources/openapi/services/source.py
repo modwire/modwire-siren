@@ -1,24 +1,28 @@
+from dataclasses import dataclass
 from typing import Any
 
-from ...runtime import SirenApi
-from ..builder import SirenBuilderService
-from ..siren_source import SirenSource
-from .component_resolver import ComponentResolver
-from .operation_compiler import OperationCompiler
-from .route_catalog import RouteCatalog
+from wireup import injectable
+
+from .....runtime import SirenApi
+from ....assembly.contracts import SirenBuilderFactory
+from ...contracts import SirenSource
+from ..contracts import OpenApiOperationCompiler
+from ..values import ComponentResolver, RouteCatalog
 
 
+@injectable(as_type=SirenSource)
+@dataclass(frozen=True)
 class OpenApiSource(SirenSource):
-    def __init__(self, root_path: str = "/") -> None:
-        self.root_path = root_path
+    builders: SirenBuilderFactory
+    operations: OpenApiOperationCompiler
 
-    def load(self, schema: dict[str, Any]) -> SirenApi:
+    def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
         paths = schema.get("paths")
         if not isinstance(paths, dict):
             raise ValueError("OpenAPI schema requires an object-valued paths field")
         info = schema.get("info", {})
-        builder = SirenBuilderService().set_root(
-            path=self.root_path,
+        builder = self.builders.create().set_root(
+            path=root_path,
             title=str(info.get("title", "")) if isinstance(info, dict) else "",
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
@@ -32,5 +36,5 @@ class OpenApiSource(SirenSource):
                 resource.entity_path,
                 resource.identifier,
             )
-        OperationCompiler(builder, routes, ComponentResolver(schema.get("components", {}))).compile()
+        self.operations.compile(builder, routes, ComponentResolver(schema.get("components", {})))
         return builder.build()

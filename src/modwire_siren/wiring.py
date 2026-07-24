@@ -6,6 +6,7 @@ from types import ModuleType
 
 from wireup import create_sync_container
 
+from .compiler import SirenApiService
 from .runtime.engine import SirenEngineFactory
 
 
@@ -28,7 +29,10 @@ class SirenApplicationContainer:
     discovery: SirenServiceModuleDiscovery = field(default_factory=SirenServiceModuleDiscovery)
 
     def engine_factory(self) -> SirenEngineFactory:
-        container = create_sync_container(
-            injectables=self.discovery.modules(("modwire_siren.**.services",))
-        )
-        return container.get(SirenEngineFactory)
+        return self.container().get(SirenEngineFactory)
+
+    def api_service(self) -> SirenApiService:
+        return self.container().get(SirenApiService)
+
+    def container(self):
+        return create_sync_container(injectables=self.discovery.modules(("modwire_siren.**.services",)))
