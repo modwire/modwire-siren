@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 
-from ...builder import SirenBuilderService
+from ..builder import SirenBuilderService
 from .component_resolver import ComponentResolver
 from .field import Field
 from .route_catalog import RouteCatalog
@@ -94,12 +94,8 @@ class OperationCompiler:
         definition = self.components.schema(schema)
         properties = definition.get("properties", {}) if isinstance(definition, dict) else {}
         required = set(definition.get("required", ())) if isinstance(definition, dict) else set()
-        return (
-            fields
-            + tuple(
-                Field(name=name, definition=self.components.schema(value), required=name in required)
-                for name, value in properties.items()
-                if isinstance(name, str) and isinstance(value, dict)
-            ),
-            "application/json" if content else None,
-        )
+        return fields + tuple(
+            Field(name=name, definition=self.components.schema(value), required=name in required)
+            for name, value in properties.items()
+            if isinstance(name, str) and isinstance(value, dict)
+        ), "application/json" if content else None

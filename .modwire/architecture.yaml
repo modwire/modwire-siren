@@ -1,32 +1,19 @@
 boundaries:
   tags:
-    - {name: &module_tag module, match: src/modwire_siren/*}
-    - {name: &test_module_tag test_module, match: tests}
-    - {name: &tooling_module_tag tooling_module, match: scripts}
-    - {name: &package_api_tag package_api, match: src/modwire_siren/__init__.py}
-    - {name: &facade_tag facade, match: src/modwire_siren/extras.py}
-    - {name: &service_tag service, match: src/modwire_siren/service.py}
-    - {name: &builder_tag builder, match: src/modwire_siren/builder.py}
-    - {name: &contract_tag contract, match: src/modwire_siren/contracts.py}
-    - {name: &engine_tag engine, match: src/modwire_siren/engine}
-    - {name: &source_tag source, match: src/modwire_siren/sources}
+    - {name: &module_tag module, match: modwire_siren/*}
+    - {name: &package_api_tag package_api, match: modwire_siren/__init__.py}
+    - {name: &api_tag api, match: modwire_siren/api}
+    - {name: &compiler_tag compiler, match: modwire_siren/compiler}
+    - {name: &runtime_tag runtime, match: modwire_siren/runtime}
 
   rules:
-    - {source: *package_api_tag, allow: [*facade_tag, *contract_tag]}
-    - {source: *facade_tag, allow: [*engine_tag, *service_tag, *source_tag]}
-    - {source: *service_tag, allow: [*builder_tag, *contract_tag, *source_tag]}
-    - {source: *builder_tag, allow: [*contract_tag]}
-    - {source: *engine_tag, allow: [*contract_tag]}
-    - {source: *source_tag, allow: [*builder_tag, *contract_tag]}
-    - {source: *test_module_tag, allow: [*package_api_tag]}
-    - {source: *tooling_module_tag, allow: [*package_api_tag]}
+    - {source: *package_api_tag, allow: [*api_tag, *runtime_tag]}
+    - {source: *api_tag, allow: [*compiler_tag, *runtime_tag]}
+    - {source: *compiler_tag, allow: [*runtime_tag]}
 
   flow:
     analyzers: [module-boundaries, backward-flow, no-cycles, no-reentry]
-    realms:
-      - {name: package, module_tag: *module_tag}
-      - {name: tests, module_tag: *test_module_tag}
-      - {name: tooling, module_tag: *tooling_module_tag}
+    module_tag: *module_tag
 
 # agent forbidden start
 shape:

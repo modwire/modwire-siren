@@ -59,7 +59,7 @@ tag-pattern = '^v(?P<version>\d+\.\d+\.\d+)$'
 fallback-version = "0.0.0"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/modwire_siren/_version.py"
+version-file = "src/modwire_siren/runtime/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/modwire_siren"]

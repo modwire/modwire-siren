@@ -1,9 +1,9 @@
 from collections.abc import Sequence
 from typing import Any
 
+from ..runtime import SirenApi, SirenOperation, SirenResource, SirenRoot
 from .builder import SirenBuilderService
-from .contracts import SirenApi, SirenOperation, SirenResource, SirenRoot
-from .sources.base import SirenSource
+from .siren_source import SirenSource
 
 
 class SirenApiService:
@@ -16,21 +16,15 @@ class SirenApiService:
         return self._build(self._merge(tuple(source.load(schema) for source in self._sources)))
 
     def _merge(
-        self,
-        apis: tuple[SirenApi, ...],
+        self, apis: tuple[SirenApi, ...]
     ) -> tuple[SirenRoot, tuple[SirenResource, ...], tuple[SirenOperation, ...]]:
         root = SirenRoot()
         resources: dict[str, SirenResource] = {}
         operations: dict[str, SirenOperation] = {}
         for api in apis:
             if api.root != SirenRoot():
-                if (
-                    root != SirenRoot()
-                    and (
-                        root.route != api.root.route
-                        or root.title != api.root.title
-                        or root.version != api.root.version
-                    )
+                if root != SirenRoot() and (
+                    root.route != api.root.route or root.title != api.root.title or root.version != api.root.version
                 ):
                     raise ValueError("Siren sources define conflicting roots")
                 root = api.root.model_copy(
@@ -38,10 +32,9 @@ class SirenApiService:
                 )
             for resource in api.resources:
                 existing = resources.get(resource.reference)
-                if existing is None:
-                    resources[resource.reference] = resource
-                else:
-                    resources[resource.reference] = self._merge_resource(existing, resource)
+                resources[resource.reference] = (
+                    resource if existing is None else self._merge_resource(existing, resource)
+                )
             for operation in api.operations:
                 existing = operations.get(operation.name)
                 if existing is None:

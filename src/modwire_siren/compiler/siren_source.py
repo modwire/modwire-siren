@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ..contracts import SirenApi
+from ..runtime import SirenApi
 
 
 class SirenSource(ABC):

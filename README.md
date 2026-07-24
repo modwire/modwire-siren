@@ -43,25 +43,10 @@ openapi = {
     "openapi": "3.1.1",
     "info": {"title": "Records API", "version": "1.0"},
     "paths": {
-        "/records": {
-            "get": {
-                "operationId": "list_records",
-                "responses": {"200": {"description": "OK"}},
-            }
-        },
+        "/records": {"get": {"operationId": "list_records", "responses": {"200": {"description": "OK"}}}},
         "/records/{record_id}": {
-            "parameters": [
-                {
-                    "name": "record_id",
-                    "in": "path",
-                    "required": True,
-                    "schema": {"type": "string"},
-                }
-            ],
-            "get": {
-                "operationId": "get_record",
-                "responses": {"200": {"description": "OK"}},
-            },
+            "parameters": [{"name": "record_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+            "get": {"operationId": "get_record", "responses": {"200": {"description": "OK"}}},
             "patch": {
                 "operationId": "rename_record",
                 "requestBody": {
@@ -91,76 +76,32 @@ document = engine.project(
     )
 )
 
-assert document["actions"] == [
-    {"name": "get_record", "href": "https://api.example.com/records/42", "method": "GET"},
-    {
-        "name": "rename_record",
-        "href": "https://api.example.com/records/42",
-        "method": "PATCH",
-        "type": "application/json",
-        "fields": [{"name": "title", "type": "string", "required": True}],
-    },
-]
+assert document["actions"][0] == {
+    "name": "get_record",
+    "href": "https://api.example.com/records/42",
+    "method": "GET",
+}
 ```
 
 #### OpenAPI requirements
 
 The final plural static segment of a route is a collection; adding one path parameter forms
-its entity route. Prefixes and nested collections are supported, including:
-
-```text
-/api/v1/records
-/accounts/{account}/records
-/accounts/{account}/records/{record}
-```
-
-Every non-root HTTP operation needs a unique `operationId`. Operations on collection or
-entity paths, including their static subpaths, belong to that resource. The longest matching
-route wins, so a nested resource owns `/accounts/{account}/records` rather than `account`.
-The root document links only static collections with an input-free `GET` operation. Static
-collection operations needing input or using another method, and standalone commands without
-path parameters, are root actions when their operation IDs appear in the root context's
-capabilities. Contextual operations remain on their owning collection or entity. Parameters
-must be unchanged from the owning route: adding, removing, renaming, or reordering them is
-unsupported. Ambiguous routes, unowned routes ending in a parameter, duplicate resource names,
-missing operation IDs, and invalid OpenAPI fail compilation explicitly.
-
-Local `#/components/parameters`, `#/components/requestBodies`, and `#/components/schemas`
-references are resolved for actions. External and path-item references
-are unsupported. Action fields come from query parameters and JSON request-body properties;
-path parameters remain routing values. Header and cookie parameters are unsupported. If a
-request body declares content, it must include `application/json`; that media type is projected
-as the Siren action's `type`.
+its entity route. Prefixes and nested collections are supported. Every non-root HTTP operation
+needs a unique `operationId`. Local `#/components/parameters`, `#/components/requestBodies`,
+and `#/components/schemas` references are resolved; external and path-item references are not.
 
 #### Framework integration is one startup call
 
-Do not recreate your framework's routes, actions, or OpenAPI document in Siren-specific code.
-Give the framework-generated document directly to `siren()` once, after routes are registered:
+Give the framework-generated document directly to `siren()` after routes are registered:
 
 ```python
-# FastAPI
-engine = siren(app.openapi())
-
-# Django Ninja / Django Ninja Extra
-engine = siren(api.get_openapi_schema())
+engine = siren(app.openapi())  # FastAPI
+engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
 ```
 
-That is the integration point: `siren()` derives the graph from the same contract your
-framework already exposes. At response time, only supply the request-specific data and allowed
-operation IDs in `SirenContext`, then return `engine.project(context)` as
-`application/vnd.siren+json`. No builder, resource registration, route duplication, or
-framework adapter is required.
-
-#### Mounted entry point
-
-Set `root_path` when the Siren entry point is mounted away from `/`:
-
-```python
-engine = siren(app.openapi(), root_path="/siren/")
-```
-
-Framework adapters are intentionally outside this package because the integration is already
-the small startup call shown above.
+Supply request-specific data and allowed operation IDs in `SirenContext`, then return
+`engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
+entry point is mounted away from `/`.
 
 ### `SirenContext`
 
@@ -171,54 +112,16 @@ for an API entry point. A resource is required outside root scope and is the sin
 derived from the collection route: `"record"` for `/records`. If the same resource appears
 in multiple nested routes, `path_values` selects the route with matching parent parameters.
 
-#### Collection example
-
-```python
-context = SirenContext(
-    base_url="https://api.example.com",
-    scope="collection",
-    resource="record",
-    items=(
-        {"id": "42", "title": "Architecture"},
-        {"id": "43", "title": "Systems"},
-    ),
-    query=(("page", 2),),
-    capabilities=frozenset({"list_records"}),
-)
-document = engine.project(context)
-
-assert document["links"] == [
-    {"rel": ["self"], "href": "https://api.example.com/records?page=2"}
-]
-```
-
 | Field | Purpose |
 | --- | --- |
-| `base_url` | Public origin joined with OpenAPI paths, for example `https://api.example.com`. |
-| `scope` | `"root"`, `"collection"`, or `"entity"`. Root contexts have no resource. |
-| `resource` | Derived singular resource name. Required outside the root. |
-| `value` | Entity properties or collection-level properties. Also supplies entity path parameters. |
-| `items` | Tuple of entity mappings for a collection. |
-| `path_values` | Path parameters missing from `value`, such as a parent resource ID. |
-| `query` | Ordered `(name, value)` pairs added to self and action links. |
-| `capabilities` | Permitted OpenAPI `operationId` values to advertise as Siren actions. |
-
-#### Nested routes and queries
-
-For `/accounts/{account}/records/{record}`, supply the parent parameter separately:
-
-```python
-context = SirenContext(
-    base_url="https://api.example.com",
-    resource="record",
-    path_values={"account": "acme"},
-    value={"record": "42", "title": "Architecture"},
-)
-```
-
-Path values are percent-encoded. Query pairs retain their order and repeated keys. Query
-values must be scalar; booleans become lowercase `true` or `false`, and `None` becomes
-an empty value. The root self link receives its query pairs, while root resource links do not.
+| `base_url` | Public origin joined with OpenAPI paths. |
+| `scope` | `"root"`, `"collection"`, or `"entity"`. |
+| `resource` | Derived singular resource name; required outside root. |
+| `value` | Entity or collection properties and entity path parameters. |
+| `items` | Entity mappings for a collection. |
+| `path_values` | Missing path parameters, such as a parent resource ID. |
+| `query` | Ordered query pairs for self and action links. |
+| `capabilities` | Permitted OpenAPI `operationId` values. |
 
 ## Public API
 

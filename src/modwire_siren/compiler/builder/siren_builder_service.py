@@ -1,40 +1,12 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Literal
 
 from pydantic import JsonValue
 
-from .contracts import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
-
-Scope = Literal["root", "collection", "entity"]
-
-
-@dataclass
-class _ResourceDraft:
-    reference: str
-    name: str
-    resource_class: str
-    collection_path: str
-    entity_path: str | None
-    identifier: str
-
-
-@dataclass
-class _OperationDraft:
-    resource: str | None
-    scope: str
-    name: str
-    method: str
-    path: str
-    media_type: str | None
-
-
-@dataclass
-class _FieldDraft:
-    operation: str
-    name: str
-    definition: Mapping[str, JsonValue]
-    required: bool
+from ...runtime import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from .field_draft import FieldDraft
+from .operation_draft import OperationDraft
+from .resource_draft import ResourceDraft
 
 
 @dataclass
@@ -42,9 +14,9 @@ class SirenBuilderService:
     _root_path: str = "/"
     _root_title: str = ""
     _root_version: str = ""
-    _resources: list[_ResourceDraft] = field(default_factory=list)
-    _operations: list[_OperationDraft] = field(default_factory=list)
-    _fields: list[_FieldDraft] = field(default_factory=list)
+    _resources: list[ResourceDraft] = field(default_factory=list)
+    _operations: list[OperationDraft] = field(default_factory=list)
+    _fields: list[FieldDraft] = field(default_factory=list)
     _root_operations: list[str] = field(default_factory=list)
 
     def set_root(self, path: str = "/", title: str = "", version: str = "") -> "SirenBuilderService":
@@ -62,21 +34,13 @@ class SirenBuilderService:
         entity_path: str | None = None,
         identifier: str = "id",
     ) -> "SirenBuilderService":
-        self._resources.append(
-            _ResourceDraft(reference, name, resource_class, collection_path, entity_path, identifier)
-        )
+        self._resources.append(ResourceDraft(reference, name, resource_class, collection_path, entity_path, identifier))
         return self
 
     def add_operation(
-        self,
-        resource: str | None,
-        scope: Scope,
-        name: str,
-        method: str,
-        path: str,
-        media_type: str | None = None,
+        self, resource: str | None, scope: str, name: str, method: str, path: str, media_type: str | None = None
     ) -> "SirenBuilderService":
-        self._operations.append(_OperationDraft(resource, scope, name, method, path, media_type))
+        self._operations.append(OperationDraft(resource, scope, name, method, path, media_type))
         return self
 
     def add_root_operation(self, name: str) -> "SirenBuilderService":
@@ -84,13 +48,9 @@ class SirenBuilderService:
         return self
 
     def add_field(
-        self,
-        operation: str,
-        name: str,
-        definition: Mapping[str, JsonValue],
-        required: bool = False,
+        self, operation: str, name: str, definition: Mapping[str, JsonValue], required: bool = False
     ) -> "SirenBuilderService":
-        self._fields.append(_FieldDraft(operation, name, definition, required))
+        self._fields.append(FieldDraft(operation, name, definition, required))
         return self
 
     def build(self) -> SirenApi:
@@ -142,16 +102,16 @@ class SirenBuilderService:
             ),
         )
 
-    def _resource_index(self) -> dict[str, _ResourceDraft]:
-        index: dict[str, _ResourceDraft] = {}
+    def _resource_index(self) -> dict[str, ResourceDraft]:
+        index: dict[str, ResourceDraft] = {}
         for resource in self._resources:
             if resource.reference in index:
                 raise ValueError(f"Siren resource already exists: {resource.reference}")
             index[resource.reference] = resource
         return index
 
-    def _operation_index(self, resources: Mapping[str, _ResourceDraft]) -> dict[str, _OperationDraft]:
-        index: dict[str, _OperationDraft] = {}
+    def _operation_index(self, resources: Mapping[str, ResourceDraft]) -> dict[str, OperationDraft]:
+        index: dict[str, OperationDraft] = {}
         for operation in self._operations:
             if operation.name in index:
                 raise ValueError(f"Siren operation already exists: {operation.name}")
@@ -171,7 +131,7 @@ class SirenBuilderService:
         return index
 
     @staticmethod
-    def _validate_operation_path(operation: _OperationDraft, resource: _ResourceDraft) -> None:
+    def _validate_operation_path(operation: OperationDraft, resource: ResourceDraft) -> None:
         if operation.scope == "entity":
             if resource.entity_path is None:
                 raise ValueError(f"Siren resource {resource.name!r} has no entity path")
@@ -190,8 +150,8 @@ class SirenBuilderService:
                 f"{operation.scope} scope of resource {resource.name!r}"
             )
 
-    def _field_index(self, operations: Mapping[str, _OperationDraft]) -> dict[str, tuple[_FieldDraft, ...]]:
-        index: dict[str, list[_FieldDraft]] = {}
+    def _field_index(self, operations: Mapping[str, OperationDraft]) -> dict[str, tuple[FieldDraft, ...]]:
+        index: dict[str, list[FieldDraft]] = {}
         for item in self._fields:
             if item.operation not in operations:
                 raise ValueError(f"Siren field {item.name!r} references unknown operation {item.operation!r}")

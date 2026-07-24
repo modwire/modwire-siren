@@ -1,7 +1,7 @@
-.PHONY: docs docs-check verify
+.PHONY: docs docs-check modwire verify
 
 modwire:
-	modwire report --language python --summary
+	modwire report --architecture-root src --language python --summary
 
 docs:
 	uv run python scripts/generate_docs.py

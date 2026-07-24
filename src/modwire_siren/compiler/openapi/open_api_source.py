@@ -1,8 +1,8 @@
 from typing import Any
 
-from ...builder import SirenBuilderService
-from ...contracts import SirenApi
-from ..base import SirenSource
+from ...runtime import SirenApi
+from ..builder import SirenBuilderService
+from ..siren_source import SirenSource
 from .component_resolver import ComponentResolver
 from .operation_compiler import OperationCompiler
 from .route_catalog import RouteCatalog

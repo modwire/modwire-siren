@@ -3,7 +3,10 @@ from collections.abc import Mapping
 from typing import Any
 from urllib.parse import quote
 
-from ..contracts import SirenApi, SirenContext, SirenOperation, SirenResource
+from .siren_api import SirenApi
+from .siren_context import SirenContext
+from .siren_operation import SirenOperation
+from .siren_resource import SirenResource
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")
 
@@ -76,10 +79,7 @@ class SirenEngine:
                 {
                     "rel": ["self"],
                     "href": self._href(
-                        resource.entity.path if resource.entity else resource.collection.path,
-                        context,
-                        resource,
-                        value,
+                        resource.entity.path if resource.entity else resource.collection.path, context, resource, value
                     ),
                 }
             ],
@@ -89,11 +89,7 @@ class SirenEngine:
         return document
 
     def _actions(
-        self,
-        resource: SirenResource,
-        scope: str,
-        context: SirenContext,
-        value: Mapping[str, Any],
+        self, resource: SirenResource, scope: str, context: SirenContext, value: Mapping[str, Any]
     ) -> list[dict[str, Any]]:
         names = resource.collection_operations if scope == "collection" else resource.entity_operations
         return [
@@ -119,11 +115,7 @@ class SirenEngine:
             action["type"] = operation.media_type
         if operation.fields:
             action["fields"] = [
-                {
-                    "name": field.name,
-                    "type": field.definition.get("type", "text"),
-                    "required": field.required,
-                }
+                {"name": field.name, "type": field.definition.get("type", "text"), "required": field.required}
                 for field in operation.fields
             ]
         return action
@@ -138,9 +130,7 @@ class SirenEngine:
             return candidates[0]
         values = set(context.value) | set(context.path_values)
         matches = [
-            resource
-            for resource in candidates
-            if set(_PARAMETER.findall(resource.collection.path)).issubset(values)
+            resource for resource in candidates if set(_PARAMETER.findall(resource.collection.path)).issubset(values)
         ]
         if not matches:
             raise ValueError(f"Siren context cannot select resource {context.resource!r}: provide parent path values")
@@ -192,5 +182,4 @@ class SirenEngine:
             else:
                 value = str(query_value)
             query_items.append(f"{quote(name, safe='')}={quote(value, safe='')}")
-        query = "&".join(query_items)
-        return f"{href}?{query}"
+        return f"{href}?{'&'.join(query_items)}"

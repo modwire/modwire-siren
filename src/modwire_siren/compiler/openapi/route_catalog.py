@@ -36,12 +36,7 @@ class RouteCatalog:
             existing = candidates.get(collection_path)
             if existing is None:
                 candidates[collection_path] = Resource(
-                    collection_path,
-                    name,
-                    name.replace("_", "-"),
-                    collection_path,
-                    entity_path,
-                    "id",
+                    collection_path, name, name.replace("_", "-"), collection_path, entity_path, "id"
                 )
             elif entity_path is not None:
                 candidates[collection_path] = Resource(

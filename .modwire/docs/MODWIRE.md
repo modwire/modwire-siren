@@ -1,3 +1,3 @@
 # Modwire
 
-Run `modwire report --language python` before and after structural changes. Resolve boundary violations before review; update the map when a deliberate architectural change changes ownership or allowed dependencies.
+Run `make modwire` before and after structural changes. It checks the package architecture only; resolve boundary violations before review and update the map when deliberate changes alter ownership or allowed dependencies.
