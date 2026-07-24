@@ -76,6 +76,7 @@ include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.to
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
 filterwarnings = ["error"]
+xfail_strict = true
 
 [tool.ruff]
 line-length = 120
