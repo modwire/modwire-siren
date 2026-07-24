@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
-from ....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenScope
+from ....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 
@@ -41,7 +41,7 @@ class SirenBuilder:
         name: str,
         method: SirenHttpMethod,
         path: str,
-        media_type: str | None = None,
+        media_type: SirenMediaType | None = None,
     ) -> "SirenBuilder":
         self._operations.append(OperationDraft(resource, scope, name, method, path, media_type))
         return self

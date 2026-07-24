@@ -8,6 +8,7 @@ from wireup import injectable
 
 from ...graph import SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenUri
 from ..contracts import SirenHrefService
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")
@@ -23,7 +24,7 @@ class SirenDefaultHrefService(SirenHrefService):
         resource: SirenResource | None,
         value: Mapping[str, Any] | None = None,
         include_query: bool = True,
-    ) -> str:
+    ) -> SirenUri:
         values = dict(context.value)
         values.update(context.path_values)
         values.update(value or {})
@@ -37,7 +38,7 @@ class SirenDefaultHrefService(SirenHrefService):
             resolved_path = resolved_path.replace(f"{{{parameter}}}", quote(str(path_value), safe=""))
         href = f"{context.base_url.rstrip('/')}{resolved_path}"
         if not include_query or not context.query:
-            return href
+            return SirenUri.validate(href)
         query_items = []
         for name, query_value in context.query:
             query_text = str(query_value)
@@ -46,4 +47,4 @@ class SirenDefaultHrefService(SirenHrefService):
             elif isinstance(query_value, bool):
                 query_text = query_text.lower()
             query_items.append(f"{quote(name, safe='')}={quote(query_text, safe='')}")
-        return f"{href}?{'&'.join(query_items)}"
+        return SirenUri.validate(f"{href}?{'&'.join(query_items)}")

@@ -202,10 +202,10 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
-| `SirenAction` | Describe an available Siren action. | `apply_default_media_type() -> SirenAction`<br>`validate_field_names() -> SirenAction` |
+| `SirenAction` | Describe an available Siren action. | — |
 | `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
-| `SirenContext` | Supply runtime state used to project a Siren document. | `validate_scope() -> SirenContext` |
-| `SirenDocument` | Represent an official Siren entity document. | `validate_action_names() -> SirenDocument` |
+| `SirenContext` | Supply runtime state used to project a Siren document. | — |
+| `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
 | `SirenEmbeddedRepresentation` | Represent a Siren sub-entity embedded in full. | — |
 | `SirenField` | Describe an official Siren action field. | — |

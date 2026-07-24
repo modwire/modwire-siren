@@ -1,5 +1,5 @@
 from ..contracts import Contract
-from ..vocabulary import SirenHttpMethod, SirenScope
+from ..vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 from .field import SirenField
 from .route import SirenRoute
 
@@ -10,5 +10,5 @@ class SirenOperation(Contract):
     scope: SirenScope
     method: SirenHttpMethod
     route: SirenRoute
-    media_type: str | None = None
+    media_type: SirenMediaType | None = None
     fields: tuple[SirenField, ...] = ()
