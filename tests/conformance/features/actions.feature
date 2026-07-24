@@ -28,6 +28,11 @@ Feature: Siren actions
       When it is created
       Then creation is rejected
 
+    Scenario: Distinct action names preserve their serialized order
+      Given a public Siren document with actions named "create" and "update"
+      When its actions are serialized
+      Then the document has actions named "create" then "update"
+
   Rule: An action has Siren defaults
 
     Scenario: An action without a method serializes as GET
