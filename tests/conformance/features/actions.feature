@@ -7,6 +7,13 @@ Feature: Siren actions
       When it is created
       Then creation is rejected
 
+  Rule: An action target is a URI
+
+    Scenario: An action with a non-URI href is rejected
+      Given a public Siren action with a non-URI href
+      When it is created
+      Then creation is rejected
+
   Rule: Action names are unique within an entity
 
     Scenario: Duplicate action names are rejected

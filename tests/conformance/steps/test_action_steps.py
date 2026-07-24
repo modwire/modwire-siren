@@ -14,6 +14,7 @@ class ActionSteps:
     payloads: tuple[Mapping[str, object], ...] | None = None
     error: ValueError | None = None
     unsupported_method: str | None = None
+    invalid_href: str | None = None
     duplicate_names: bool = False
 
     @staticmethod
@@ -25,6 +26,7 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(
             class_=("update",),
@@ -45,6 +47,7 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(name="update", href="https://api.example.com/records/42")
 
@@ -57,6 +60,7 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
         ActionSteps.duplicate_names = False
         ActionSteps.actions = tuple(
             SirenAction(
@@ -77,6 +81,20 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = "HEAD"
+        ActionSteps.invalid_href = None
+        ActionSteps.duplicate_names = False
+
+    @staticmethod
+    @given("a public Siren action with a non-URI href", stacklevel=2)
+    def public_siren_action_with_non_uri_href() -> None:
+        ActionSteps.action = None
+        ActionSteps.actions = None
+        ActionSteps.document = None
+        ActionSteps.payload = None
+        ActionSteps.payloads = None
+        ActionSteps.error = None
+        ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = "not-a-uri"
         ActionSteps.duplicate_names = False
 
     @staticmethod
@@ -89,6 +107,7 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
         ActionSteps.duplicate_names = True
 
     @staticmethod
@@ -100,6 +119,7 @@ class ActionSteps:
         ActionSteps.payloads = None
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(
             name="update",
@@ -111,6 +131,11 @@ class ActionSteps:
     @when("it is created", stacklevel=2)
     def created_action() -> None:
         try:
+            if ActionSteps.invalid_href is not None:
+                ActionSteps.action = SirenAction(
+                    name="inspect",
+                    href=ActionSteps.invalid_href,
+                )
             if ActionSteps.unsupported_method is not None:
                 ActionSteps.action = SirenAction(
                     name="inspect",
