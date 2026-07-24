@@ -1,9 +1,9 @@
-import json
 import re
-from importlib.resources import files
 from typing import Any
 
 from pydantic_core import CoreSchema, core_schema
+
+from ....siren_schema import SirenSchemaReader
 
 
 class SirenMediaType(str):
@@ -25,6 +25,10 @@ class SirenMediaType(str):
         return cls(value)
 
     @classmethod
+    def default(cls) -> "SirenMediaType":
+        return cls.validate(SirenSchemaReader.official().default("Action", "type"))
+
+    @classmethod
     def schema(cls) -> dict[str, Any]:
-        document = json.loads(files("modwire_siren.runtime.document.schema").joinpath("siren.schema.json").read_text())
-        return document["definitions"]["MediaType"]
+        document = SirenSchemaReader.official()
+        return document.thaw(document.definition("MediaType"))

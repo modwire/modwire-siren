@@ -1,5 +1,3 @@
-import json
-from importlib.resources import files
 from typing import ClassVar
 
 from pydantic import Field, model_validator
@@ -13,13 +11,10 @@ from .field import SirenField
 class SirenAction(Contract):
     """Describe an available Siren action."""
 
-    default_media_type: ClassVar[SirenMediaType] = SirenMediaType.validate(
-        json.loads(files("modwire_siren.runtime.document.schema").joinpath("siren.schema.json").read_text())["definitions"]
-        ["Action"]["properties"]["type"]["default"]
-    )
+    default_media_type: ClassVar[SirenMediaType] = SirenMediaType.default()
     class_: tuple[str, ...] | None = Field(default=None, alias="class")
     name: str
-    method: SirenActionMethod = SirenActionMethod.GET
+    method: SirenActionMethod = SirenActionMethod.default()
     href: SirenUri
     title: str | None = None
     type: SirenMediaType | SkipJsonSchema[None] = Field(default=None, json_schema_extra={"default": default_media_type})

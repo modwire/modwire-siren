@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 from wireup import injectable
 
-from ....schema.services import SirenSchemaFreezer
+from .....siren_schema import SirenSchemaReader
 from ...values import SirenCapability
 
 
 @injectable
 @dataclass(frozen=True)
 class SirenSerializationSchemaExporter:
-    schemas: SirenSchemaFreezer
+    schemas: SirenSchemaReader
 
     def export(self, definition: str, model: type[BaseModel]) -> SirenCapability:
         schema = model.model_json_schema(by_alias=True, mode="serialization")

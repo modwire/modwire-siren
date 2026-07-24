@@ -1,5 +1,6 @@
 # Testing
 
-Test through published `modwire_siren` imports and observable Siren documents only—never private modules or internal state. The Modwire MCP tool, when available, is a reference consumer: inspect its advertised links and actions before using it.
-
-Write cases in Auntie order: adversarial boundary, invariant, interruption, cleanup, recovery, then happy path. Run `make verify` before review.
+- Test only published `modwire_siren` imports and observable Siren documents, never private modules or state. When
+  available, inspect the Modwire MCP tool's advertised links and actions before using it as a reference consumer.
+- Use Auntie order: adversarial boundary, invariant, interruption, cleanup, recovery, happy path. Run `make verify`
+  before review.

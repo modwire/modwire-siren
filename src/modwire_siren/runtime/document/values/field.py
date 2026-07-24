@@ -9,6 +9,6 @@ class SirenField(Contract):
     """Describe an official Siren action field."""
 
     name: str
-    type: SirenFieldType = SirenFieldType.TEXT
+    type: SirenFieldType = SirenFieldType.default()
     title: str | None = None
     value: str | StrictInt | StrictFloat | tuple[SirenFieldValue, ...] | None = None

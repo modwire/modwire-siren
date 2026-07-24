@@ -79,7 +79,7 @@ class TestSirenSpecCommand:
 
     def test_command_fails_for_an_unsupported_official_schema_term(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        schema = workspace / "src/modwire_siren/runtime/document/schema/siren.schema.json"
+        schema = workspace / "src/modwire_siren/siren_schema/schema/siren.schema.json"
         document = json.loads(schema.read_text())
         document["definitions"]["Action"]["properties"]["href"]["minLength"] = 1
         schema.write_text(json.dumps(document))
