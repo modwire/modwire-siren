@@ -30,7 +30,7 @@ shape:
   max_types_per_file: -1
   max_abstract_classes_per_file: -1
   max_functions_per_file: 1
-  allow_optional_function_args: false
-  allow_optional_method_args: false
-  allow_optional_class_properties: false
+  allow_optional_function_args: true
+  allow_optional_method_args: true
+  allow_optional_class_properties: true
 # agent forbidden end

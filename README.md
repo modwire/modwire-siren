@@ -103,6 +103,30 @@ Supply request-specific data and allowed operation IDs in `SirenContext`, then r
 `engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
 entry point is mounted away from `/`.
 
+### `SirenLink`
+
+Describe a navigational Siren link.
+
+### `SirenFieldValue`
+
+Describe a selectable Siren action field value.
+
+### `SirenField`
+
+Describe an official Siren action field.
+
+### `SirenEmbeddedRepresentation`
+
+Represent a Siren sub-entity embedded in full.
+
+### `SirenEmbeddedLink`
+
+Represent a Siren sub-entity linked by URI.
+
+### `SirenDocument`
+
+Represent an official Siren entity document.
+
 ### `SirenContext`
 
 Supply runtime state used to project a Siren document.
@@ -123,12 +147,23 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
 
+### `SirenAction`
+
+Describe an available Siren action.
+
 ## Public API
 
 The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
+| `SirenAction` | Describe an available Siren action. | — |
 | `SirenContext` | Supply runtime state used to project a Siren document. | `validate_scope() -> SirenContext` |
+| `SirenDocument` | Represent an official Siren entity document. | — |
+| `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
+| `SirenEmbeddedRepresentation` | Represent a Siren sub-entity embedded in full. | — |
+| `SirenField` | Describe an official Siren action field. | — |
+| `SirenFieldValue` | Describe a selectable Siren action field value. | — |
+| `SirenLink` | Describe a navigational Siren link. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->
