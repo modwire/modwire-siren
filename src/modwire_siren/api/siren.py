@@ -35,7 +35,6 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "required": ["title"],
                                     "properties": {"title": {"type": "string"}},
                                 }
                             }
@@ -70,6 +69,25 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     its entity route. Prefixes and nested collections are supported. Every non-root HTTP operation
     needs a unique `operationId`. Local `#/components/parameters`, `#/components/requestBodies`,
     and `#/components/schemas` references are resolved; external and path-item references are not.
+
+    #### Action field support matrix
+
+    Path parameters substitute into action URLs and never become fields. Optional query parameters
+    and properties of an `application/json` object body become fields:
+
+    | OpenAPI schema | Siren field type |
+    | --- | --- |
+    | `string` | `text` |
+    | formatted `string` | matching Siren field type |
+    | `integer` or `number` | `number` |
+    | `boolean` | `checkbox` |
+
+    `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
+    `datetime-local`, and `time`, respectively.
+
+    Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
+    objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
+    or `TRACE` operations are rejected during this startup call.
 
     #### Framework integration is one startup call
 

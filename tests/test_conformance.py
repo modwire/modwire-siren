@@ -30,7 +30,7 @@ class TestConformance:
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
-                "fields": [{"name": "page", "type": "integer", "required": False}],
+                "fields": [{"name": "page", "type": "number"}],
             }
         ]
 
@@ -50,7 +50,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "string", "required": True}],
+                "fields": [{"name": "title", "type": "text"}],
             }
         ]
 
@@ -81,7 +81,7 @@ class TestConformance:
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
-                "fields": [{"name": "page", "type": "integer", "required": False}],
+                "fields": [{"name": "page", "type": "number"}],
             }
         ]
 
@@ -101,7 +101,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "string", "required": True}],
+                "fields": [{"name": "title", "type": "text"}],
             }
         ]
 

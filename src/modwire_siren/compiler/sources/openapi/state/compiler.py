@@ -9,7 +9,7 @@ from .routes import RouteCatalog
 
 @dataclass(frozen=True)
 class OpenApiOperationCompiler:
-    methods: ClassVar[frozenset[str]] = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
+    methods: ClassVar[frozenset[str]] = frozenset({"get", "post", "put", "patch", "delete"})
     builder: SirenBuilder
     routes: RouteCatalog
     components: ComponentResolver
@@ -31,9 +31,10 @@ class OpenApiOperationCompiler:
             ):
                 continue
             for method, operation in path_item.items():
-                if method.lower() == "trace":
-                    raise ValueError(f"OpenAPI operation method is unsupported: TRACE {path}")
-                if method.lower() not in self.methods or not isinstance(operation, dict):
+                method_name = method.lower()
+                if method_name in {"head", "options", "trace"}:
+                    raise ValueError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                if method_name not in self.methods or not isinstance(operation, dict):
                     continue
                 name = operation.get("operationId")
                 if not isinstance(name, str) or not name:
@@ -46,17 +47,17 @@ class OpenApiOperationCompiler:
                     self.builder.add_operation(None, "root", name, method.upper(), path, media_type)
                     self.builder.add_root_operation(name)
                     for field in fields:
-                        self.builder.add_field(name, field.name, field.definition, field.required)
+                        self.builder.add_field(name, field.name, field.type)
                     continue
                 resource, scope = ownership
                 self.builder.add_operation(resource.reference, scope, name, method.upper(), path, media_type)
                 for field in fields:
-                    self.builder.add_field(name, field.name, field.definition, field.required)
+                    self.builder.add_field(name, field.name, field.type)
                 if (
                     scope == "collection"
                     and path == resource.collection_path
                     and not self.routes.parameters(path)
-                    and (method.lower() != "get" or any(field.required for field in fields))
+                    and method_name != "get"
                 ):
                     self.builder.add_root_operation(name)
 
@@ -69,21 +70,19 @@ class OpenApiOperationCompiler:
             location = definition.get("in")
             if not isinstance(name, str) or not isinstance(location, str):
                 raise ValueError("OpenAPI parameter requires string name and location")
-            if location not in {"path", "query"}:
+            if location == "path":
+                continue
+            if location != "query":
                 raise ValueError(f"OpenAPI parameter location is unsupported: {location}")
             schema = definition.get("schema")
             if not isinstance(schema, dict):
                 raise ValueError(f"OpenAPI parameter schema is required: {name}")
             parameter_index[name, location] = definition
-        fields = tuple(
-            Field(
-                name=name,
-                definition=self.components.schema(definition["schema"]),
-                required=bool(definition.get("required", False)),
-            )
-            for (name, location), definition in parameter_index.items()
-            if location == "query"
-        )
+        fields: list[Field] = []
+        for (name, _), definition in parameter_index.items():
+            if definition.get("required"):
+                raise ValueError(f"OpenAPI required query parameter is unsupported: {name}")
+            fields.append(Field(name=name, type=self.field_type(name, self.components.schema(definition["schema"]))))
         body = self.components.request_body(operation.get("requestBody", {}))
         content = body.get("content", {}) if isinstance(body, dict) else {}
         if content and (not isinstance(content, dict) or not isinstance(content.get("application/json"), dict)):
@@ -93,10 +92,37 @@ class OpenApiOperationCompiler:
         if content and not isinstance(schema, dict):
             raise ValueError("OpenAPI request body schema is required")
         definition = self.components.schema(schema)
-        properties = definition.get("properties", {}) if isinstance(definition, dict) else {}
-        required = set(definition.get("required", ())) if isinstance(definition, dict) else set()
-        return fields + tuple(
-            Field(name=name, definition=self.components.schema(value), required=name in required)
-            for name, value in properties.items()
-            if isinstance(name, str) and isinstance(value, dict)
-        ), "application/json" if content else None
+        if content and definition.get("type") != "object":
+            raise ValueError("OpenAPI JSON request body must be an object")
+        properties = definition.get("properties", {})
+        if not isinstance(properties, dict):
+            raise ValueError("OpenAPI JSON request body properties must be an object")
+        if definition.get("required"):
+            raise ValueError("OpenAPI required JSON body field is unsupported")
+        for name, value in properties.items():
+            if not isinstance(name, str) or not isinstance(value, dict):
+                raise ValueError("OpenAPI JSON request body property is invalid")
+            fields.append(Field(name=name, type=self.field_type(name, self.components.schema(value))))
+        return tuple(fields), "application/json" if content else None
+
+    def field_type(self, name: str, definition: dict[str, Any]) -> str:
+        unsupported = {"allOf", "anyOf", "const", "contains", "enum", "if", "items", "not", "oneOf", "prefixItems"}
+        if unsupported & definition.keys() or definition.get("nullable") is True:
+            raise ValueError(f"OpenAPI field schema is unsupported: {name}")
+        schema_type = definition.get("type")
+        if schema_type == "string":
+            formats = {
+                "date": "date",
+                "date-time": "datetime-local",
+                "email": "email",
+                "time": "time",
+                "uri": "url",
+            }
+            field_type = formats.get(definition.get("format"), "text")
+            if definition.get("format") is None or field_type != "text":
+                return field_type
+        if schema_type in {"integer", "number"}:
+            return "number"
+        if schema_type == "boolean":
+            return "checkbox"
+        raise ValueError(f"OpenAPI field schema is unsupported: {name}")

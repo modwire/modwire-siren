@@ -1,11 +1,8 @@
-from collections.abc import Mapping
-
-from pydantic import Field, JsonValue
+from typing import Literal
 
 from ..contracts import Contract
 
 
 class SirenField(Contract):
     name: str
-    definition: Mapping[str, JsonValue] = Field(default_factory=dict)
-    required: bool = False
+    type: Literal["checkbox", "date", "datetime-local", "email", "number", "text", "time", "url"]
