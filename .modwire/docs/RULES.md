@@ -19,5 +19,7 @@
 - Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
   `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.
+- BDD step adapter methods are permitted only in `tests/conformance/steps`. They import only the published root
+  API, contain no application logic, and never create or query a Wireup container.
 - Read `.modwire/INDEX.md` and local guidance before changing code.
 - Run local commands with the user's effective privileges.

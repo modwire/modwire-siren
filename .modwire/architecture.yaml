@@ -5,6 +5,7 @@ boundaries:
     - {name: &api_tag api, match: src/modwire_siren/api}
     - {name: &compiler_tag compiler, match: src/modwire_siren/compiler}
     - {name: &runtime_tag runtime, match: src/modwire_siren/runtime}
+    - {name: &conformance_tag conformance, match: src/modwire_siren/conformance}
     - {name: &wiring_plumbing_tag wiring_plumbing, match: src/modwire_siren/wiring.py}
     - {name: &tests_tag tests, match: tests}
     - {name: &scripts_tag scripts, match: scripts}
@@ -13,7 +14,8 @@ boundaries:
     - {source: *package_api_tag, allow: [*api_tag, *runtime_tag]}
     - {source: *api_tag, allow: [*compiler_tag, *runtime_tag, *wiring_plumbing_tag]}
     - {source: *compiler_tag, allow: [*runtime_tag]}
-    - {source: *wiring_plumbing_tag, allow: [*api_tag, *compiler_tag, *runtime_tag]}
+    - {source: *conformance_tag, allow: [*runtime_tag]}
+    - {source: *wiring_plumbing_tag, allow: [*api_tag, *compiler_tag, *runtime_tag, *conformance_tag]}
     - {source: *tests_tag, allow: [*package_api_tag], allow_same_match: true}
 
   flow:
