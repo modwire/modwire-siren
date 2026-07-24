@@ -5,6 +5,30 @@ from modwire_siren import SirenContext, SirenProjectionError, siren
 
 
 class TestQueries:
+    def test_public_facade_rejects_nonscalar_query_values_and_recovers(self):
+        with pytest.raises(ValueError, match="Siren query values must be scalar"):
+            SirenContext(base_url="https://api.example.com", scope="root", query=(("tag", ["one", "two"]),))
+
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
+            siren(ROUTE_POLICY_SCHEMA).project(
+                SirenContext(
+                    base_url="https://api.example.com",
+                    scope="collection",
+                    resource="record",
+                    query=(("page", 2),),
+                )
+            )
+
+        payload = siren(SCHEMA).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                query=(("page", 2),),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+        assert payload["links"] == [{"rel": ["self"], "href": "https://api.example.com/records?page=2"}]
+
     def test_public_facade_serializes_ordered_repeated_and_escaped_query_values(self):
         document = siren(SCHEMA).project(
             SirenContext(
@@ -41,28 +65,3 @@ class TestQueries:
             {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
             {"rel": ["record"], "href": "https://api.example.com/records"},
         ]
-
-
-    def test_public_facade_rejects_nonscalar_query_values_and_recovers(self):
-        with pytest.raises(ValueError, match="Siren query values must be scalar"):
-            SirenContext(base_url="https://api.example.com", scope="root", query=(("tag", ["one", "two"]),))
-
-        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
-            siren(ROUTE_POLICY_SCHEMA).project(
-                SirenContext(
-                    base_url="https://api.example.com",
-                    scope="collection",
-                    resource="record",
-                    query=(("page", 2),),
-                )
-            )
-
-        payload = siren(SCHEMA).project(
-            SirenContext(
-                base_url="https://api.example.com",
-                scope="collection",
-                resource="record",
-                query=(("page", 2),),
-            )
-        ).model_dump(by_alias=True, mode="json", exclude_none=True)
-        assert payload["links"] == [{"rel": ["self"], "href": "https://api.example.com/records?page=2"}]

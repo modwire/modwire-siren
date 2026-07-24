@@ -5,6 +5,17 @@ from modwire_siren import SirenContext, SirenDocument, SirenEmbeddedRepresentati
 
 
 class TestProjection:
+    def test_engine_rejects_a_capability_outside_the_resource_contract(self):
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
+            siren(SCHEMA).project(
+                SirenContext(
+                    base_url="https://api.example.com",
+                    resource="record",
+                    value={"id": "42"},
+                    capabilities=frozenset({"archive_record"}),
+                )
+            )
+
     def test_public_facade_projects_collection_items_as_embedded_representations(self):
         document = siren(SCHEMA).project(
             SirenContext(
@@ -49,18 +60,6 @@ class TestProjection:
         }
         assert payload["actions"][1]["type"] == "application/json"
         assert payload["actions"][1]["fields"][0] == {"name": "title", "type": "text"}
-
-
-    def test_engine_rejects_a_capability_outside_the_resource_contract(self):
-        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
-            siren(SCHEMA).project(
-                SirenContext(
-                    base_url="https://api.example.com",
-                    resource="record",
-                    value={"id": "42"},
-                    capabilities=frozenset({"archive_record"}),
-                )
-            )
 
 
     def test_public_facade_projects_only_followable_root_links_and_eligible_root_actions(self):
