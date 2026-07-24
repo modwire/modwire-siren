@@ -1,21 +1,27 @@
 boundaries:
   tags:
-    - {name: &module_tag module, match: modwire_siren/*}
-    - {name: &package_api_tag package_api, match: modwire_siren/__init__.py}
-    - {name: &api_tag api, match: modwire_siren/api}
-    - {name: &compiler_tag compiler, match: modwire_siren/compiler}
-    - {name: &runtime_tag runtime, match: modwire_siren/runtime}
-    - {name: &wiring_plumbing_tag wiring_plumbing, match: modwire_siren/wiring.py}
+    - {name: &module_tag module, match: src/modwire_siren/*}
+    - {name: &package_api_tag package_api, match: src/modwire_siren/__init__.py}
+    - {name: &api_tag api, match: src/modwire_siren/api}
+    - {name: &compiler_tag compiler, match: src/modwire_siren/compiler}
+    - {name: &runtime_tag runtime, match: src/modwire_siren/runtime}
+    - {name: &wiring_plumbing_tag wiring_plumbing, match: src/modwire_siren/wiring.py}
+    - {name: &tests_tag tests, match: tests}
+    - {name: &scripts_tag scripts, match: scripts}
 
   rules:
     - {source: *package_api_tag, allow: [*api_tag, *runtime_tag]}
     - {source: *api_tag, allow: [*compiler_tag, *runtime_tag, *wiring_plumbing_tag]}
     - {source: *compiler_tag, allow: [*runtime_tag]}
     - {source: *wiring_plumbing_tag, allow: [*api_tag, *compiler_tag, *runtime_tag]}
+    - {source: *tests_tag, allow: [*package_api_tag], allow_same_match: true}
 
   flow:
     analyzers: [module-boundaries, backward-flow, no-cycles, no-reentry]
     module_tag: *module_tag
+    realms:
+      - {name: tests, module_tag: *tests_tag}
+      - {name: scripts, module_tag: *scripts_tag}
 
 # agent forbidden start
 shape:
@@ -24,7 +30,7 @@ shape:
   max_types_per_file: -1
   max_abstract_classes_per_file: -1
   max_functions_per_file: 1
-  allow_optional_function_args: true
-  allow_optional_method_args: true
-  allow_optional_class_properties: true
+  allow_optional_function_args: false
+  allow_optional_method_args: false
+  allow_optional_class_properties: false
 # agent forbidden end

@@ -4,11 +4,48 @@ import pytest
 from openapi_documents import SCHEMA
 
 import modwire_siren
-from modwire_siren import SirenContext, siren
+from modwire_siren import (
+    SirenAction,
+    SirenContext,
+    SirenDocument,
+    SirenEmbeddedLink,
+    SirenEmbeddedRepresentation,
+    SirenField,
+    SirenFieldValue,
+    SirenLink,
+    siren,
+)
 
 
-def test_public_facade_exports_only_runtime_context_and_siren():
-    assert modwire_siren.__all__ == ["SirenContext", "siren"]
+def test_public_facade_exports_siren_contracts_and_composition_entry_points():
+    assert modwire_siren.__all__ == [
+        "SirenAction",
+        "SirenContext",
+        "SirenDocument",
+        "SirenEmbeddedLink",
+        "SirenEmbeddedRepresentation",
+        "SirenField",
+        "SirenFieldValue",
+        "SirenLink",
+        "siren",
+    ]
+    assert (
+        SirenAction,
+        SirenDocument,
+        SirenEmbeddedLink,
+        SirenEmbeddedRepresentation,
+        SirenField,
+        SirenFieldValue,
+        SirenLink,
+    ) == (
+        modwire_siren.SirenAction,
+        modwire_siren.SirenDocument,
+        modwire_siren.SirenEmbeddedLink,
+        modwire_siren.SirenEmbeddedRepresentation,
+        modwire_siren.SirenField,
+        modwire_siren.SirenFieldValue,
+        modwire_siren.SirenLink,
+    )
     parameters = signature(siren).parameters
     assert tuple(parameters) == ("openapi", "root_path")
     assert parameters["openapi"].kind is Parameter.POSITIONAL_OR_KEYWORD

@@ -9,7 +9,7 @@
   bounded contexts and assembles them without becoming part of their domain logic.
 - Root `__init__.py` is exports only; it is the technical package entry.
 
-`.modwire/architecture.yaml` makes those dependencies explicit. `make modwire` scopes the map to the source package; architectural rules belong in boundary rules, not an aspirational file-shape baseline.
+`.modwire/architecture.yaml` makes those dependencies explicit. `make modwire` maps the source package, tests, and support scripts so boundary rules can require tests to use only the supported package API; architectural rules belong in boundary rules, not an aspirational file-shape baseline.
 
 Each bounded context uses feature subpackages with minimal `__init__.py` APIs. A context root contains only
 its public types and composition entry points. When a capability has collaborating contracts, values, or
