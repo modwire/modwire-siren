@@ -14,6 +14,13 @@ Feature: Siren actions
       When it is created
       Then creation is rejected
 
+  Rule: An action type is a media type
+
+    Scenario: An action with an invalid media type is rejected
+      Given a public Siren action with an invalid media type
+      When it is created
+      Then creation is rejected
+
   Rule: Action names are unique within an entity
 
     Scenario: Duplicate action names are rejected

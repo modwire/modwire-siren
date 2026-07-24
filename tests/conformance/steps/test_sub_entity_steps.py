@@ -10,6 +10,7 @@ class SubEntitySteps:
     payload: Mapping[str, object] | None = None
     error: ValueError | None = None
     missing_value_type: type[SirenEmbeddedLink] | type[SirenEmbeddedRepresentation] | None = None
+    invalid_media_type: str | None = None
 
     @staticmethod
     @given('a public embedded link with rel "item" and an href', stacklevel=2)
@@ -17,7 +18,12 @@ class SubEntitySteps:
         SubEntitySteps.payload = None
         SubEntitySteps.error = None
         SubEntitySteps.missing_value_type = None
-        SubEntitySteps.value = SirenEmbeddedLink(rel=("item",), href="https://api.example.com/records/42")
+        SubEntitySteps.invalid_media_type = None
+        SubEntitySteps.value = SirenEmbeddedLink(
+            rel=("item",),
+            href="https://api.example.com/records/42",
+            type="application/json",
+        )
 
     @staticmethod
     @given("a public embedded link without an href", stacklevel=2)
@@ -26,6 +32,16 @@ class SubEntitySteps:
         SubEntitySteps.payload = None
         SubEntitySteps.error = None
         SubEntitySteps.missing_value_type = SirenEmbeddedLink
+        SubEntitySteps.invalid_media_type = None
+
+    @staticmethod
+    @given("a public embedded link with an invalid media type", stacklevel=2)
+    def public_embedded_link_with_an_invalid_media_type() -> None:
+        SubEntitySteps.value = None
+        SubEntitySteps.payload = None
+        SubEntitySteps.error = None
+        SubEntitySteps.missing_value_type = None
+        SubEntitySteps.invalid_media_type = "not a media type"
 
     @staticmethod
     @given('a public embedded representation with rel "item"', stacklevel=2)
@@ -33,6 +49,7 @@ class SubEntitySteps:
         SubEntitySteps.payload = None
         SubEntitySteps.error = None
         SubEntitySteps.missing_value_type = None
+        SubEntitySteps.invalid_media_type = None
         SubEntitySteps.value = SirenEmbeddedRepresentation(rel=("item",), properties={"id": "42"})
 
     @staticmethod
@@ -42,11 +59,18 @@ class SubEntitySteps:
         SubEntitySteps.payload = None
         SubEntitySteps.error = None
         SubEntitySteps.missing_value_type = SirenEmbeddedRepresentation
+        SubEntitySteps.invalid_media_type = None
 
     @staticmethod
     @when("it is created", stacklevel=2)
     def created_sub_entity() -> None:
         try:
+            if SubEntitySteps.invalid_media_type is not None:
+                SubEntitySteps.value = SirenEmbeddedLink(
+                    rel=("item",),
+                    href="https://api.example.com/records/42",
+                    type=SubEntitySteps.invalid_media_type,
+                )
             if SubEntitySteps.missing_value_type is SirenEmbeddedLink:
                 SubEntitySteps.value = SirenEmbeddedLink(rel=("item",))
             if SubEntitySteps.missing_value_type is SirenEmbeddedRepresentation:
@@ -63,7 +87,11 @@ class SubEntitySteps:
     @staticmethod
     @then('the embedded link has rel "item" and its href', stacklevel=2)
     def embedded_link_has_relation_and_href() -> None:
-        assert SubEntitySteps.payload == {"rel": ["item"], "href": "https://api.example.com/records/42"}
+        assert SubEntitySteps.payload == {
+            "rel": ["item"],
+            "href": "https://api.example.com/records/42",
+            "type": "application/json",
+        }
 
     @staticmethod
     @then('the embedded representation has rel "item"', stacklevel=2)

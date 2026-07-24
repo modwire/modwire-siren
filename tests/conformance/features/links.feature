@@ -14,6 +14,13 @@ Feature: Siren links
       When it is created
       Then creation is rejected
 
+  Rule: A link type is a media type
+
+    Scenario: A link with an invalid media type is rejected
+      Given a public link with an invalid media type
+      When it is created
+      Then creation is rejected
+
   Rule: A link describes a navigational transition
 
     Scenario: A link serializes its relationship and target

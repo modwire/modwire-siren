@@ -15,6 +15,7 @@ class ActionSteps:
     error: ValueError | None = None
     unsupported_method: str | None = None
     invalid_href: str | None = None
+    invalid_media_type: str | None = None
     duplicate_names: bool = False
 
     @staticmethod
@@ -27,6 +28,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(
             class_=("update",),
@@ -48,6 +50,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(name="update", href="https://api.example.com/records/42")
 
@@ -61,6 +64,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = False
         ActionSteps.actions = tuple(
             SirenAction(
@@ -82,6 +86,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = "HEAD"
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = False
 
     @staticmethod
@@ -95,6 +100,21 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = "not-a-uri"
+        ActionSteps.invalid_media_type = None
+        ActionSteps.duplicate_names = False
+
+    @staticmethod
+    @given("a public Siren action with an invalid media type", stacklevel=2)
+    def public_siren_action_with_an_invalid_media_type() -> None:
+        ActionSteps.action = None
+        ActionSteps.actions = None
+        ActionSteps.document = None
+        ActionSteps.payload = None
+        ActionSteps.payloads = None
+        ActionSteps.error = None
+        ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = "not a media type"
         ActionSteps.duplicate_names = False
 
     @staticmethod
@@ -108,6 +128,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = True
 
     @staticmethod
@@ -120,6 +141,7 @@ class ActionSteps:
         ActionSteps.error = None
         ActionSteps.unsupported_method = None
         ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
         ActionSteps.duplicate_names = False
         ActionSteps.action = SirenAction(
             name="update",
@@ -135,6 +157,12 @@ class ActionSteps:
                 ActionSteps.action = SirenAction(
                     name="inspect",
                     href=ActionSteps.invalid_href,
+                )
+            if ActionSteps.invalid_media_type is not None:
+                ActionSteps.action = SirenAction(
+                    name="inspect",
+                    href="https://api.example.com/records/42",
+                    type=ActionSteps.invalid_media_type,
                 )
             if ActionSteps.unsupported_method is not None:
                 ActionSteps.action = SirenAction(
