@@ -55,6 +55,7 @@ class SirenBuilder:
         resources = self.resource_index()
         operations = self.operation_index(resources)
         fields = self.field_index(operations)
+        resource_operations = self.resource_operation_index(operations)
         return SirenApi(
             root=SirenRoot(
                 route=SirenRoute(path=self._root_path),
@@ -70,16 +71,8 @@ class SirenBuilder:
                     identifier=resource.identifier,
                     collection=SirenRoute(path=resource.collection_path),
                     entity=SirenRoute(path=resource.entity_path) if resource.entity_path else None,
-                    collection_operations=tuple(
-                        operation.name
-                        for operation in operations.values()
-                        if operation.resource == resource.reference and operation.scope == "collection"
-                    ),
-                    entity_operations=tuple(
-                        operation.name
-                        for operation in operations.values()
-                        if operation.resource == resource.reference and operation.scope == "entity"
-                    ),
+                    collection_operations=resource_operations.get((resource.reference, "collection"), ()),
+                    entity_operations=resource_operations.get((resource.reference, "entity"), ()),
                 )
                 for resource in resources.values()
             ),
@@ -150,11 +143,22 @@ class SirenBuilder:
 
     def field_index(self, operations: Mapping[str, OperationDraft]) -> dict[str, tuple[FieldDraft, ...]]:
         index: dict[str, list[FieldDraft]] = {}
+        names: dict[str, set[str]] = {}
         for item in self._fields:
             if item.operation not in operations:
                 raise ValueError(f"Siren field {item.name!r} references unknown operation {item.operation!r}")
             fields = index.setdefault(item.operation, [])
-            if item.name in {field.name for field in fields}:
+            operation_names = names.setdefault(item.operation, set())
+            if item.name in operation_names:
                 raise ValueError(f"Siren operation {item.operation!r} has duplicate field {item.name!r}")
             fields.append(item)
+            operation_names.add(item.name)
         return {operation: tuple(fields) for operation, fields in index.items()}
+
+    @staticmethod
+    def resource_operation_index(operations: Mapping[str, OperationDraft]) -> dict[tuple[str, str], tuple[str, ...]]:
+        index: dict[tuple[str, str], list[str]] = {}
+        for operation in operations.values():
+            if operation.resource is not None:
+                index.setdefault((operation.resource, operation.scope), []).append(operation.name)
+        return {key: tuple(names) for key, names in index.items()}
