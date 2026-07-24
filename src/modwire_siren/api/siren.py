@@ -8,7 +8,7 @@ from ..compiler import OpenApiSource, SirenApiService
 from ..runtime import SirenEngine
 
 
-class Siren:
+def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     """Compile a complete OpenAPI 3.1 document into a reusable Siren engine.
 
     Call this once during application startup, then call `engine.project(context)` for each
@@ -85,17 +85,16 @@ class Siren:
     entry point is mounted away from `/`.
     """
 
-    def __call__(self, openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
-        if not isinstance(openapi, Mapping):
-            raise TypeError("OpenAPI document must be a mapping")
-        if not isinstance(root_path, str) or not root_path.startswith("/"):
-            raise ValueError("Siren root path must start with '/'")
-        try:
-            document = json.loads(json.dumps(openapi))
-            validate(document)
-        except RecursionError as error:
-            raise ValueError("OpenAPI document is invalid: cyclic reference") from error
-        except Exception as error:
-            raise ValueError(f"OpenAPI document is invalid: {error}") from error
-        api = SirenApiService((OpenApiSource(root_path=root_path),)).build(document)
-        return SirenEngine(api)
+    if not isinstance(openapi, Mapping):
+        raise TypeError("OpenAPI document must be a mapping")
+    if not isinstance(root_path, str) or not root_path.startswith("/"):
+        raise ValueError("Siren root path must start with '/'")
+    try:
+        document = json.loads(json.dumps(openapi))
+        validate(document)
+    except RecursionError as error:
+        raise ValueError("OpenAPI document is invalid: cyclic reference") from error
+    except Exception as error:
+        raise ValueError(f"OpenAPI document is invalid: {error}") from error
+    api = SirenApiService((OpenApiSource(root_path=root_path),)).build(document)
+    return SirenEngine(api)

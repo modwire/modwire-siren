@@ -1,7 +1,5 @@
-from .api import Siren
+from .api import siren
 from .runtime import SirenContext
-
-siren = Siren()
 
 __all__ = [
     "SirenContext",

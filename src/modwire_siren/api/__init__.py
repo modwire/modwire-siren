@@ -1,3 +1,3 @@
-from .siren import Siren
+from .siren import siren
 
-__all__ = ["Siren"]
+__all__ = ["siren"]
