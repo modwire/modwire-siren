@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
     "openapi-spec-validator>=0.9,<1",
     "pydantic>=2.12",
+    "wireup>=2.12.0",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +43,7 @@ dev = [
     "django>=5.1,<6.1",
     "django-ninja-extra>=0.30,<1",
     "fastapi>=0.115,<1",
+    "modwire-cli>=1.2.0",
     "packaging>=25",
     "pytest>=9",
     "ruff>=0.14",
@@ -58,7 +60,7 @@ tag-pattern = '^v(?P<version>\d+\.\d+\.\d+)$'
 fallback-version = "0.0.0"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/modwire_siren/_version.py"
+version-file = "src/modwire_siren/runtime/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/modwire_siren"]

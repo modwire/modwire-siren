@@ -1,5 +1,5 @@
-from .contracts import SirenContext
-from .extras import siren
+from .api import siren
+from .runtime import SirenContext
 
 __all__ = [
     "SirenContext",

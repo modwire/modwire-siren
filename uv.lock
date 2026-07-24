@@ -496,11 +496,54 @@ wheels = [
 ]
 
 [[package]]
+name = "modwire-architecture"
+version = "6.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "modwire-extraction" },
+    { name = "pydantic" },
+    { name = "pydantic-yaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/14/7b/e0ad59df4797f766b0503aaf90b33b1c603c8cf8d1c9a0bdfe4101686b0b/modwire_architecture-6.0.0.tar.gz", hash = "sha256:d468ff371c3a0848859ceee185b8ff309628cdc5569092f6418a222e17d77c18", size = 96509, upload-time = "2026-07-17T17:34:04.418Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/f4/d98c8822649ec5c119c9332f2c94fd9b84e332303d8feb2b70d882047377/modwire_architecture-6.0.0-py3-none-any.whl", hash = "sha256:65fca29186262b728be92406ce18a5889fe5d2fb834537863bc5854c4829b10f", size = 51959, upload-time = "2026-07-17T17:34:02.989Z" },
+]
+
+[[package]]
+name = "modwire-cli"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "modwire-architecture" },
+    { name = "modwire-extraction" },
+    { name = "pydantic-yaml" },
+    { name = "rich" },
+    { name = "wireup" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/87/e0786751d1c9451c7368756957353e4789d63336a4d5400ded9a5b756f8c/modwire_cli-1.2.0.tar.gz", hash = "sha256:1c2ec871a0d807083deb3f4bc048e6392b873e7be7ff17c7532ba568d40842c8", size = 53648, upload-time = "2026-07-24T11:10:29.802Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/dc/edf94ad753da22929252d64db9d775f8de7956122f0cac3daade751abfdc/modwire_cli-1.2.0-py3-none-any.whl", hash = "sha256:499f579ca7c17f7da2f61bf9986c2dfedcba8c2113b9d3c985e53a0a3ef35f03", size = 24391, upload-time = "2026-07-24T11:10:28.397Z" },
+]
+
+[[package]]
+name = "modwire-extraction"
+version = "2.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6e/c9/33a459ba4a3533118efd54acfdcf7e505e80d15706b81f24a47614304ead/modwire_extraction-2.0.2.tar.gz", hash = "sha256:9bdbfc96fb1b670f1936ce8a6fb75e238ee0a44a88faf2eff5f54e0a558bb873", size = 2363226, upload-time = "2026-07-18T13:42:16.466Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/d9/40f595928bd35858e47874df5361631707bc417d53faee19a062adb3c3af/modwire_extraction-2.0.2-py3-none-any.whl", hash = "sha256:c319ae0e95ed26a383a881bbd8a331ba2551f935d599e948d1017bf1c39c893a", size = 2335494, upload-time = "2026-07-18T13:42:14.878Z" },
+]
+
+[[package]]
 name = "modwire-siren"
 source = { editable = "." }
 dependencies = [
     { name = "openapi-spec-validator" },
     { name = "pydantic" },
+    { name = "wireup" },
 ]
 
 [package.optional-dependencies]
@@ -521,6 +564,7 @@ dev = [
     { name = "django" },
     { name = "django-ninja-extra" },
     { name = "fastapi" },
+    { name = "modwire-cli" },
     { name = "packaging" },
     { name = "pytest" },
     { name = "ruff" },
@@ -539,6 +583,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=6" },
+    { name = "wireup", specifier = ">=2.12.0" },
 ]
 provides-extras = ["dev"]
 
@@ -548,6 +593,7 @@ dev = [
     { name = "django", specifier = ">=5.1,<6.1" },
     { name = "django-ninja-extra", specifier = ">=0.30,<1" },
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "modwire-cli", specifier = ">=1.2.0" },
     { name = "packaging", specifier = ">=25" },
     { name = "pytest", specifier = ">=9" },
     { name = "ruff", specifier = ">=0.14" },
@@ -769,6 +815,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5c/b5/8f48e906c3e0205276e8bd8cb7512217a87b2685304d64be27cad5b3019f/pydantic_settings-2.14.2.tar.gz", hash = "sha256:c19dd64b19097f1de80184f0cc7b0272a13ae6e170cbf240a3e27e381ed14a5f", size = 237700, upload-time = "2026-06-19T13:44:56.324Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/c1/6e422f34e569cf8e18df68d1939c81c099d2b61e4f7d9621c8a77560799c/pydantic_settings-2.14.2-py3-none-any.whl", hash = "sha256:a20c97b37910b6550d5ea50fbcc2d4187defe58cd57070b73863d069419c9440", size = 61715, upload-time = "2026-06-19T13:44:55.02Z" },
+]
+
+[[package]]
+name = "pydantic-yaml"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "ruamel-yaml" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c1/c9/1952345a95c9699783ea138a0cc47a151189adbbc2be5106fdab3788eaab/pydantic_yaml-1.7.0.tar.gz", hash = "sha256:b7c9420647537166c58ff9b150176a434fbdbae843d076e37011dd7e3e2e0044", size = 96334, upload-time = "2026-06-21T14:11:04.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/a5/198079eb0445eeaa28c732e2b87df7e2bf3452a8823a8774398b4104b674/pydantic_yaml-1.7.0-py3-none-any.whl", hash = "sha256:794867172285e444653605c16adfc4b874938ce60132eff24cda4e3c590f75f3", size = 25106, upload-time = "2026-06-21T14:11:03.192Z" },
 ]
 
 [[package]]
@@ -1055,6 +1115,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ruamel-yaml"
+version = "0.19.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/3b/ebda527b56beb90cb7652cb1c7e4f91f48649fbcd8d2eb2fb6e77cd3329b/ruamel_yaml-0.19.1.tar.gz", hash = "sha256:53eb66cd27849eff968ebf8f0bf61f46cdac2da1d1f3576dd4ccee9b25c31993", size = 142709, upload-time = "2026-01-02T16:50:31.84Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl", hash = "sha256:27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93", size = 118102, upload-time = "2026-01-02T16:50:29.201Z" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.15.21"
 source = { registry = "https://pypi.org/simple" }
@@ -1180,4 +1249,16 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
+]
+
+[[package]]
+name = "wireup"
+version = "2.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/13/45337aac6078b2e800e8ec26b845eb4c4a76eabc243658da89676da6af23/wireup-2.12.0.tar.gz", hash = "sha256:e21bf35356d5c670a66ab4e349fffdf58ce3e272dd233f6085885137315325e9", size = 8773922, upload-time = "2026-07-09T22:23:53.104Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/6b/330fda3bd0378b1e33738b30d47f25fafa9430ab4472ebb307a23f96d959/wireup-2.12.0-py3-none-any.whl", hash = "sha256:6d418626040e92dde7ecec0460d8712b97cf26466a24d962ed6b2e455739094b", size = 62187, upload-time = "2026-07-09T22:23:55.825Z" },
 ]
