@@ -17,3 +17,7 @@ services, place them under that capability rather than adding a flat sibling mod
 
 Only `wiring.py` may scan registrations across contexts. The public `api` facade is its composition entry point;
 all other bounded-context code receives dependencies and never creates or queries a container.
+
+Every injectable belongs in its feature's `services` package, whose `__init__.py` re-exports every decorated
+registration beneath it. `wiring.py` discovers only `**.services`; projectors and factories are services for
+registration purposes.

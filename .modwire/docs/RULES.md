@@ -6,6 +6,11 @@
   Collaborating contracts, values, and services belong in a feature subpackage; flat service fields are forbidden.
 - `wiring.py` is the sole technical-plumbing exception: it may group the discovery and application-container
   classes so that all cross-context wiring is visible in one place.
+- Put every `@injectable` class in its feature's `services` package and re-export it from that package's
+  `__init__.py`; `wiring.py` discovers only those packages. Stateless services are singletons, mutable
+  operation state is factory-created or transient, and request values remain ordinary method arguments.
+- Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
+  `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.
 - Read `.modwire/INDEX.md` and local guidance before changing code.
 - Run local commands with the user's effective privileges.

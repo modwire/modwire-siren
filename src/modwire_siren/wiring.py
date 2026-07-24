@@ -29,8 +29,6 @@ class SirenApplicationContainer:
 
     def engine_factory(self) -> SirenEngineFactory:
         container = create_sync_container(
-            injectables=self.discovery.modules(
-                ("modwire_siren.**.services", "modwire_siren.**.projectors", "modwire_siren.**.factories")
-            )
+            injectables=self.discovery.modules(("modwire_siren.**.services",))
         )
         return container.get(SirenEngineFactory)
