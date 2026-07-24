@@ -40,6 +40,11 @@ Feature: Siren actions
       When it is serialized
       Then its type is "application/x-www-form-urlencoded"
 
+    Scenario: An action with fields serializes its explicit type
+      Given a public Siren action with fields and an explicit type
+      When it is serialized
+      Then its type is "application/json"
+
   Rule: An action exposes its members
 
     Scenario: An action serializes its official members

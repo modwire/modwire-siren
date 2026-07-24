@@ -31,6 +31,7 @@ class TestConformance:
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
+                "type": "application/x-www-form-urlencoded",
                 "fields": [{"name": "page", "type": "number"}],
             }
         ]
@@ -84,6 +85,7 @@ class TestConformance:
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
+                "type": "application/x-www-form-urlencoded",
                 "fields": [{"name": "page", "type": "number"}],
             }
         ]
