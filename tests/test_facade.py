@@ -6,6 +6,7 @@ from openapi_documents import SCHEMA
 import modwire_siren
 from modwire_siren import (
     SirenAction,
+    SirenCompilationError,
     SirenContext,
     SirenDocument,
     SirenEmbeddedLink,
@@ -13,6 +14,7 @@ from modwire_siren import (
     SirenField,
     SirenFieldValue,
     SirenLink,
+    SirenProjectionError,
     siren,
 )
 
@@ -21,6 +23,7 @@ class TestFacade:
     def test_public_facade_exports_siren_contracts_and_composition_entry_points(self):
         assert modwire_siren.__all__ == [
             "SirenAction",
+            "SirenCompilationError",
             "SirenContext",
             "SirenDocument",
             "SirenEmbeddedLink",
@@ -28,24 +31,29 @@ class TestFacade:
             "SirenField",
             "SirenFieldValue",
             "SirenLink",
+            "SirenProjectionError",
             "siren",
         ]
         assert (
             SirenAction,
+            SirenCompilationError,
             SirenDocument,
             SirenEmbeddedLink,
             SirenEmbeddedRepresentation,
             SirenField,
             SirenFieldValue,
             SirenLink,
+            SirenProjectionError,
         ) == (
             modwire_siren.SirenAction,
+            modwire_siren.SirenCompilationError,
             modwire_siren.SirenDocument,
             modwire_siren.SirenEmbeddedLink,
             modwire_siren.SirenEmbeddedRepresentation,
             modwire_siren.SirenField,
             modwire_siren.SirenFieldValue,
             modwire_siren.SirenLink,
+            modwire_siren.SirenProjectionError,
         )
         parameters = signature(siren).parameters
         assert tuple(parameters) == ("openapi", "root_path")
@@ -63,12 +71,12 @@ class TestFacade:
 
 
     @pytest.mark.parametrize(
-        ("openapi", "root_path", "error", "message"),
+        ("openapi", "root_path"),
         [
-            ([], "/", TypeError, "OpenAPI document must be a mapping"),
-            (SCHEMA, "siren", ValueError, "Siren root path must start"),
+            ([], "/"),
+            (SCHEMA, "siren"),
         ],
     )
-    def test_public_facade_rejects_invalid_inputs_before_the_happy_path(self, openapi, root_path, error, message):
-        with pytest.raises(error, match=message):
+    def test_public_facade_rejects_invalid_inputs_before_the_happy_path(self, openapi, root_path):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(openapi, root_path=root_path)

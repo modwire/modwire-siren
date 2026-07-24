@@ -1,7 +1,7 @@
 import pytest
 from openapi_documents import SCHEMA
 
-from modwire_siren import SirenContext, siren
+from modwire_siren import SirenContext, SirenProjectionError, siren
 
 
 class TestProjection:
@@ -27,7 +27,7 @@ class TestProjection:
 
 
     def test_engine_rejects_a_capability_outside_the_resource_contract(self):
-        with pytest.raises(ValueError, match="unsupported capabilities"):
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
             siren(SCHEMA).project(
                 SirenContext(
                     base_url="https://api.example.com",

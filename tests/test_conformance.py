@@ -8,7 +8,7 @@ import pytest
 from framework_fixtures.django_ninja_extra.openapi_fixture import DjangoNinjaExtraOpenApiFixture
 from framework_fixtures.fastapi.openapi_fixture import FastApiOpenApiFixture
 
-from modwire_siren import SirenContext, siren
+from modwire_siren import SirenCompilationError, SirenContext, siren
 
 
 class TestConformance:
@@ -63,7 +63,7 @@ class TestConformance:
         invalid = deepcopy(openapi)
         invalid["paths"]["/api/v1/widgets"]["get"]["responses"] = {999: {"description": "Invalid"}}
 
-        with pytest.raises(ValueError, match="OpenAPI document is invalid"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(openapi).project(

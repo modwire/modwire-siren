@@ -1,7 +1,7 @@
 import pytest
 from openapi_documents import ROUTE_POLICY_SCHEMA, SCHEMA
 
-from modwire_siren import SirenContext, siren
+from modwire_siren import SirenContext, SirenProjectionError, siren
 
 
 class TestQueries:
@@ -45,7 +45,7 @@ class TestQueries:
         with pytest.raises(ValueError, match="Siren query values must be scalar"):
             SirenContext(base_url="https://api.example.com", scope="root", query=(("tag", ["one", "two"]),))
 
-        with pytest.raises(ValueError, match="Siren link requires path value: team"):
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
             siren(ROUTE_POLICY_SCHEMA).project(
                 SirenContext(
                     base_url="https://api.example.com",

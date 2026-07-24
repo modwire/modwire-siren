@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import PARAMETER_MEDIA_SCHEMA
 
-from modwire_siren import SirenContext, siren
+from modwire_siren import SirenCompilationError, SirenContext, siren
 
 
 class TestFields:
@@ -13,7 +13,7 @@ class TestFields:
             {"name": "page", "in": "header", "required": False, "schema": {"type": "string"}}
         )
 
-        with pytest.raises(ValueError, match="OpenAPI parameter location is unsupported: header"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         assert siren(PARAMETER_MEDIA_SCHEMA).project(
@@ -32,7 +32,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "content": {"application/json": {}}}
         ]
 
-        with pytest.raises(ValueError, match="OpenAPI parameter schema is required: filter"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -43,7 +43,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "schema": {"type": "integer"}},
         ]
 
-        with pytest.raises(ValueError, match="OpenAPI document is invalid"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -71,7 +71,7 @@ class TestFields:
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
         invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"] = content
 
-        with pytest.raises(ValueError, match="OpenAPI request body must provide application/json"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ class TestFields:
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
         invalid["paths"]["/records"]["get"]["parameters"] = [parameter]
 
-        with pytest.raises(ValueError, match=message):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize(
@@ -111,7 +111,7 @@ class TestFields:
             {"name": "value", "in": "query", "required": False, "schema": schema}
         ]
 
-        with pytest.raises(ValueError, match="OpenAPI field schema is unsupported: value"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     def test_public_facade_rejects_required_json_body_controls(self):
@@ -120,7 +120,7 @@ class TestFields:
             "schema"
         ]["required"] = ["title"]
 
-        with pytest.raises(ValueError, match="OpenAPI required JSON body field is unsupported"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize("method", ["head", "options"])
@@ -131,7 +131,7 @@ class TestFields:
             "responses": {"200": {"description": "OK"}},
         }
 
-        with pytest.raises(ValueError, match=f"OpenAPI operation method is unsupported: {method.upper()} /records"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     def test_public_facade_maps_supported_query_and_json_body_fields(self):
