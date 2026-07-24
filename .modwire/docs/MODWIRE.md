@@ -1,5 +1,3 @@
-# Quality loop
+# Modwire
 
-1. Run `modwire report --language <language>` before changing code.
-2. Make the smallest coherent change.
-3. Run the report again and resolve violations before review.
+Run `modwire report --language python` before and after structural changes. Resolve boundary violations before review; update the map when a deliberate architectural change changes ownership or allowed dependencies.

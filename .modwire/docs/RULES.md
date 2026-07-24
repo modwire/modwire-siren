@@ -1,6 +1,7 @@
-# Working rules
+# Rules
 
-- Use comments only as docstrings that document public API classes or functions.
-- Keep documentation focused on its readers' tasks; do not generate internal implementation inventories for end users.
-- When running local CLI commands, use host mode or an execution mode with privileges equivalent to the user's.
-- Read the local guidance before changing code.
+- Keep the public API to the supported `modwire_siren` root imports; do not make private modules contractual.
+- Use OOP: one class per file, no helper or pseudo-private functions. A function is allowed only as public API, such as `siren()`.
+- Comments are public-API docstrings only. User documentation explains use, not internal inventories.
+- Read `.modwire/INDEX.md` and local guidance before changing code.
+- Run local commands with the user's effective privileges.

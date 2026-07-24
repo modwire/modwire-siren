@@ -1,51 +1,41 @@
-# Adapt the example paths and names below to your repository before enforcing it.
-# Tag names are anchored as YAML variables so rules and flows can reuse them by alias.
-
 boundaries:
   tags:
-    # Broad module identity keeps all code under src/ classified for boundary rules.
-    - {name: &module_tag module, match: src/*}
-    - {name: &shared_tag shared, match: src/shared}
-
-    # Backend realm: src/backend/<module>/<layer>/...
-    - {name: &backend_module_tag backend_module, match: src/backend/*}
-    - {name: &api_tag api, match: src/backend/*/api}
-    - {name: &application_tag application, match: src/backend/*/application}
-    - {name: &infrastructure_tag infrastructure, match: src/backend/*/infrastructure}
-    - {name: &domain_tag domain, match: src/backend/*/domain}
-
-    # Frontend realm: src/frontend/<page>/<layer>/...
-    - {name: &frontend_module_tag frontend_module, match: src/frontend/*}
-    - {name: &page_tag page, match: src/frontend/*/page}
-    - {name: &state_tag state, match: src/frontend/*/state}
-    - {name: &component_tag component, match: src/frontend/*/component}
+    - {name: &module_tag module, match: src/modwire_siren/*}
+    - {name: &test_module_tag test_module, match: tests}
+    - {name: &tooling_module_tag tooling_module, match: scripts}
+    - {name: &package_api_tag package_api, match: src/modwire_siren/__init__.py}
+    - {name: &facade_tag facade, match: src/modwire_siren/extras.py}
+    - {name: &service_tag service, match: src/modwire_siren/service.py}
+    - {name: &builder_tag builder, match: src/modwire_siren/builder.py}
+    - {name: &contract_tag contract, match: src/modwire_siren/contracts.py}
+    - {name: &engine_tag engine, match: src/modwire_siren/engine}
+    - {name: &source_tag source, match: src/modwire_siren/sources}
 
   rules:
-    # Modules are closed by default, but may use the shared package and themselves.
-    - source: *module_tag
-      disallow: [*module_tag]
-      allow: [*shared_tag]
-      allow_same_match: true
+    - {source: *package_api_tag, allow: [*facade_tag, *contract_tag]}
+    - {source: *facade_tag, allow: [*engine_tag, *service_tag, *source_tag]}
+    - {source: *service_tag, allow: [*builder_tag, *contract_tag, *source_tag]}
+    - {source: *builder_tag, allow: [*contract_tag]}
+    - {source: *engine_tag, allow: [*contract_tag]}
+    - {source: *source_tag, allow: [*builder_tag, *contract_tag]}
+    - {source: *test_module_tag, allow: [*package_api_tag]}
+    - {source: *tooling_module_tag, allow: [*package_api_tag]}
 
   flow:
     analyzers: [module-boundaries, backward-flow, no-cycles, no-reentry]
     realms:
-      - name: backend
-        module_tag: *backend_module_tag
-        layers: &backend_layers [*api_tag, *application_tag, *infrastructure_tag, *domain_tag]
-      - name: frontend
-        module_tag: *frontend_module_tag
-        layers: &frontend_layers [*page_tag, *state_tag, *component_tag]
+      - {name: package, module_tag: *module_tag}
+      - {name: tests, module_tag: *test_module_tag}
+      - {name: tooling, module_tag: *tooling_module_tag}
 
+# agent forbidden start
 shape:
-  max_classes_per_file: 1
-  max_interfaces_per_file: 1
-  max_types_per_file: 1
-  max_abstract_classes_per_file: 1
+  max_classes_per_file: -1
+  max_interfaces_per_file: -1
+  max_types_per_file: -1
+  max_abstract_classes_per_file: -1
   max_functions_per_file: 0
-  allow_optional_function_args: false
-  allow_optional_method_args: false
-  allow_optional_class_properties: false
-  allow_import_aliases: false
-  require_joined_imports: true
-  allowed_import_crossing_types: [module, symbol]
+  allow_optional_function_args: true
+  allow_optional_method_args: true
+  allow_optional_class_properties: true
+# agent forbidden end

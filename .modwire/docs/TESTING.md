@@ -1,7 +1,5 @@
 # Testing
 
-If a local Modwire MCP tool is available, consult it first for project-specific testing rules.
+Test through published `modwire_siren` imports and observable Siren documents only—never private modules or internal state. The Modwire MCP tool, when available, is a reference consumer: inspect its advertised links and actions before using it.
 
-Test only public interfaces and assert observable outcomes such as returned values, exit codes, output, or files.
-
-Write scenarios in Auntie order: attacks, invariants, interruption, cleanup, recovery, then happy paths.
+Write cases in Auntie order: adversarial boundary, invariant, interruption, cleanup, recovery, then happy path. Run `make verify` before review.
