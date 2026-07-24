@@ -5,6 +5,7 @@ from typing import Any
 from ...document import SirenAction
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenScope
 
 
 class SirenActionDocumentService(ABC):
@@ -13,7 +14,7 @@ class SirenActionDocumentService(ABC):
         self,
         api: SirenApi,
         resource: SirenResource,
-        scope: str,
+        scope: SirenScope,
         context: SirenContext,
         value: Mapping[str, Any],
     ) -> list[SirenAction]:

@@ -4,7 +4,7 @@ from wireup import injectable
 
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
-from ...vocabulary import SirenScope
+from ...vocabulary import SirenRelation, SirenScope
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 
@@ -26,7 +26,9 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
             class_=(SirenScope.COLLECTION, request.resource.resource_class),
             properties=request.context.value,
             entities=tuple(
-                self.entities.entity(request.api, request.resource, item, request.context, ("item",))
+                self.entities.entity(
+                    request.api, request.resource, item, request.context, (SirenRelation.validate("item"),)
+                )
                 for item in request.context.items
             ) or None,
             actions=tuple(self.actions.actions(

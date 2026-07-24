@@ -58,4 +58,10 @@ class TestComponents:
         )
         document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
+        assert document["actions"][0] == {
+            "name": "rename_record",
+            "method": "PATCH",
+            "href": "https://api.example.com/records/42",
+            "type": "application/json",
+            "fields": [{"name": "title", "type": "text"}],
+        }

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
-from .....runtime.vocabulary import SirenActionMethod, SirenFieldType, SirenHttpMethod, SirenScope
+from .....runtime.vocabulary import SirenActionMethod, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 from ....assembly.state import SirenBuilder
 from ..values import Field
 from .components import ComponentResolver
@@ -70,7 +70,9 @@ class OpenApiOperationCompiler:
                 ):
                     self.builder.add_root_operation(name)
 
-    def fields(self, path_item: dict[str, Any], operation: dict[str, Any]) -> tuple[tuple[Field, ...], str | None]:
+    def fields(
+        self, path_item: dict[str, Any], operation: dict[str, Any]
+    ) -> tuple[tuple[Field, ...], SirenMediaType | None]:
         parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
         parameter_index: dict[tuple[str, str], dict[str, Any]] = {}
         for parameter in parameters:
@@ -112,7 +114,7 @@ class OpenApiOperationCompiler:
             if not isinstance(name, str) or not isinstance(value, dict):
                 raise ValueError("OpenAPI JSON request body property is invalid")
             fields.append(Field(name=name, type=self.field_type(name, self.components.schema(value))))
-        return tuple(fields), "application/json" if content else None
+        return tuple(fields), SirenMediaType.validate("application/json") if content else None
 
     def field_type(self, name: str, definition: dict[str, Any]) -> SirenFieldType:
         unsupported = {"allOf", "anyOf", "const", "contains", "enum", "if", "items", "not", "oneOf", "prefixItems"}

@@ -78,9 +78,11 @@ class DocumentationGenerator:
     def _operations(value: object) -> str:
         if not inspect.isclass(value):
             return "—"
+        decorators = getattr(value, "__pydantic_decorators__", None)
+        validators = decorators.model_validators if decorators is not None else {}
         operations = []
         for name, member in value.__dict__.items():
-            if name.startswith("_"):
+            if name.startswith("_") or name in validators:
                 continue
             if isinstance(member, property):
                 annotation = DocumentationGenerator._annotation(

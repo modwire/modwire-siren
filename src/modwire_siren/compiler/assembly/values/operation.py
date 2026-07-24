@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ....runtime.vocabulary import SirenHttpMethod, SirenScope
+from ....runtime.vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 
 
 @dataclass(frozen=True)
@@ -10,4 +10,4 @@ class OperationDraft:
     name: str
     method: SirenHttpMethod
     path: str
-    media_type: str | None
+    media_type: SirenMediaType | None

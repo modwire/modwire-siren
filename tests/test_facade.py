@@ -1,4 +1,5 @@
 from inspect import Parameter, signature
+from pathlib import Path
 
 import pytest
 from openapi_documents import SCHEMA
@@ -82,3 +83,12 @@ class TestFacade:
             "rel": ["self"],
             "href": "https://api.example.com/siren/",
         }
+
+    def test_generated_public_api_hides_framework_validator_hooks(self):
+        documentation = (Path(__file__).parents[1] / "README.md").read_text()
+
+        assert "apply_default_media_type()" not in documentation
+        assert "validate_field_names()" not in documentation
+        assert "validate_scope()" not in documentation
+        assert "validate_action_names()" not in documentation
+        assert "| `SirenAction` | Describe an available Siren action. | — |" in documentation

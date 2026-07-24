@@ -8,7 +8,7 @@ from ...document import SirenDocument, SirenEmbeddedRepresentation, SirenLink
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
-from ...vocabulary import SirenScope
+from ...vocabulary import SirenRelation, SirenScope
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService
 
 
@@ -24,7 +24,7 @@ class SirenDefaultEntityDocumentService(SirenEntityDocumentService):
         resource: SirenResource,
         value: Mapping[str, Any],
         context: SirenContext,
-        rel: tuple[str, ...],
+        rel: tuple[SirenRelation, ...],
     ) -> SirenDocument | SirenEmbeddedRepresentation:
         fields = {
             "class_": (resource.resource_class,),
