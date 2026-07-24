@@ -6,6 +6,7 @@ from typing import Any
 
 from wireup import injectable
 
+from ...schema.services import SirenSchemaFreezer
 from ..contracts import SirenSpecification
 from ..values import SirenRequirement
 
@@ -13,17 +14,25 @@ from ..values import SirenRequirement
 @injectable(as_type=SirenSpecification)
 @dataclass(frozen=True)
 class SirenSchemaSpecification(SirenSpecification):
+    schemas: SirenSchemaFreezer
+
     def requirements(self) -> tuple[SirenRequirement, ...]:
-        document = json.loads(files("modwire_siren.runtime.document.schema").joinpath("siren.schema.json").read_text())
+        document = self.schemas.freeze(
+            json.loads(files("modwire_siren.runtime.document.schema").joinpath("siren.schema.json").read_text())
+        )
         definitions = (("Entity", document), *document["definitions"].items())
         requirements: tuple[SirenRequirement, ...] = ()
         for name, definition in definitions:
             effective = self.effective(definition, document)
             for member, member_schema in effective.get("properties", {}).items():
-                requirement = SirenRequirement(name, member, member_schema, member in effective.get("required", []))
+                requirement = SirenRequirement(
+                    name, member, member_schema, member in effective.get("required", []), document
+                )
                 requirements += (requirement,)
                 for value in member_schema.get("enum", []):
-                    requirements += (SirenRequirement(name, member, member_schema, requirement.required, value),)
+                    requirements += (
+                        SirenRequirement(name, member, member_schema, requirement.required, document, value),
+                    )
         return requirements
 
     def effective(self, schema: Mapping[str, Any], document: Mapping[str, Any]) -> dict[str, Any]:

@@ -9,6 +9,7 @@ class SirenRequirement:
     member: str
     schema: Mapping[str, Any]
     required: bool
+    document: Mapping[str, Any]
     enum_value: str | int | float | bool | None = None
 
     @property
