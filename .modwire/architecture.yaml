@@ -1,0 +1,51 @@
+# Adapt the example paths and names below to your repository before enforcing it.
+# Tag names are anchored as YAML variables so rules and flows can reuse them by alias.
+
+boundaries:
+  tags:
+    # Broad module identity keeps all code under src/ classified for boundary rules.
+    - {name: &module_tag module, match: src/*}
+    - {name: &shared_tag shared, match: src/shared}
+
+    # Backend realm: src/backend/<module>/<layer>/...
+    - {name: &backend_module_tag backend_module, match: src/backend/*}
+    - {name: &api_tag api, match: src/backend/*/api}
+    - {name: &application_tag application, match: src/backend/*/application}
+    - {name: &infrastructure_tag infrastructure, match: src/backend/*/infrastructure}
+    - {name: &domain_tag domain, match: src/backend/*/domain}
+
+    # Frontend realm: src/frontend/<page>/<layer>/...
+    - {name: &frontend_module_tag frontend_module, match: src/frontend/*}
+    - {name: &page_tag page, match: src/frontend/*/page}
+    - {name: &state_tag state, match: src/frontend/*/state}
+    - {name: &component_tag component, match: src/frontend/*/component}
+
+  rules:
+    # Modules are closed by default, but may use the shared package and themselves.
+    - source: *module_tag
+      disallow: [*module_tag]
+      allow: [*shared_tag]
+      allow_same_match: true
+
+  flow:
+    analyzers: [module-boundaries, backward-flow, no-cycles, no-reentry]
+    realms:
+      - name: backend
+        module_tag: *backend_module_tag
+        layers: &backend_layers [*api_tag, *application_tag, *infrastructure_tag, *domain_tag]
+      - name: frontend
+        module_tag: *frontend_module_tag
+        layers: &frontend_layers [*page_tag, *state_tag, *component_tag]
+
+shape:
+  max_classes_per_file: 1
+  max_interfaces_per_file: 1
+  max_types_per_file: 1
+  max_abstract_classes_per_file: 1
+  max_functions_per_file: 0
+  allow_optional_function_args: false
+  allow_optional_method_args: false
+  allow_optional_class_properties: false
+  allow_import_aliases: false
+  require_joined_imports: true
+  allowed_import_crossing_types: [module, symbol]
