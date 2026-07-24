@@ -6,6 +6,9 @@ from ..values import Resource
 class RouteCatalog:
     def __init__(self, paths: dict[str, Any]) -> None:
         self.paths = paths
+        self.segment_cache: dict[str, tuple[str, ...]] = {}
+        self.parameter_cache: dict[str, tuple[str, ...]] = {}
+        self.ownership_cache: dict[str, tuple[Resource, str] | None] = {}
         self.resource_list = self.compile_resources()
 
     def resources(self) -> tuple[Resource, ...]:
@@ -50,6 +53,8 @@ class RouteCatalog:
         return tuple(candidates.values())
 
     def ownership(self, path: str) -> tuple[Resource, str] | None:
+        if path in self.ownership_cache:
+            return self.ownership_cache[path]
         candidates: list[tuple[int, Resource, str]] = []
         for resource in self.resource_list:
             if resource.entity_path and self.belongs(path, resource.entity_path):
@@ -59,12 +64,14 @@ class RouteCatalog:
         if not candidates:
             segments = self.segments(path)
             if segments and not self.is_parameter(segments[-1]):
+                self.ownership_cache[path] = None
                 return None
             raise ValueError(f"OpenAPI route is unsupported: {path!r}")
         longest = max(candidate[0] for candidate in candidates)
         owners = [(resource, scope) for length, resource, scope in candidates if length == longest]
         if len(owners) != 1:
             raise ValueError(f"OpenAPI route ownership is ambiguous: {path!r}")
+        self.ownership_cache[path] = owners[0]
         return owners[0]
 
     def belongs(self, path: str, base: str) -> bool:
@@ -73,7 +80,11 @@ class RouteCatalog:
         return path_segments[: len(base_segments)] == base_segments and self.parameters(path) == self.parameters(base)
 
     def segments(self, path: str) -> tuple[str, ...]:
+        cached = self.segment_cache.get(path)
+        if cached is not None:
+            return cached
         if path == "/":
+            self.segment_cache[path] = ()
             return ()
         if not isinstance(path, str) or not path.startswith("/"):
             raise ValueError(f"OpenAPI route is unsupported: {path!r}")
@@ -84,6 +95,7 @@ class RouteCatalog:
             for segment in segments
         ):
             raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+        self.segment_cache[path] = segments
         return segments
 
     def is_collection(self, segments: tuple[str, ...]) -> bool:
@@ -96,7 +108,12 @@ class RouteCatalog:
         return len(segment) > 2 and segment.startswith("{") and segment.endswith("}")
 
     def parameters(self, path: str) -> tuple[str, ...]:
-        return tuple(segment[1:-1] for segment in self.segments(path) if self.is_parameter(segment))
+        cached = self.parameter_cache.get(path)
+        if cached is not None:
+            return cached
+        parameters = tuple(segment[1:-1] for segment in self.segments(path) if self.is_parameter(segment))
+        self.parameter_cache[path] = parameters
+        return parameters
 
     def is_plural(self, value: str) -> bool:
         return value.endswith("s") and len(value) > 1
