@@ -11,8 +11,8 @@
   operation state is factory-created or transient, and request values remain ordinary method arguments.
 - Model injectable services as frozen dataclasses, including stateless services with no fields; this gives
   Wireup a declarative constructor without handwritten initialization plumbing.
-- Keep `values` packages for immutable records only. Services that carry behavior belong in `services`; when
-  they hold operation state, an injectable factory creates them for that operation instead of registering them.
+- Keep `values` packages for immutable records only. `services` contains only injectable services; operation-bound
+  state belongs in `state` and an injectable factory creates it for that operation instead of registering it.
 - Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
   `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.

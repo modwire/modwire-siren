@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from wireup import injectable
 
 from ..contracts import SirenBuilderFactory
-from .builder import SirenBuilder
+from ..state import SirenBuilder
 
 
 @injectable(as_type=SirenBuilderFactory)

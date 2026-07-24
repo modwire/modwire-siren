@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..services.routes import RouteCatalog
+    from ..state.routes import RouteCatalog
 
 
 class OpenApiRouteCatalogFactory(ABC):

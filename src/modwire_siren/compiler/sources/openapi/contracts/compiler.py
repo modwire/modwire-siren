@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ....assembly.services.builder import SirenBuilder
-    from ..services.components import ComponentResolver
-    from ..services.routes import RouteCatalog
+    from ....assembly.state.builder import SirenBuilder
+    from ..state.components import ComponentResolver
+    from ..state.routes import RouteCatalog
 
 
 class OpenApiOperationCompiler(ABC):

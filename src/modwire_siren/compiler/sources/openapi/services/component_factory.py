@@ -4,7 +4,7 @@ from typing import Any
 from wireup import injectable
 
 from ..contracts import OpenApiComponentResolverFactory
-from .components import ComponentResolver
+from ..state import ComponentResolver
 
 
 @injectable(as_type=OpenApiComponentResolverFactory)

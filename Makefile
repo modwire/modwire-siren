@@ -1,4 +1,4 @@
-.PHONY: docs docs-check modwire verify
+.PHONY: docs docs-check modwire service-check verify
 
 modwire:
 	modwire report --architecture-root src --language python --summary
@@ -9,6 +9,9 @@ docs:
 docs-check:
 	uv run python scripts/generate_docs.py --check
 
-verify: docs-check
+service-check:
+	uv run python scripts/check_service_conventions.py
+
+verify: docs-check service-check
 	uv run ruff check .
 	uv run pytest

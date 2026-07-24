@@ -3,11 +3,10 @@ from typing import Any, ClassVar
 
 from wireup import injectable
 
-from ....assembly.services.builder import SirenBuilder
+from ....assembly.state import SirenBuilder
 from ..contracts import OpenApiOperationCompiler
+from ..state import ComponentResolver, RouteCatalog
 from ..values import Field
-from .components import ComponentResolver
-from .routes import RouteCatalog
 
 
 @injectable(as_type=OpenApiOperationCompiler)

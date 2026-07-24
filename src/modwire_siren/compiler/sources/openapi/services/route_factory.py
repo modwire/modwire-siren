@@ -4,7 +4,7 @@ from typing import Any
 from wireup import injectable
 
 from ..contracts import OpenApiRouteCatalogFactory
-from .routes import RouteCatalog
+from ..state import RouteCatalog
 
 
 @injectable(as_type=OpenApiRouteCatalogFactory)
