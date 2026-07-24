@@ -1,8 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from pydantic import JsonValue
-
 from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
@@ -45,10 +43,8 @@ class SirenBuilder:
         self._root_operations.append(name)
         return self
 
-    def add_field(
-        self, operation: str, name: str, definition: Mapping[str, JsonValue], required: bool = False
-    ) -> "SirenBuilder":
-        self._fields.append(FieldDraft(operation, name, definition, required))
+    def add_field(self, operation: str, name: str, type: str) -> "SirenBuilder":
+        self._fields.append(FieldDraft(operation, name, type))
         return self
 
     def build(self) -> SirenApi:
@@ -85,7 +81,7 @@ class SirenBuilder:
                     route=SirenRoute(path=operation.path),
                     media_type=operation.media_type,
                     fields=tuple(
-                        SirenField(name=item.name, definition=item.definition, required=item.required)
+                        SirenField(name=item.name, type=item.type)
                         for item in fields.get(operation.name, ())
                     ),
                 )

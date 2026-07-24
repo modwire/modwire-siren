@@ -47,8 +47,5 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         if operation.media_type is not None:
             action["type"] = operation.media_type
         if operation.fields:
-            action["fields"] = [
-                {"name": field.name, "type": field.definition.get("type", "text"), "required": field.required}
-                for field in operation.fields
-            ]
+            action["fields"] = [{"name": field.name, "type": field.type} for field in operation.fields]
         return action

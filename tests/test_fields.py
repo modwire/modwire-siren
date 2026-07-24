@@ -23,7 +23,7 @@ class TestFields:
                 resource="record",
                 capabilities=frozenset({"list_records"}),
             )
-        )["actions"][0]["fields"] == [{"name": "page", "type": "string", "required": True}]
+        )["actions"][0]["fields"] == [{"name": "page", "type": "text"}]
 
 
     def test_public_facade_rejects_a_schema_less_parameter(self):
@@ -57,7 +57,7 @@ class TestFields:
             )
         )
 
-        assert document["actions"][0]["fields"] == [{"name": "title", "type": "string", "required": True}]
+        assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
 
 
     @pytest.mark.parametrize(
@@ -73,3 +73,125 @@ class TestFields:
 
         with pytest.raises(ValueError, match="OpenAPI request body must provide application/json"):
             siren(invalid)
+
+    @pytest.mark.parametrize(
+        ("parameter", "message"),
+        [
+            (
+                {"name": "page", "in": "query", "required": True, "schema": {"type": "integer"}},
+                "OpenAPI required query parameter is unsupported: page",
+            ),
+            (
+                {"name": "session", "in": "cookie", "required": False, "schema": {"type": "string"}},
+                "OpenAPI parameter location is unsupported: cookie",
+            ),
+        ],
+    )
+    def test_public_facade_rejects_unrepresentable_parameter_controls(self, parameter, message):
+        invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        invalid["paths"]["/records"]["get"]["parameters"] = [parameter]
+
+        with pytest.raises(ValueError, match=message):
+            siren(invalid)
+
+    @pytest.mark.parametrize(
+        "schema",
+        [
+            {"type": "array", "items": {"type": "string"}},
+            {"type": "object"},
+            {"type": "null"},
+            {"type": "string", "enum": ["draft", "published"]},
+            {"oneOf": [{"type": "string"}, {"type": "integer"}]},
+            {"type": "string", "format": "uuid"},
+        ],
+    )
+    def test_public_facade_rejects_unmappable_field_schemas(self, schema):
+        invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        invalid["paths"]["/records"]["get"]["parameters"] = [
+            {"name": "value", "in": "query", "required": False, "schema": schema}
+        ]
+
+        with pytest.raises(ValueError, match="OpenAPI field schema is unsupported: value"):
+            siren(invalid)
+
+    def test_public_facade_rejects_required_json_body_controls(self):
+        invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
+            "schema"
+        ]["required"] = ["title"]
+
+        with pytest.raises(ValueError, match="OpenAPI required JSON body field is unsupported"):
+            siren(invalid)
+
+    @pytest.mark.parametrize("method", ["head", "options"])
+    def test_public_facade_rejects_unsupported_http_methods(self, method):
+        invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        invalid["paths"]["/records"][method] = {
+            "operationId": f"{method}_records",
+            "responses": {"200": {"description": "OK"}},
+        }
+
+        with pytest.raises(ValueError, match=f"OpenAPI operation method is unsupported: {method.upper()} /records"):
+            siren(invalid)
+
+    def test_public_facade_maps_supported_query_and_json_body_fields(self):
+        document = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        document["paths"]["/records"]["parameters"] = []
+        document["paths"]["/records"]["get"]["parameters"] = [
+            {"name": "text", "in": "query", "required": False, "schema": {"type": "string"}},
+            {"name": "email", "in": "query", "required": False, "schema": {"type": "string", "format": "email"}},
+            {"name": "uri", "in": "query", "required": False, "schema": {"type": "string", "format": "uri"}},
+            {"name": "date", "in": "query", "required": False, "schema": {"type": "string", "format": "date"}},
+            {
+                "name": "date_time",
+                "in": "query",
+                "required": False,
+                "schema": {"type": "string", "format": "date-time"},
+            },
+            {"name": "time", "in": "query", "required": False, "schema": {"type": "string", "format": "time"}},
+            {"name": "integer", "in": "query", "required": False, "schema": {"type": "integer"}},
+            {"name": "number", "in": "query", "required": False, "schema": {"type": "number"}},
+            {"name": "boolean", "in": "query", "required": False, "schema": {"type": "boolean"}},
+        ]
+        document["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
+            "schema"
+        ]["properties"] = {
+            "title": {"type": "string"},
+            "priority": {"type": "integer"},
+            "published": {"type": "boolean"},
+        }
+        engine = siren(document)
+
+        collection = engine.project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                capabilities=frozenset({"list_records"}),
+            )
+        )
+        entity = engine.project(
+            SirenContext(
+                base_url="https://api.example.com",
+                resource="record",
+                value={"id": "42"},
+                capabilities=frozenset({"replace_record"}),
+            )
+        )
+
+        assert collection["actions"][0]["fields"] == [
+            {"name": "text", "type": "text"},
+            {"name": "email", "type": "email"},
+            {"name": "uri", "type": "url"},
+            {"name": "date", "type": "date"},
+            {"name": "date_time", "type": "datetime-local"},
+            {"name": "time", "type": "time"},
+            {"name": "integer", "type": "number"},
+            {"name": "number", "type": "number"},
+            {"name": "boolean", "type": "checkbox"},
+        ]
+        assert entity["actions"][0]["fields"] == [
+            {"name": "title", "type": "text"},
+            {"name": "priority", "type": "number"},
+            {"name": "published", "type": "checkbox"},
+        ]

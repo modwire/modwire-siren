@@ -23,7 +23,7 @@ class TestProjection:
             "method": "GET",
         }
         assert document["actions"][1]["type"] == "application/json"
-        assert document["actions"][1]["fields"][0] == {"name": "title", "type": "string", "required": True}
+        assert document["actions"][1]["fields"][0] == {"name": "title", "type": "text"}
 
 
     def test_engine_rejects_a_capability_outside_the_resource_contract(self):
@@ -45,14 +45,13 @@ class TestProjection:
             "paths": {
                 "/records": {"get": {"operationId": "list_records", "responses": {"200": {"description": "OK"}}}},
                 "/searches": {
-                    "get": {
+                    "post": {
                         "operationId": "search_records",
                         "requestBody": {
                             "content": {
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "required": ["phrase"],
                                         "properties": {"phrase": {"type": "string"}},
                                     }
                                 }
@@ -70,7 +69,6 @@ class TestProjection:
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "required": ["scope"],
                                         "properties": {"scope": {"type": "string"}},
                                     }
                                 }
@@ -111,15 +109,15 @@ class TestProjection:
             {
                 "name": "search_records",
                 "href": "https://api.example.com/searches",
-                "method": "GET",
+                "method": "POST",
                 "type": "application/json",
-                "fields": [{"name": "phrase", "type": "string", "required": True}],
+                "fields": [{"name": "phrase", "type": "text"}],
             },
             {
                 "name": "rebuild_index",
                 "href": "https://api.example.com/commands/rebuild",
                 "method": "POST",
                 "type": "application/json",
-                "fields": [{"name": "scope", "type": "string", "required": True}],
+                "fields": [{"name": "scope", "type": "text"}],
             },
         ]

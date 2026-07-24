@@ -34,7 +34,6 @@ class SirenRootScopeProjector(SirenScopeProjector):
                 operation.scope == "collection"
                 and operation.route.path == resource.collection.path
                 and operation.method == "GET"
-                and not any(field.required for field in operation.fields)
                 for operation in request.api.operations
             )
         )

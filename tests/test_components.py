@@ -23,7 +23,7 @@ class TestComponents:
             )
         )
 
-        assert document["actions"][0]["fields"] == [{"name": "page_size", "type": "integer", "required": False}]
+        assert document["actions"][0]["fields"] == [{"name": "page_size", "type": "number"}]
 
 
     @pytest.mark.parametrize(
@@ -56,4 +56,4 @@ class TestComponents:
             )
         )
 
-        assert document["actions"][0]["fields"] == [{"name": "title", "type": "string", "required": True}]
+        assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
