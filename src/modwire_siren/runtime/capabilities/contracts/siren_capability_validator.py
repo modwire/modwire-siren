@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenResource
+from ...request import SirenContext
 
 
 class SirenCapabilityValidator(ABC):

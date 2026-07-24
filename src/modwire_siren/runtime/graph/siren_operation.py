@@ -1,6 +1,6 @@
 from typing import Literal
 
-from .contract import Contract
+from ..contracts import Contract
 from .siren_field import SirenField
 from .siren_route import SirenRoute
 

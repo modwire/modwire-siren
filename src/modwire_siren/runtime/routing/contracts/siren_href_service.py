@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenResource
+from ...request import SirenContext
 
 
 class SirenHrefService(ABC):

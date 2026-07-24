@@ -129,6 +129,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
-| `SirenContext` | Supply runtime state used to project a Siren document. | — |
+| `SirenContext` | Supply runtime state used to project a Siren document. | `validate_scope() -> SirenContext` |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

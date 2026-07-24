@@ -4,11 +4,9 @@ from typing import Any
 
 from wireup import injectable
 
+from ...graph import SirenApi, SirenOperation, SirenResource
+from ...request import SirenContext
 from ...routing import SirenHrefService
-from ...siren_api import SirenApi
-from ...siren_context import SirenContext
-from ...siren_operation import SirenOperation
-from ...siren_resource import SirenResource
 from ..contracts import SirenActionDocumentService
 
 

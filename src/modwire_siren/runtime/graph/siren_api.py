@@ -1,6 +1,6 @@
 from pydantic import Field, model_validator
 
-from .contract import Contract
+from ..contracts import Contract
 from .siren_operation import SirenOperation
 from .siren_resource import SirenResource
 from .siren_root import SirenRoot

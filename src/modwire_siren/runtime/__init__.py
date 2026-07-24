@@ -1,12 +1,7 @@
-from .contract import Contract
+from .contracts import Contract
 from .engine import SirenEngine
-from .siren_api import SirenApi
-from .siren_context import SirenContext
-from .siren_field import SirenField
-from .siren_operation import SirenOperation
-from .siren_resource import SirenResource
-from .siren_root import SirenRoot
-from .siren_route import SirenRoute
+from .graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from .request import SirenContext
 
 __all__ = [
     "Contract",

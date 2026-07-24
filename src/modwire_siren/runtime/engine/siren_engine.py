@@ -1,8 +1,8 @@
 from typing import Any
 
+from ..graph import SirenApi
 from ..projection import SirenProjectionService
-from ..siren_api import SirenApi
-from ..siren_context import SirenContext
+from ..request import SirenContext
 
 
 class SirenEngine:

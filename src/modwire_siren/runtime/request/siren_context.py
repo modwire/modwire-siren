@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field, JsonValue, model_validator
 
-from .contract import Contract
+from ..contracts import Contract
 
 
 class SirenContext(Contract):
@@ -36,7 +36,7 @@ class SirenContext(Contract):
     capabilities: frozenset[str] = frozenset()
 
     @model_validator(mode="after")
-    def _validate_scope(self) -> "SirenContext":
+    def validate_scope(self) -> "SirenContext":
         if self.scope == "root" and self.resource is not None:
             raise ValueError("Siren root context cannot declare a resource")
         if self.scope != "root" and self.resource is None:

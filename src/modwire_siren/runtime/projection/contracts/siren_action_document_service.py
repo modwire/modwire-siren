@@ -2,10 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
-from ...siren_api import SirenApi
-from ...siren_context import SirenContext
-from ...siren_operation import SirenOperation
-from ...siren_resource import SirenResource
+from ...graph import SirenApi, SirenOperation, SirenResource
+from ...request import SirenContext
 
 
 class SirenActionDocumentService(ABC):

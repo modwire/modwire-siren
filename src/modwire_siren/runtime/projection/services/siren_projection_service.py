@@ -5,9 +5,9 @@ from typing import Any
 from wireup import injectable
 
 from ...capabilities import SirenCapabilityValidator
+from ...graph import SirenApi
+from ...request import SirenContext
 from ...routing import SirenResourceResolver
-from ...siren_api import SirenApi
-from ...siren_context import SirenContext
 from ..contracts import SirenScopeProjector
 from ..values import SirenProjectionRequest
 

@@ -3,9 +3,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from ...siren_api import SirenApi
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenApi, SirenResource
+from ...request import SirenContext
 from ..contracts import SirenResourceResolver
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")

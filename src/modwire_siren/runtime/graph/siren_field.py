@@ -2,7 +2,7 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue
 
-from .contract import Contract
+from ..contracts import Contract
 
 
 class SirenField(Contract):

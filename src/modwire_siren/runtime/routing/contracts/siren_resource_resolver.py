@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ...siren_api import SirenApi
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenApi, SirenResource
+from ...request import SirenContext
 
 
 class SirenResourceResolver(ABC):

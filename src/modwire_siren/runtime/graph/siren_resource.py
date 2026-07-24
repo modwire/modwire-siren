@@ -1,4 +1,4 @@
-from .contract import Contract
+from ..contracts import Contract
 from .siren_route import SirenRoute
 
 

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenResource
+from ...request import SirenContext
 from ..contracts import SirenCapabilityValidator
 
 

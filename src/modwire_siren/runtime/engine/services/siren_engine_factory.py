@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from ...graph import SirenApi
 from ...projection import SirenProjectionService
-from ...siren_api import SirenApi
 from ..siren_engine import SirenEngine
 
 

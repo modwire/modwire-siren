@@ -6,8 +6,8 @@ from urllib.parse import quote
 
 from wireup import injectable
 
-from ...siren_context import SirenContext
-from ...siren_resource import SirenResource
+from ...graph import SirenResource
+from ...request import SirenContext
 from ..contracts import SirenHrefService
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")
