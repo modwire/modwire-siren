@@ -23,6 +23,10 @@ class ServiceConventionChecker:
         failures: list[str] = []
         if "TYPE_CHECKING" in source:
             failures.append(f"{path}: TYPE_CHECKING is forbidden")
+        if "create_sync_container" in source:
+            failures.append(f"{path}: containers belong only in wiring.py")
+        if "@injectable" in source and "services" not in path.parts:
+            failures.append(f"{path}: injectables belong only in services")
         for node in classes:
             if any(
                 isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)) and member.name == "__init__"

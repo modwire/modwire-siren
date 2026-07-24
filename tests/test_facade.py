@@ -1,3 +1,5 @@
+from inspect import Parameter, signature
+
 import pytest
 from openapi_documents import SCHEMA
 
@@ -7,6 +9,11 @@ from modwire_siren import SirenContext, siren
 
 def test_public_facade_exports_only_runtime_context_and_siren():
     assert modwire_siren.__all__ == ["SirenContext", "siren"]
+    parameters = signature(siren).parameters
+    assert tuple(parameters) == ("openapi", "root_path")
+    assert parameters["openapi"].kind is Parameter.POSITIONAL_OR_KEYWORD
+    assert parameters["root_path"].kind is Parameter.KEYWORD_ONLY
+    assert parameters["root_path"].default == "/"
 
 
 def test_public_facade_uses_an_explicit_mounted_root_path():
