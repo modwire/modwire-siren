@@ -16,7 +16,7 @@ context = SirenContext(
     resource="widget",
     capabilities=frozenset({"list_widgets"}),
 )
-document = siren(schema).project(context)
+document = siren(schema).project(context).model_dump(by_alias=True, mode="json", exclude_none=True)
 
 assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/widgets"}]
 print(modwire_siren.__file__)

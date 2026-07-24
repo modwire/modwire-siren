@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Any
 
 from wireup import injectable
 
+from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
@@ -18,23 +18,23 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
     def supports(self, scope: str) -> bool:
         return scope == "collection"
 
-    def project(self, request: SirenProjectionRequest) -> dict[str, Any]:
+    def project(self, request: SirenProjectionRequest) -> SirenDocument:
         if request.resource is None:
             raise ValueError("Siren collection projection requires a resource")
-        return {
-            "class": ["collection", request.resource.resource_class],
-            "properties": dict(request.context.value),
-            "entities": [
+        return SirenDocument(
+            class_=("collection", request.resource.resource_class),
+            properties=request.context.value,
+            entities=tuple(
                 self.entities.entity(request.api, request.resource, item, request.context, ("item",))
                 for item in request.context.items
-            ],
-            "actions": self.actions.actions(
+            ) or None,
+            actions=tuple(self.actions.actions(
                 request.api, request.resource, "collection", request.context, request.context.value
+            )) or None,
+            links=(
+                SirenLink(
+                    rel=("self",),
+                    href=self.hrefs.href(request.resource.collection.path, request.context, request.resource),
+                ),
             ),
-            "links": [
-                {
-                    "rel": ["self"],
-                    "href": self.hrefs.href(request.resource.collection.path, request.context, request.resource),
-                }
-            ],
-        }
+        )

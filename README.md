@@ -75,7 +75,9 @@ document = engine.project(
     )
 )
 
-assert document["actions"][0] == {
+payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+assert payload["actions"][0] == {
     "name": "get_record",
     "href": "https://api.example.com/records/42",
     "method": "GET",

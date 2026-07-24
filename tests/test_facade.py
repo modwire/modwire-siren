@@ -67,7 +67,10 @@ class TestFacade:
             SirenContext(base_url="https://api.example.com", scope="root")
         )
 
-        assert document["links"][0] == {"rel": ["self"], "href": "https://api.example.com/siren/"}
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"][0] == {
+            "rel": ["self"],
+            "href": "https://api.example.com/siren/",
+        }
 
 
     @pytest.mark.parametrize(

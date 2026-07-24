@@ -1,10 +1,33 @@
 import pytest
 from openapi_documents import SCHEMA
 
-from modwire_siren import SirenContext, SirenProjectionError, siren
+from modwire_siren import SirenContext, SirenDocument, SirenEmbeddedRepresentation, SirenProjectionError, siren
 
 
 class TestProjection:
+    def test_public_facade_projects_collection_items_as_embedded_representations(self):
+        document = siren(SCHEMA).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                items=({"id": "42", "title": "Architecture"},),
+                capabilities=frozenset({"list_records", "get_record"}),
+            )
+        )
+
+        assert isinstance(document, SirenDocument)
+        assert isinstance(document.entities[0], SirenEmbeddedRepresentation)
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["entities"] == [
+            {
+                "class": ["record"],
+                "rel": ["item"],
+                "properties": {"id": "42", "title": "Architecture"},
+                "actions": [{"name": "get_record", "href": "https://api.example.com/records/42", "method": "GET"}],
+                "links": [{"rel": ["self"], "href": "https://api.example.com/records/42"}],
+            }
+        ]
+
     def test_public_facade_projects_an_entity_with_concrete_links_and_allowed_actions(self):
         document = siren(SCHEMA).project(
             SirenContext(
@@ -15,15 +38,17 @@ class TestProjection:
             )
         )
 
-        assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/records/42"}]
-        assert [action["name"] for action in document["actions"]] == ["get_record", "rename_record"]
-        assert document["actions"][0] == {
+        assert isinstance(document, SirenDocument)
+        payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+        assert payload["links"] == [{"rel": ["self"], "href": "https://api.example.com/records/42"}]
+        assert [action["name"] for action in payload["actions"]] == ["get_record", "rename_record"]
+        assert payload["actions"][0] == {
             "name": "get_record",
             "href": "https://api.example.com/records/42",
             "method": "GET",
         }
-        assert document["actions"][1]["type"] == "application/json"
-        assert document["actions"][1]["fields"][0] == {"name": "title", "type": "text"}
+        assert payload["actions"][1]["type"] == "application/json"
+        assert payload["actions"][1]["fields"][0] == {"name": "title", "type": "text"}
 
 
     def test_engine_rejects_a_capability_outside_the_resource_contract(self):
@@ -101,11 +126,13 @@ class TestProjection:
             )
         )
 
-        assert document["links"] == [
+        assert isinstance(document, SirenDocument)
+        payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+        assert payload["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
             {"rel": ["record"], "href": "https://api.example.com/records"},
         ]
-        assert document["actions"] == [
+        assert payload["actions"] == [
             {
                 "name": "search_records",
                 "href": "https://api.example.com/searches",

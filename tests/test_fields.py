@@ -16,14 +16,17 @@ class TestFields:
         with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
-        assert siren(PARAMETER_MEDIA_SCHEMA).project(
+        document = siren(PARAMETER_MEDIA_SCHEMA).project(
             SirenContext(
                 base_url="https://api.example.com",
                 scope="collection",
                 resource="record",
                 capabilities=frozenset({"list_records"}),
             )
-        )["actions"][0]["fields"] == [{"name": "page", "type": "text"}]
+        )
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["actions"][0]["fields"] == [
+            {"name": "page", "type": "text"}
+        ]
 
 
     def test_public_facade_rejects_a_schema_less_parameter(self):
@@ -56,6 +59,7 @@ class TestFields:
                 capabilities=frozenset({"replace_record"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
 
@@ -178,6 +182,8 @@ class TestFields:
                 capabilities=frozenset({"replace_record"}),
             )
         )
+        collection = collection.model_dump(by_alias=True, mode="json", exclude_none=True)
+        entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert collection["actions"][0]["fields"] == [
             {"name": "text", "type": "text"},

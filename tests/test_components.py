@@ -22,6 +22,7 @@ class TestComponents:
                 capabilities=frozenset({"list_records"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["actions"][0]["fields"] == [{"name": "page_size", "type": "number"}]
 
@@ -55,5 +56,6 @@ class TestComponents:
                 capabilities=frozenset({"rename_record"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]

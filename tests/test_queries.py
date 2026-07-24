@@ -22,20 +22,22 @@ class TestQueries:
                 capabilities=frozenset({"list_records"}),
             )
         )
+        payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         href = (
             "https://api.example.com/records?filter=a%2Fb%20%26%20c&tag=first&tag=second&empty=&missing=&%C5%BC=%E2%9C%93"
         )
-        assert document["links"] == [{"rel": ["self"], "href": href}]
-        assert document["actions"] == [{"name": "list_records", "href": href, "method": "GET"}]
+        assert payload["links"] == [{"rel": ["self"], "href": href}]
+        assert payload["actions"] == [{"name": "list_records", "href": href, "method": "GET"}]
 
 
     def test_public_facade_limits_root_query_values_to_the_self_link(self):
         document = siren(SCHEMA).project(
             SirenContext(base_url="https://api.example.com", scope="root", query=(("format", "siren"),))
         )
+        payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert document["links"] == [
+        assert payload["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
             {"rel": ["record"], "href": "https://api.example.com/records"},
         ]
@@ -55,11 +57,12 @@ class TestQueries:
                 )
             )
 
-        assert siren(SCHEMA).project(
+        payload = siren(SCHEMA).project(
             SirenContext(
                 base_url="https://api.example.com",
                 scope="collection",
                 resource="record",
                 query=(("page", 2),),
             )
-        )["links"] == [{"rel": ["self"], "href": "https://api.example.com/records?page=2"}]
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+        assert payload["links"] == [{"rel": ["self"], "href": "https://api.example.com/records?page=2"}]
