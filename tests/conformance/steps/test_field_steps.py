@@ -1,12 +1,12 @@
 from collections.abc import Mapping
 
-from pytest import mark
 from pytest_bdd import given, scenarios, then, when
 
 from modwire_siren import SirenAction, SirenField, SirenFieldValue
 
 
 class FieldSteps:
+    action: SirenAction | None = None
     field: SirenField | None = None
     fields: tuple[SirenField, ...] | None = None
     payload: Mapping[str, object] | None = None
@@ -18,6 +18,7 @@ class FieldSteps:
     @staticmethod
     @given("public Siren fields for every permitted type", stacklevel=2)
     def public_siren_fields_for_every_permitted_type() -> None:
+        FieldSteps.action = None
         FieldSteps.field = None
         FieldSteps.payload = None
         FieldSteps.payloads = None
@@ -52,6 +53,7 @@ class FieldSteps:
     @staticmethod
     @given("a public Siren field without a type", stacklevel=2)
     def public_siren_field_without_a_type() -> None:
+        FieldSteps.action = None
         FieldSteps.fields = None
         FieldSteps.payload = None
         FieldSteps.payloads = None
@@ -63,6 +65,7 @@ class FieldSteps:
     @staticmethod
     @given("a public Siren field with an unsupported type", stacklevel=2)
     def public_siren_field_with_an_unsupported_type() -> None:
+        FieldSteps.action = None
         FieldSteps.field = None
         FieldSteps.fields = None
         FieldSteps.payload = None
@@ -74,6 +77,7 @@ class FieldSteps:
     @staticmethod
     @given("a public radio field with selectable values", stacklevel=2)
     def public_radio_field_with_selectable_values() -> None:
+        FieldSteps.action = None
         FieldSteps.fields = None
         FieldSteps.payload = None
         FieldSteps.payloads = None
@@ -92,6 +96,7 @@ class FieldSteps:
     @staticmethod
     @given('a public Siren action with two fields named "title"', stacklevel=2)
     def public_siren_action_with_duplicate_field_names() -> None:
+        FieldSteps.action = None
         FieldSteps.field = None
         FieldSteps.fields = None
         FieldSteps.payload = None
@@ -99,6 +104,22 @@ class FieldSteps:
         FieldSteps.error = None
         FieldSteps.unsupported_type = None
         FieldSteps.duplicate_names = True
+
+    @staticmethod
+    @given('a public Siren action with fields named "title" and "page"', stacklevel=2)
+    def public_siren_action_with_distinct_field_names() -> None:
+        FieldSteps.field = None
+        FieldSteps.fields = None
+        FieldSteps.payload = None
+        FieldSteps.payloads = None
+        FieldSteps.error = None
+        FieldSteps.unsupported_type = None
+        FieldSteps.duplicate_names = False
+        FieldSteps.action = SirenAction(
+            name="update",
+            href="https://api.example.com/records/42",
+            fields=(SirenField(name="title"), SirenField(name="page", type="number")),
+        )
 
     @staticmethod
     @when("it is created", stacklevel=2)
@@ -130,6 +151,12 @@ class FieldSteps:
         )
 
     @staticmethod
+    @when("its fields are serialized", stacklevel=2)
+    def serialized_action_fields() -> None:
+        assert isinstance(FieldSteps.action, SirenAction)
+        FieldSteps.payload = FieldSteps.action.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+    @staticmethod
     @then("their types are the permitted Siren field types", stacklevel=2)
     def field_types_are_permitted_siren_field_types() -> None:
         assert FieldSteps.payloads is not None
@@ -156,6 +183,20 @@ class FieldSteps:
         ]
 
     @staticmethod
+    @then('the action has fields named "title" then "page"', stacklevel=2)
+    def action_has_ordered_field_names() -> None:
+        assert FieldSteps.payload == {
+            "name": "update",
+            "method": "GET",
+            "href": "https://api.example.com/records/42",
+            "type": "application/x-www-form-urlencoded",
+            "fields": [
+                {"name": "title", "type": "text"},
+                {"name": "page", "type": "number"},
+            ],
+        }
+
+    @staticmethod
     @then('its type is "text"', stacklevel=2)
     def field_type_is_text() -> None:
         assert FieldSteps.payload == {"name": "title", "type": "text"}
@@ -179,7 +220,3 @@ class FieldSteps:
 
 
 scenarios("../features/fields.feature")
-globals()["test_duplicate_field_names_are_rejected"] = mark.xfail(
-    strict=True,
-    reason="SirenAction does not enforce unique field names",
-)(globals()["test_duplicate_field_names_are_rejected"])
