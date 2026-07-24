@@ -23,13 +23,14 @@ class TestSirenSpecCommand:
         assert "      ✓ EmbeddedRepresentationSubEntity.rel — structural contract" in result.stdout
         assert "      ✓ Link.rel — structural contract" in result.stdout
         assert "      ✓ Action.href — structural contract" in result.stdout
-        assert "      ✗ Action.type — structural contract" in result.stdout
+        assert "      ✓ Action.type — structural contract" in result.stdout
         assert "      ✓ EmbeddedLinkSubEntity.href — structural contract" in result.stdout
         assert "      ✓ EmbeddedLinkSubEntity.type — structural contract" in result.stdout
         assert "      ✓ Link.href — structural contract" in result.stdout
         assert "      ✓ Link.type — structural contract" in result.stdout
         assert "      ✓ A root entity serializes a self link — executable specification" in result.stdout
         assert "      ✗ Duplicate action names are rejected — expected failure" in result.stdout
+        assert "      ✓ An action with fields serializes its default type — executable specification" in result.stdout
         assert "      ✓ A link with a non-URI href is rejected — executable specification" in result.stdout
         definitions = tuple(
             line[4:]

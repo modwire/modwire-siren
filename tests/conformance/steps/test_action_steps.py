@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 
 from pytest import mark
-from pytest_bdd import given, scenarios, then, when
+from pytest_bdd import given, parsers, scenarios, then, when
 
 from modwire_siren import SirenAction, SirenDocument, SirenField
 
@@ -150,6 +150,25 @@ class ActionSteps:
         )
 
     @staticmethod
+    @given("a public Siren action with fields and an explicit type", stacklevel=2)
+    def public_siren_action_with_fields_and_an_explicit_type() -> None:
+        ActionSteps.actions = None
+        ActionSteps.document = None
+        ActionSteps.payload = None
+        ActionSteps.payloads = None
+        ActionSteps.error = None
+        ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
+        ActionSteps.duplicate_names = False
+        ActionSteps.action = SirenAction(
+            name="update",
+            href="https://api.example.com/records/42",
+            type="application/json",
+            fields=(SirenField(name="title"),),
+        )
+
+    @staticmethod
     @when("it is created", stacklevel=2)
     def created_action() -> None:
         try:
@@ -223,10 +242,10 @@ class ActionSteps:
         assert [payload["method"] for payload in ActionSteps.payloads] == ["DELETE", "GET", "PATCH", "POST", "PUT"]
 
     @staticmethod
-    @then('its type is "application/x-www-form-urlencoded"', stacklevel=2)
-    def action_type_is_form_encoding() -> None:
+    @then(parsers.parse('its type is "{media_type}"'), stacklevel=2)
+    def action_type_is(media_type: str) -> None:
         assert isinstance(ActionSteps.payload, Mapping)
-        assert ActionSteps.payload.get("type") == "application/x-www-form-urlencoded"
+        assert ActionSteps.payload.get("type") == media_type
 
     @staticmethod
     @then("creation is rejected", stacklevel=2)
@@ -239,7 +258,3 @@ globals()["test_duplicate_action_names_are_rejected"] = mark.xfail(
     strict=True,
     reason="SirenDocument does not enforce unique action names",
 )(globals()["test_duplicate_action_names_are_rejected"])
-globals()["test_an_action_with_fields_serializes_its_default_type"] = mark.xfail(
-    strict=True,
-    reason="SirenAction does not default its type when fields are present",
-)(globals()["test_an_action_with_fields_serializes_its_default_type"])
