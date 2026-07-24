@@ -21,7 +21,7 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
             self.finding(requirement, capability_by_definition.get(requirement.definition))
             for requirement in requirements
         )
-        return SirenConformanceReport(findings)
+        return SirenConformanceReport(findings, ())
 
     def finding(self, requirement: SirenRequirement, capability: SirenCapability | None) -> SirenFinding:
         if capability is None:

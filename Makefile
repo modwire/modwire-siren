@@ -17,6 +17,6 @@ service-check:
 siren-spec:
 	$(PYTHON) scripts/siren_spec.py
 
-verify: docs-check service-check
+verify: docs-check service-check siren-spec
 	uv run ruff check .
 	uv run pytest
