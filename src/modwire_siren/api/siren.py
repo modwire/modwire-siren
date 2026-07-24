@@ -100,9 +100,14 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
     ```
 
-    Supply request-specific data and allowed operation IDs in `SirenContext`, then return
-    `engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
-    entry point is mounted away from `/`.
+    #### HTTP response contract
+
+    `engine.project(context)` returns a `SirenDocument`, not a dictionary. Serialize it with
+    `document.model_dump(by_alias=True, mode="json", exclude_none=True)` and send that payload as
+    `application/vnd.siren+json`. The document contains only official Siren members; action fields
+    never include the non-standard `required` member.
+
+    Set `root_path` when the Siren entry point is mounted away from `/`.
     """
 
     try:

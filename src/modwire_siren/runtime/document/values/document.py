@@ -12,7 +12,13 @@ from .link import SirenLink
 
 
 class SirenDocument(Contract):
-    """Represent an official Siren entity document."""
+    """Represent an official Siren entity document.
+
+    Project an engine request into this immutable public value, then serialize it with
+    `model_dump(by_alias=True, mode="json", exclude_none=True)` for an
+    `application/vnd.siren+json` response. Navigation belongs in `links`; embedded sub-entities
+    belong in `entities`.
+    """
 
     class_: tuple[str, ...] | None = Field(default=None, alias="class")
     title: str | None = None
