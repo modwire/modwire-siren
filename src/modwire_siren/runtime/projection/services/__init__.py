@@ -1,9 +1,9 @@
-from .siren_collection_scope_projector import SirenCollectionScopeProjector
-from .siren_default_action_document_service import SirenDefaultActionDocumentService
-from .siren_default_entity_document_service import SirenDefaultEntityDocumentService
-from .siren_entity_scope_projector import SirenEntityScopeProjector
-from .siren_projection_service import SirenProjectionService
-from .siren_root_scope_projector import SirenRootScopeProjector
+from .action import SirenDefaultActionDocumentService
+from .collection import SirenCollectionScopeProjector
+from .entity import SirenDefaultEntityDocumentService
+from .entity_scope import SirenEntityScopeProjector
+from .projection import SirenProjectionService
+from .root import SirenRootScopeProjector
 
 __all__ = [
     "SirenCollectionScopeProjector",

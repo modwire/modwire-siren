@@ -1,9 +1,9 @@
 from pydantic import Field, model_validator
 
 from ..contracts import Contract
-from .siren_operation import SirenOperation
-from .siren_resource import SirenResource
-from .siren_root import SirenRoot
+from .operation import SirenOperation
+from .resource import SirenResource
+from .root import SirenRoot
 
 
 class SirenApi(Contract):

@@ -1,5 +1,5 @@
 from ..contracts import Contract
-from .siren_route import SirenRoute
+from .route import SirenRoute
 
 
 class SirenRoot(Contract):

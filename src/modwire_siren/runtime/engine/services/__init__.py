@@ -1,3 +1,3 @@
-from .siren_engine_factory import SirenEngineFactory
+from .factory import SirenEngineFactory
 
 __all__ = ["SirenEngineFactory"]

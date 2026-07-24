@@ -1,3 +1,3 @@
-from .siren_context import SirenContext
+from .context import SirenContext
 
 __all__ = ["SirenContext"]

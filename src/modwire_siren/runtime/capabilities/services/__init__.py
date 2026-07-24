@@ -1,3 +1,3 @@
-from .siren_default_capability_validator import SirenDefaultCapabilityValidator
+from .validator import SirenDefaultCapabilityValidator
 
 __all__ = ["SirenDefaultCapabilityValidator"]

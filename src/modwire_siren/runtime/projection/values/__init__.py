@@ -1,3 +1,3 @@
-from .siren_projection_request import SirenProjectionRequest
+from .request import SirenProjectionRequest
 
 __all__ = ["SirenProjectionRequest"]

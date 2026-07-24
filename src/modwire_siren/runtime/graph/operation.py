@@ -1,8 +1,8 @@
 from typing import Literal
 
 from ..contracts import Contract
-from .siren_field import SirenField
-from .siren_route import SirenRoute
+from .field import SirenField
+from .route import SirenRoute
 
 
 class SirenOperation(Contract):
