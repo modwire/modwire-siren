@@ -29,14 +29,22 @@ class SirenServiceModuleDiscovery:
 class SirenApplicationContainer:
     discovery: SirenServiceModuleDiscovery = field(default_factory=SirenServiceModuleDiscovery)
 
-    def engine_factory(self) -> SirenEngineFactory:
-        return self.container().get(SirenEngineFactory)
-
-    def api_service(self) -> SirenApiService:
-        return self.container().get(SirenApiService)
-
-    def conformance_service(self) -> SirenConformanceService:
-        return self.container().get(SirenConformanceService)
+    def application(self) -> "SirenApplication":
+        return SirenApplication(self.container())
 
     def container(self):
         return create_sync_container(injectables=self.discovery.modules(("modwire_siren.**.services",)))
+
+
+@dataclass(frozen=True)
+class SirenApplication:
+    container: object
+
+    def api_service(self) -> SirenApiService:
+        return self.container.get(SirenApiService)
+
+    def engine_factory(self) -> SirenEngineFactory:
+        return self.container.get(SirenEngineFactory)
+
+    def conformance_service(self) -> SirenConformanceService:
+        return self.container.get(SirenConformanceService)
