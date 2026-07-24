@@ -9,6 +9,7 @@ from ..contracts import SirenRequirementMatcher
 from ..evidence.contracts import SirenBddEvidenceReader
 from ..values import SirenConformanceReport
 from .renderer import SirenLedgerRenderer
+from .verdict import SirenLedgerVerdict
 
 
 @injectable
@@ -19,8 +20,14 @@ class SirenConformanceService:
     matcher: SirenRequirementMatcher
     evidence: SirenBddEvidenceReader
     renderer: SirenLedgerRenderer
+    verdict: SirenLedgerVerdict
 
-    def inspect(self, cucumber_report: Path) -> str:
+    def inspect(self, cucumber_report: Path) -> SirenConformanceReport:
         structural = self.matcher.match(self.specification.requirements(), self.implementation.capabilities())
-        report = SirenConformanceReport(structural.findings, self.evidence.read(cucumber_report))
+        return SirenConformanceReport(structural.findings, self.evidence.read(cucumber_report))
+
+    def render(self, report: SirenConformanceReport) -> str:
         return self.renderer.render(report)
+
+    def verify(self, report: SirenConformanceReport) -> None:
+        self.verdict.verify(report)

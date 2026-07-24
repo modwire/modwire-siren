@@ -26,4 +26,7 @@ with TemporaryDirectory() as directory:
         sys.stderr.write(result.stdout)
         sys.stderr.write(result.stderr)
         raise SystemExit(result.returncode)
-    print(SirenApplicationContainer().conformance_service().inspect(cucumber_report))
+    conformance = SirenApplicationContainer().conformance_service()
+    report = conformance.inspect(cucumber_report)
+    print(conformance.render(report))
+    conformance.verify(report)

@@ -60,32 +60,53 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
                 expected_document,
                 actual_document,
             )
-        if "allOf" in actual:
-            return all(self.matches(expected, value, expected_document, actual_document) for value in actual["allOf"])
-        if "anyOf" in actual:
-            return all(
-                self.matches(expected, value, expected_document, actual_document)
-                for value in actual["anyOf"]
-                if value.get("type") != "null"
-            )
-        if "oneOf" in actual:
-            return all(
-                self.matches(expected, value, expected_document, actual_document) for value in actual["oneOf"]
-            )
         if "allOf" in expected:
-            return all(self.matches(value, actual, expected_document, actual_document) for value in expected["allOf"])
+            siblings = {key: value for key, value in expected.items() if key != "allOf"}
+            return all(
+                self.matches({**siblings, **value}, actual, expected_document, actual_document)
+                for value in expected["allOf"]
+            )
         if "anyOf" in expected or "oneOf" in expected:
-            alternatives = expected.get("anyOf", expected.get("oneOf", ()))
-            return any(self.matches(value, actual, expected_document, actual_document) for value in alternatives)
-        expected_type = expected.get("type")
-        actual_type = actual.get("type")
-        expected_types = (expected_type,) if isinstance(expected_type, str) else tuple(expected_type or ())
-        actual_types = (actual_type,) if isinstance(actual_type, str) else tuple(actual_type or ())
+            keyword = "anyOf" if "anyOf" in expected else "oneOf"
+            siblings = {key: value for key, value in expected.items() if key != keyword}
+            return all(
+                self.matches({**siblings, **value}, actual, expected_document, actual_document)
+                for value in expected[keyword]
+            )
+        if "allOf" in actual:
+            siblings = {key: value for key, value in actual.items() if key != "allOf"}
+            return all(
+                self.matches(expected, {**siblings, **value}, expected_document, actual_document)
+                for value in actual["allOf"]
+            )
+        if "anyOf" in actual or "oneOf" in actual:
+            keyword = "anyOf" if "anyOf" in actual else "oneOf"
+            siblings = {key: value for key, value in actual.items() if key != keyword}
+            expected_types = self.types(expected)
+            if expected_types:
+                return all(
+                    any(
+                        self.matches(
+                            {**expected, "type": expected_type},
+                            {**siblings, **value},
+                            expected_document,
+                            actual_document,
+                        )
+                        for value in actual[keyword]
+                    )
+                    for expected_type in expected_types
+                )
+            return any(
+                self.matches(expected, {**siblings, **value}, expected_document, actual_document)
+                for value in actual[keyword]
+            )
+        expected_types = self.types(expected)
+        actual_types = self.types(actual)
         types_match = not expected_types or (bool(actual_types) and all(
-            value in expected_types or (value == "integer" and "number" in expected_types)
-            for value in actual_types
+            value in actual_types or (value == "integer" and "number" in actual_types)
+            for value in expected_types
         ))
-        enum_match = "enum" not in expected or set(expected["enum"]).issubset(actual.get("enum", ()))
+        enum_match = "enum" not in expected or "enum" not in actual or set(expected["enum"]).issubset(actual["enum"])
         default_match = "default" not in expected or actual.get("default") == expected["default"]
         format_match = "format" not in expected or actual.get("format") == expected["format"]
         pattern_match = "pattern" not in expected or actual.get("pattern") == expected["pattern"]
@@ -95,6 +116,10 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
         )
         minimum_match = "minItems" not in expected or actual.get("minItems", 0) >= expected["minItems"]
         return all((types_match, enum_match, default_match, format_match, pattern_match, items_match, minimum_match))
+
+    def types(self, schema: Mapping[str, Any]) -> tuple[str, ...]:
+        value = schema.get("type")
+        return (value,) if isinstance(value, str) else tuple(value or ())
 
     def reference(self, reference: str, document: Mapping[str, Any]) -> Mapping[str, Any]:
         if reference == "#":
