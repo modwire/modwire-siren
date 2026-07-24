@@ -52,7 +52,13 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
             )
         if "$ref" in actual:
             return self.matches(
-                expected, self.reference(actual["$ref"], actual_document), expected_document, actual_document
+                expected,
+                {
+                    **self.reference(actual["$ref"], actual_document),
+                    **{key: value for key, value in actual.items() if key != "$ref"},
+                },
+                expected_document,
+                actual_document,
             )
         if "allOf" in actual:
             return all(self.matches(expected, value, expected_document, actual_document) for value in actual["allOf"])
