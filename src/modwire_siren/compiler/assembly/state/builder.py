@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from pydantic import JsonValue
 
-from ....runtime import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 
