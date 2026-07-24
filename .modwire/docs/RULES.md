@@ -8,11 +8,13 @@
   classes so that all cross-context wiring is visible in one place.
 - Put every `@injectable` class in its feature's `services` package and re-export it from that package's
   `__init__.py`; `wiring.py` discovers only those packages. Stateless services are singletons, mutable
-  operation state is factory-created or transient, and request values remain ordinary method arguments.
+  operation state is constructed by its coordinator, and request values remain ordinary method arguments.
 - Model injectable services as frozen dataclasses, including stateless services with no fields; this gives
   Wireup a declarative constructor without handwritten initialization plumbing.
 - Keep `values` packages for immutable records only. `services` contains only injectable services; operation-bound
-  state belongs in `state` and an injectable factory creates it for that operation instead of registering it.
+  state belongs in `state` and its coordinator constructs it for that operation instead of registering it.
+- Service collaborations are dataclass fields resolved by Wireup, never method parameters. Operation state receives
+  its collaborators in its constructor; methods receive only operation inputs.
 - Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
   `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.

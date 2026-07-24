@@ -1,18 +1,21 @@
+from dataclasses import dataclass, field
 from typing import Any
 
 from ..values import Resource
 
 
+@dataclass
 class RouteCatalog:
-    def __init__(self, paths: dict[str, Any]) -> None:
-        self.paths = paths
-        self.segment_cache: dict[str, tuple[str, ...]] = {}
-        self.parameter_cache: dict[str, tuple[str, ...]] = {}
-        self.ownership_cache: dict[str, tuple[Resource, str] | None] = {}
-        self.resource_list = self.compile_resources()
+    paths: dict[str, Any]
+    segment_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    parameter_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    ownership_cache: dict[str, tuple[Resource, str] | None] = field(default_factory=dict)
+    resource_cache: tuple[Resource, ...] | None = None
 
     def resources(self) -> tuple[Resource, ...]:
-        return self.resource_list
+        if self.resource_cache is None:
+            self.resource_cache = self.compile_resources()
+        return self.resource_cache
 
     def compile_resources(self) -> tuple[Resource, ...]:
         candidates: dict[str, Resource] = {}
@@ -56,7 +59,7 @@ class RouteCatalog:
         if path in self.ownership_cache:
             return self.ownership_cache[path]
         candidates: list[tuple[int, Resource, str]] = []
-        for resource in self.resource_list:
+        for resource in self.resources():
             if resource.entity_path and self.belongs(path, resource.entity_path):
                 candidates.append((len(self.segments(resource.entity_path)), resource, "entity"))
             if self.belongs(path, resource.collection_path):

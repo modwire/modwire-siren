@@ -1,11 +1,12 @@
 from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import Any
 
 
+@dataclass(frozen=True)
 class ComponentResolver:
-    def __init__(self, components: Any) -> None:
-        self.components = components if isinstance(components, dict) else {}
-        self.reference_cache: dict[tuple[str, str], dict[str, Any]] = {}
+    components: Any
+    reference_cache: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
 
     def parameter(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "parameters")
@@ -32,7 +33,7 @@ class ComponentResolver:
         cached = self.reference_cache.get(cache_key)
         if cached is not None:
             return deepcopy(cached) | result
-        collection = self.components.get(component_kind)
+        collection = self.components.get(component_kind) if isinstance(self.components, dict) else None
         target = collection.get(name) if isinstance(collection, dict) else None
         if not isinstance(target, dict):
             raise ValueError(f"OpenAPI component reference is unknown: {reference}")

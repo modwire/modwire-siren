@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any
 
 from ..graph import SirenApi
@@ -5,10 +6,10 @@ from ..projection import SirenProjectionService
 from ..request import SirenContext
 
 
+@dataclass(frozen=True)
 class SirenEngine:
-    def __init__(self, api: SirenApi, projection: SirenProjectionService):
-        self._api = api
-        self._projection = projection
+    api: SirenApi
+    projection: SirenProjectionService
 
     def project(self, context: SirenContext) -> dict[str, Any]:
-        return self._projection.project(self._api, context)
+        return self.projection.project(self.api, context)
