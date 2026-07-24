@@ -10,7 +10,9 @@ class TestSirenSpecCommand:
     def test_command_fails_after_a_public_schema_narrows_an_official_requirement(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
         field_value = workspace / "src/modwire_siren/runtime/document/values/field_value.py"
-        field_value.write_text(field_value.read_text().replace("value: str | int | float", "value: str | int"))
+        field_value.write_text(
+            field_value.read_text().replace("value: str | StrictInt | StrictFloat", "value: str | StrictInt")
+        )
 
         result = self.command(workspace)
 

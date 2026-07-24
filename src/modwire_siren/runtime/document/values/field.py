@@ -1,3 +1,5 @@
+from pydantic import StrictFloat, StrictInt
+
 from ...contracts import Contract
 from ...vocabulary import SirenFieldType
 from .field_value import SirenFieldValue
@@ -9,4 +11,4 @@ class SirenField(Contract):
     name: str
     type: SirenFieldType = SirenFieldType.TEXT
     title: str | None = None
-    value: str | int | float | tuple[SirenFieldValue, ...] | None = None
+    value: str | StrictInt | StrictFloat | tuple[SirenFieldValue, ...] | None = None

@@ -1,11 +1,13 @@
-from typing import Any
+from typing import Any, ClassVar
 
-from pydantic import AnyUrl, TypeAdapter
+from jsonschema import FormatChecker
 from pydantic_core import CoreSchema, core_schema
 
 
 class SirenUri(str):
     """Represent an official Siren URI value."""
+
+    checker: ClassVar[FormatChecker] = FormatChecker()
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type: object, handler: Any) -> CoreSchema:
@@ -17,9 +19,7 @@ class SirenUri(str):
 
     @classmethod
     def validate(cls, value: str) -> "SirenUri":
-        try:
-            TypeAdapter(AnyUrl).validate_python(value)
-        except ValueError as error:
+        if not cls.checker.conforms(value, "uri"):
             message = "Siren URI must be a valid URI."
-            raise ValueError(message) from error
+            raise ValueError(message)
         return cls(value)
