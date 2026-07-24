@@ -8,6 +8,7 @@ from ...document import SirenDocument
 from ...graph import SirenApi
 from ...request import SirenContext
 from ...routing import SirenResourceResolver
+from ...vocabulary import SirenScope
 from ..contracts import SirenScopeProjector
 from ..values import SirenProjectionRequest
 
@@ -20,7 +21,7 @@ class SirenProjectionService:
     capabilities: SirenCapabilityValidator
 
     def project(self, api: SirenApi, context: SirenContext) -> SirenDocument:
-        resource = None if context.scope == "root" else self.resources.resolve(api, context)
+        resource = None if context.scope == SirenScope.ROOT else self.resources.resolve(api, context)
         if resource is not None:
             self.capabilities.validate(resource, context)
         candidates = [projector for projector in self.projectors if projector.supports(context.scope)]

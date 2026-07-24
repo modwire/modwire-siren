@@ -6,7 +6,7 @@ class ServiceConventionChecker:
     def run(self) -> int:
         root = Path(__file__).parents[1] / "src" / "modwire_siren"
         failures: list[str] = []
-        for context in ("runtime", "compiler"):
+        for context in ("runtime", "compiler", "conformance"):
             for path in sorted((root / context).glob("**/*.py")):
                 if path.name == "__init__.py":
                     continue

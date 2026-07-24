@@ -1,6 +1,7 @@
 from pydantic import Field, model_validator
 
 from ..contracts import Contract
+from ..vocabulary import SirenScope
 from .operation import SirenOperation
 from .resource import SirenResource
 from .root import SirenRoot
@@ -43,12 +44,12 @@ class SirenApi(Contract):
         resources = {resource.reference: resource for resource in self.resources}
         unowned = []
         for operation in self.operations:
-            if operation.scope == "root":
+            if operation.scope == SirenScope.ROOT:
                 if operation.resource is not None or operation.name not in self.root.operations:
                     unowned.append(operation.name)
             elif operation.resource is None or operation.name not in (
                 resources[operation.resource].collection_operations
-                if operation.scope == "collection"
+                if operation.scope == SirenScope.COLLECTION
                 else resources[operation.resource].entity_operations
             ):
                 unowned.append(operation.name)

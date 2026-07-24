@@ -3,17 +3,18 @@ from dataclasses import dataclass
 from wireup import injectable
 
 from ...document import SirenDocument
+from ...vocabulary import SirenScope
 from ..contracts import SirenEntityDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 
 
-@injectable(as_type=SirenScopeProjector, qualifier="entity")
+@injectable(as_type=SirenScopeProjector, qualifier=SirenScope.ENTITY)
 @dataclass(frozen=True)
 class SirenEntityScopeProjector(SirenScopeProjector):
     entities: SirenEntityDocumentService
 
-    def supports(self, scope: str) -> bool:
-        return scope == "entity"
+    def supports(self, scope: SirenScope) -> bool:
+        return scope == SirenScope.ENTITY
 
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
         if request.resource is None:

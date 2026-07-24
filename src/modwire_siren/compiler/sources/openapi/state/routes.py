@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from .....runtime.vocabulary import SirenScope
 from ..values import Resource
 
 
@@ -9,7 +10,7 @@ class RouteCatalog:
     paths: dict[str, Any]
     segment_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
     parameter_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    ownership_cache: dict[str, tuple[Resource, str] | None] = field(default_factory=dict)
+    ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = field(default_factory=dict)
     resource_cache: tuple[Resource, ...] | None = None
 
     def resources(self) -> tuple[Resource, ...]:
@@ -55,15 +56,15 @@ class RouteCatalog:
                 )
         return tuple(candidates.values())
 
-    def ownership(self, path: str) -> tuple[Resource, str] | None:
+    def ownership(self, path: str) -> tuple[Resource, SirenScope] | None:
         if path in self.ownership_cache:
             return self.ownership_cache[path]
-        candidates: list[tuple[int, Resource, str]] = []
+        candidates: list[tuple[int, Resource, SirenScope]] = []
         for resource in self.resources():
             if resource.entity_path and self.belongs(path, resource.entity_path):
-                candidates.append((len(self.segments(resource.entity_path)), resource, "entity"))
+                candidates.append((len(self.segments(resource.entity_path)), resource, SirenScope.ENTITY))
             if self.belongs(path, resource.collection_path):
-                candidates.append((len(self.segments(resource.collection_path)), resource, "collection"))
+                candidates.append((len(self.segments(resource.collection_path)), resource, SirenScope.COLLECTION))
         if not candidates:
             segments = self.segments(path)
             if segments and not self.is_parameter(segments[-1]):

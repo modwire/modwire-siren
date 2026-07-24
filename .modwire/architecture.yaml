@@ -16,6 +16,7 @@ boundaries:
     - {source: *compiler_tag, allow: [*runtime_tag]}
     - {source: *conformance_tag, allow: [*runtime_tag]}
     - {source: *wiring_plumbing_tag, allow: [*api_tag, *compiler_tag, *runtime_tag, *conformance_tag]}
+    - {source: *scripts_tag, allow: [*wiring_plumbing_tag]}
     - {source: *tests_tag, allow: [*package_api_tag], allow_same_match: true}
 
   flow:
