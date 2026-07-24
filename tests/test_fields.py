@@ -50,20 +50,6 @@ class TestFields:
             siren(invalid)
 
 
-    def test_public_facade_prefers_json_request_body_fields(self):
-        document = siren(PARAMETER_MEDIA_SCHEMA).project(
-            SirenContext(
-                base_url="https://api.example.com",
-                resource="record",
-                value={"id": "42"},
-                capabilities=frozenset({"replace_record"}),
-            )
-        )
-        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
-
-        assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
-
-
     @pytest.mark.parametrize(
         "content",
         [
@@ -137,6 +123,19 @@ class TestFields:
 
         with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
+
+    def test_public_facade_prefers_json_request_body_fields(self):
+        document = siren(PARAMETER_MEDIA_SCHEMA).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                resource="record",
+                value={"id": "42"},
+                capabilities=frozenset({"replace_record"}),
+            )
+        )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert document["actions"][0]["fields"] == [{"name": "title", "type": "text"}]
 
     def test_public_facade_maps_supported_query_and_json_body_fields(self):
         document = deepcopy(PARAMETER_MEDIA_SCHEMA)

@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 
 from pytest import mark
-from pytest_bdd import given, scenario, scenarios, then, when
+from pytest_bdd import given, scenarios, then, when
 
 from modwire_siren import SirenAction, SirenDocument, SirenField
 
@@ -181,16 +181,12 @@ class ActionSteps:
         assert isinstance(ActionSteps.error, ValueError)
 
 
-@mark.xfail(strict=True, reason="SirenDocument does not enforce unique action names")
-@scenario("../features/actions.feature", "Duplicate action names are rejected")
-def test_duplicate_action_names_are_rejected() -> None:
-    pass
-
-
-@mark.xfail(strict=True, reason="SirenAction does not default its type when fields are present")
-@scenario("../features/actions.feature", "An action with fields serializes its default type")
-def test_action_with_fields_serializes_its_default_type() -> None:
-    pass
-
-
 scenarios("../features/actions.feature")
+globals()["test_duplicate_action_names_are_rejected"] = mark.xfail(
+    strict=True,
+    reason="SirenDocument does not enforce unique action names",
+)(globals()["test_duplicate_action_names_are_rejected"])
+globals()["test_an_action_with_fields_serializes_its_default_type"] = mark.xfail(
+    strict=True,
+    reason="SirenAction does not default its type when fields are present",
+)(globals()["test_an_action_with_fields_serializes_its_default_type"])

@@ -20,6 +20,17 @@ from modwire_siren import (
 
 
 class TestFacade:
+    @pytest.mark.parametrize(
+        ("openapi", "root_path"),
+        [
+            ([], "/"),
+            (SCHEMA, "siren"),
+        ],
+    )
+    def test_public_facade_rejects_invalid_inputs_before_the_happy_path(self, openapi, root_path):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+            siren(openapi, root_path=root_path)
+
     def test_public_facade_exports_siren_contracts_and_composition_entry_points(self):
         assert modwire_siren.__all__ == [
             "SirenAction",
@@ -71,15 +82,3 @@ class TestFacade:
             "rel": ["self"],
             "href": "https://api.example.com/siren/",
         }
-
-
-    @pytest.mark.parametrize(
-        ("openapi", "root_path"),
-        [
-            ([], "/"),
-            (SCHEMA, "siren"),
-        ],
-    )
-    def test_public_facade_rejects_invalid_inputs_before_the_happy_path(self, openapi, root_path):
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
-            siren(openapi, root_path=root_path)

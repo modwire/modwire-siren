@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 
 from pytest import mark
-from pytest_bdd import given, scenario, scenarios, then, when
+from pytest_bdd import given, scenarios, then, when
 
 from modwire_siren import SirenAction, SirenField, SirenFieldValue
 
@@ -178,10 +178,8 @@ class FieldSteps:
         assert isinstance(FieldSteps.error, ValueError)
 
 
-@mark.xfail(strict=True, reason="SirenAction does not enforce unique field names")
-@scenario("../features/fields.feature", "Duplicate field names are rejected")
-def test_duplicate_field_names_are_rejected() -> None:
-    pass
-
-
 scenarios("../features/fields.feature")
+globals()["test_duplicate_field_names_are_rejected"] = mark.xfail(
+    strict=True,
+    reason="SirenAction does not enforce unique field names",
+)(globals()["test_duplicate_field_names_are_rejected"])
