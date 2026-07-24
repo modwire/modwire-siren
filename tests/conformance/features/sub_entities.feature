@@ -7,6 +7,13 @@ Feature: Siren sub-entities
       When it is created
       Then creation is rejected
 
+  Rule: An embedded link type is a media type
+
+    Scenario: An embedded link with an invalid media type is rejected
+      Given a public embedded link with an invalid media type
+      When it is created
+      Then creation is rejected
+
   Rule: An embedded representation declares its relationship
 
     Scenario: An embedded representation without rel is rejected

@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from ...contracts import Contract
-from ...vocabulary import SirenActionMethod, SirenUri
+from ...vocabulary import SirenActionMethod, SirenMediaType, SirenUri
 from .field import SirenField
 
 
@@ -13,5 +13,5 @@ class SirenAction(Contract):
     method: SirenActionMethod = SirenActionMethod.GET
     href: SirenUri
     title: str | None = None
-    type: str | None = None
+    type: SirenMediaType | None = None
     fields: tuple[SirenField, ...] | None = None
