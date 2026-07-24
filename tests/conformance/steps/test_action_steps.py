@@ -1,6 +1,5 @@
 from collections.abc import Mapping
 
-from pytest import mark
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from modwire_siren import SirenAction, SirenDocument, SirenField
@@ -132,6 +131,25 @@ class ActionSteps:
         ActionSteps.duplicate_names = True
 
     @staticmethod
+    @given('a public Siren document with actions named "create" and "update"', stacklevel=2)
+    def public_siren_document_with_distinct_action_names() -> None:
+        ActionSteps.action = None
+        ActionSteps.actions = None
+        ActionSteps.payload = None
+        ActionSteps.payloads = None
+        ActionSteps.error = None
+        ActionSteps.unsupported_method = None
+        ActionSteps.invalid_href = None
+        ActionSteps.invalid_media_type = None
+        ActionSteps.duplicate_names = False
+        ActionSteps.document = SirenDocument(
+            actions=(
+                SirenAction(name="create", href="https://api.example.com/records"),
+                SirenAction(name="update", href="https://api.example.com/records/42"),
+            ),
+        )
+
+    @staticmethod
     @given("a public Siren action with fields and no type", stacklevel=2)
     def public_siren_action_with_fields_and_no_type() -> None:
         ActionSteps.actions = None
@@ -214,6 +232,12 @@ class ActionSteps:
         )
 
     @staticmethod
+    @when("its actions are serialized", stacklevel=2)
+    def serialized_document_actions() -> None:
+        assert isinstance(ActionSteps.document, SirenDocument)
+        ActionSteps.payload = ActionSteps.document.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+    @staticmethod
     @then("the action has its official members", stacklevel=2)
     def action_has_its_official_members() -> None:
         assert ActionSteps.payload == {
@@ -242,6 +266,16 @@ class ActionSteps:
         assert [payload["method"] for payload in ActionSteps.payloads] == ["DELETE", "GET", "PATCH", "POST", "PUT"]
 
     @staticmethod
+    @then('the document has actions named "create" then "update"', stacklevel=2)
+    def document_has_ordered_action_names() -> None:
+        assert ActionSteps.payload == {
+            "actions": [
+                {"name": "create", "method": "GET", "href": "https://api.example.com/records"},
+                {"name": "update", "method": "GET", "href": "https://api.example.com/records/42"},
+            ],
+        }
+
+    @staticmethod
     @then(parsers.parse('its type is "{media_type}"'), stacklevel=2)
     def action_type_is(media_type: str) -> None:
         assert isinstance(ActionSteps.payload, Mapping)
@@ -254,7 +288,3 @@ class ActionSteps:
 
 
 scenarios("../features/actions.feature")
-globals()["test_duplicate_action_names_are_rejected"] = mark.xfail(
-    strict=True,
-    reason="SirenDocument does not enforce unique action names",
-)(globals()["test_duplicate_action_names_are_rejected"])
