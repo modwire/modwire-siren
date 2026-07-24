@@ -63,5 +63,5 @@ class TestQueries:
 
         assert payload["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
-            {"rel": ["record"], "href": "https://api.example.com/records"},
+            {"rel": ["collection"], "href": "https://api.example.com/records"},
         ]

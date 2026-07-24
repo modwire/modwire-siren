@@ -19,7 +19,9 @@ class TestSirenSpecCommand:
         assert "  Structural contract" in result.stdout
         assert "  Executable specification" in result.stdout
         assert "      ✓ Action.method.PATCH — structural contract" in result.stdout
-        assert "      ✗ EmbeddedLinkSubEntity.rel — structural contract" in result.stdout
+        assert "      ✓ EmbeddedLinkSubEntity.rel — structural contract" in result.stdout
+        assert "      ✓ EmbeddedRepresentationSubEntity.rel — structural contract" in result.stdout
+        assert "      ✓ Link.rel — structural contract" in result.stdout
         assert "      ✓ A root entity serializes a self link — executable specification" in result.stdout
         assert "      ✗ Duplicate action names are rejected — expected failure" in result.stdout
         assert "      ✗ A link with a non-URI href is rejected — expected failure" in result.stdout
