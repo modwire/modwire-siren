@@ -30,6 +30,7 @@ class TestSirenSpecCommand:
         assert "      ✓ Link.type — structural contract" in result.stdout
         assert "      ✓ A root entity serializes a self link — executable specification" in result.stdout
         assert "      ✓ Duplicate action names are rejected — executable specification" in result.stdout
+        assert "      ✓ Duplicate field names are rejected — executable specification" in result.stdout
         assert "      ✓ An action with fields serializes its default type — executable specification" in result.stdout
         assert "      ✓ A link with a non-URI href is rejected — executable specification" in result.stdout
         definitions = tuple(

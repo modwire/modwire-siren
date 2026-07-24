@@ -30,3 +30,10 @@ class SirenAction(Contract):
         if self.fields is not None and self.type is None:
             object.__setattr__(self, "type", self.default_media_type)
         return self
+
+    @model_validator(mode="after")
+    def validate_field_names(self) -> "SirenAction":
+        fields = self.fields or ()
+        if len({field.name for field in fields}) != len(fields):
+            raise ValueError("Siren action field names must be unique.")
+        return self

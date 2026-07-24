@@ -14,6 +14,11 @@ Feature: Siren fields
       When it is created
       Then creation is rejected
 
+    Scenario: Distinct field names preserve their serialized order
+      Given a public Siren action with fields named "title" and "page"
+      When its fields are serialized
+      Then the action has fields named "title" then "page"
+
   Rule: A field defaults to text
 
     Scenario: A field without a type serializes as text
