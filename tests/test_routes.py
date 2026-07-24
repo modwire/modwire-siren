@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import ROUTE_POLICY_SCHEMA, SCHEMA
 
-from modwire_siren import SirenContext, siren
+from modwire_siren import SirenCompilationError, SirenContext, SirenProjectionError, siren
 
 
 class TestRoutes:
@@ -135,7 +135,7 @@ class TestRoutes:
             }
         }
 
-        with pytest.raises(ValueError, match=message):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         assert siren(ROUTE_POLICY_SCHEMA).project(
@@ -150,9 +150,9 @@ class TestRoutes:
             "get": {"operationId": "list_archived_records", "responses": {"200": {"description": "OK"}}},
         }
 
-        with pytest.raises(ValueError, match="duplicate resource 'record'"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
-        with pytest.raises(ValueError, match="Siren link requires path value: team"):
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
             siren(ROUTE_POLICY_SCHEMA).project(
                 SirenContext(base_url="https://api.example.com", scope="collection", resource="record")
             )
@@ -170,7 +170,7 @@ class TestRoutes:
         }
         engine = siren(schema)
 
-        with pytest.raises(ValueError, match="matching routes are ambiguous"):
+        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
             engine.project(
                 SirenContext(
                     base_url="https://api.example.com",
@@ -214,7 +214,7 @@ class TestRoutes:
             }
         }
 
-        with pytest.raises(ValueError, match="OpenAPI path item reference is unsupported"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(referenced)
 
         traced = deepcopy(SCHEMA)
@@ -223,7 +223,7 @@ class TestRoutes:
             "responses": {"200": {"description": "OK"}},
         }
 
-        with pytest.raises(ValueError, match="OpenAPI operation method is unsupported: TRACE /records"):
+        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(traced)
 
         assert siren(SCHEMA).project(

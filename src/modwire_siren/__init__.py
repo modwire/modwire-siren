@@ -1,5 +1,5 @@
 from .api import siren
-from .runtime import SirenContext
+from .runtime import SirenCompilationError, SirenContext, SirenProjectionError
 from .runtime.document import (
     SirenAction,
     SirenDocument,
@@ -12,6 +12,7 @@ from .runtime.document import (
 
 __all__ = [
     "SirenAction",
+    "SirenCompilationError",
     "SirenContext",
     "SirenDocument",
     "SirenEmbeddedLink",
@@ -19,5 +20,6 @@ __all__ = [
     "SirenField",
     "SirenFieldValue",
     "SirenLink",
+    "SirenProjectionError",
     "siren",
 ]

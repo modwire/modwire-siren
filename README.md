@@ -121,6 +121,10 @@ Supply request-specific data and allowed operation IDs in `SirenContext`, then r
 `engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
 entry point is mounted away from `/`.
 
+### `SirenProjectionError`
+
+Indicate a Siren projection failure for the supplied request context.
+
 ### `SirenLink`
 
 Describe a navigational Siren link.
@@ -165,6 +169,10 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
 
+### `SirenCompilationError`
+
+Indicate an invalid or unsupported OpenAPI-to-Siren contract.
+
 ### `SirenAction`
 
 Describe an available Siren action.
@@ -176,6 +184,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
 | `SirenAction` | Describe an available Siren action. | — |
+| `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
 | `SirenContext` | Supply runtime state used to project a Siren document. | `validate_scope() -> SirenContext` |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
@@ -183,5 +192,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
+| `SirenProjectionError` | Indicate a Siren projection failure for the supplied request context. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->
