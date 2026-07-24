@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pydantic import JsonValue
 
 
-@dataclass
+@dataclass(frozen=True)
 class FieldDraft:
     operation: str
     name: str

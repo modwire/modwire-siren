@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from ..values import SirenBuilder
+if TYPE_CHECKING:
+    from ..services.builder import SirenBuilder
 
 
 class SirenBuilderFactory(ABC):
     @abstractmethod
-    def create(self) -> SirenBuilder:
+    def create(self) -> "SirenBuilder":
         raise NotImplementedError

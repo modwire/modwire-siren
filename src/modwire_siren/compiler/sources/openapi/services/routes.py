@@ -1,6 +1,6 @@
 from typing import Any
 
-from .resource import Resource
+from ..values import Resource
 
 
 class RouteCatalog:

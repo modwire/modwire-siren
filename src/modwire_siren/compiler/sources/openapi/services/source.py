@@ -6,15 +6,16 @@ from wireup import injectable
 from .....runtime import SirenApi
 from ....assembly.contracts import SirenBuilderFactory
 from ...contracts import SirenSource
-from ..contracts import OpenApiOperationCompiler
-from ..values import ComponentResolver, RouteCatalog
+from ..contracts import OpenApiComponentResolverFactory, OpenApiOperationCompiler, OpenApiRouteCatalogFactory
 
 
 @injectable(as_type=SirenSource)
 @dataclass(frozen=True)
 class OpenApiSource(SirenSource):
     builders: SirenBuilderFactory
+    components: OpenApiComponentResolverFactory
     operations: OpenApiOperationCompiler
+    routes: OpenApiRouteCatalogFactory
 
     def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
         paths = schema.get("paths")
@@ -26,7 +27,7 @@ class OpenApiSource(SirenSource):
             title=str(info.get("title", "")) if isinstance(info, dict) else "",
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
-        routes = RouteCatalog(paths)
+        routes = self.routes.create(paths)
         for resource in routes.resources():
             builder.add_resource(
                 resource.reference,
@@ -36,5 +37,5 @@ class OpenApiSource(SirenSource):
                 resource.entity_path,
                 resource.identifier,
             )
-        self.operations.compile(builder, routes, ComponentResolver(schema.get("components", {})))
+        self.operations.compile(builder, routes, self.components.create(schema.get("components", {})))
         return builder.build()

@@ -4,9 +4,7 @@ from dataclasses import dataclass, field
 from pydantic import JsonValue
 
 from ....runtime import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
-from .field import FieldDraft
-from .operation import OperationDraft
-from .resource import ResourceDraft
+from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 
 @dataclass
