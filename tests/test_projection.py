@@ -129,7 +129,7 @@ class TestProjection:
         payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
         assert payload["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
-            {"rel": ["record"], "href": "https://api.example.com/records"},
+            {"rel": ["collection"], "href": "https://api.example.com/records"},
         ]
         assert payload["actions"] == [
             {

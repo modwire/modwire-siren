@@ -210,7 +210,7 @@ class TestRoutes:
         document = engine.project(SirenContext(base_url="https://api.example.com", scope="root"))
         assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/api/"},
-            {"rel": ["record"], "href": "https://api.example.com/records"},
+            {"rel": ["collection"], "href": "https://api.example.com/records"},
         ]
 
 

@@ -26,7 +26,7 @@ class SirenRootScopeProjector(SirenScopeProjector):
         links = [SirenLink(rel=("self",), href=self.hrefs.href(request.api.root.route.path, request.context, None))]
         links.extend(
             SirenLink(
-                rel=(resource.name,),
+                rel=("collection",),
                 href=self.hrefs.href(resource.collection.path, request.context, resource, include_query=False),
             )
             for resource in request.api.resources
