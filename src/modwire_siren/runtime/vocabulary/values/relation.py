@@ -1,9 +1,8 @@
-import json
-from importlib.resources import files
 from typing import Any
 
 from pydantic_core import CoreSchema, core_schema
 
+from ....siren_schema import SirenSchemaReader
 from .uri import SirenUri
 
 
@@ -36,5 +35,5 @@ class SirenRelation(str):
 
     @classmethod
     def schema(cls) -> dict[str, Any]:
-        document = json.loads(files("modwire_siren.runtime.document.schema").joinpath("siren.schema.json").read_text())
-        return document["definitions"]["RelValue"]
+        document = SirenSchemaReader.official()
+        return document.thaw(document.definition("RelValue"))

@@ -17,7 +17,7 @@ from modwire_siren import (
 
 
 class TestSchema:
-    schema = json.loads(files(modwire_siren).joinpath("runtime/document/schema/siren.schema.json").read_text())
+    schema = json.loads(files(modwire_siren).joinpath("siren_schema/schema/siren.schema.json").read_text())
     validator = Draft4Validator(schema, format_checker=FormatChecker())
 
     @pytest.mark.parametrize(

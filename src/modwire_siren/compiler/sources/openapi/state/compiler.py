@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
-from .....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenScope
+from .....runtime.vocabulary import SirenActionMethod, SirenFieldType, SirenHttpMethod, SirenScope
 from ....assembly.state import SirenBuilder
 from ..values import Field
 from .components import ComponentResolver
@@ -11,13 +11,7 @@ from .routes import RouteCatalog
 @dataclass(frozen=True)
 class OpenApiOperationCompiler:
     methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
-        {
-            SirenHttpMethod.DELETE,
-            SirenHttpMethod.GET,
-            SirenHttpMethod.PATCH,
-            SirenHttpMethod.POST,
-            SirenHttpMethod.PUT,
-        }
+        SirenHttpMethod(value) for value in SirenActionMethod.values()
     )
     builder: SirenBuilder
     routes: RouteCatalog
@@ -127,17 +121,17 @@ class OpenApiOperationCompiler:
         schema_type = definition.get("type")
         if schema_type == "string":
             formats = {
-                "date": SirenFieldType.DATE,
-                "date-time": SirenFieldType.DATETIME_LOCAL,
-                "email": SirenFieldType.EMAIL,
-                "time": SirenFieldType.TIME,
-                "uri": SirenFieldType.URL,
+                "date": SirenFieldType.validate("date"),
+                "date-time": SirenFieldType.validate("datetime-local"),
+                "email": SirenFieldType.validate("email"),
+                "time": SirenFieldType.validate("time"),
+                "uri": SirenFieldType.validate("url"),
             }
-            field_type = formats.get(definition.get("format"), SirenFieldType.TEXT)
-            if definition.get("format") is None or field_type != SirenFieldType.TEXT:
+            field_type = formats.get(definition.get("format"), SirenFieldType.default())
+            if definition.get("format") is None or field_type != SirenFieldType.default():
                 return field_type
         if schema_type in {"integer", "number"}:
-            return SirenFieldType.NUMBER
+            return SirenFieldType.validate("number")
         if schema_type == "boolean":
-            return SirenFieldType.CHECKBOX
+            return SirenFieldType.validate("checkbox")
         raise ValueError(f"OpenAPI field schema is unsupported: {name}")
