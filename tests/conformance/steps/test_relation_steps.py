@@ -57,6 +57,12 @@ class RelationSteps:
     @then("creation is rejected", stacklevel=2)
     def relation_creation_is_rejected() -> None:
         assert isinstance(RelationSteps.error, ValueError)
+        errors = RelationSteps.error.errors(include_url=False)
+        assert any(
+            error["loc"] == ("rel", 0)
+            and error["msg"] == "Value error, Siren relation must be an official relation token or URI."
+            for error in errors
+        )
 
     @staticmethod
     @then("the link has its relation URI", stacklevel=2)

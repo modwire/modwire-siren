@@ -217,6 +217,12 @@ class FieldSteps:
     @then("creation is rejected", stacklevel=2)
     def field_creation_is_rejected() -> None:
         assert isinstance(FieldSteps.error, ValueError)
+        errors = FieldSteps.error.errors(include_url=False)
+        if FieldSteps.unsupported_type is not None:
+            assert any(error["loc"] == ("type",) and error["type"] == "enum" for error in errors)
+        else:
+            assert errors[0]["loc"] == ()
+            assert errors[0]["msg"] == "Value error, Siren action field names must be unique."
 
 
 scenarios("../features/fields.feature")
