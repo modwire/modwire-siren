@@ -11,6 +11,7 @@ from modwire_siren import (
     SirenEmbeddedLink,
     SirenEmbeddedRepresentation,
     SirenField,
+    SirenFieldValue,
     SirenLink,
 )
 
@@ -38,6 +39,61 @@ class TestSchema:
     def test_pinned_schema_rejects_invalid_public_payloads(self, payload):
         with pytest.raises(ValidationError):
             self.validator.validate(payload)
+
+    @pytest.mark.parametrize(
+        "value",
+        ("https://api.example.com/%zz", "https://api.example.com/[]", "https://api.example.com/records space"),
+    )
+    def test_public_values_reject_uri_boundaries_rejected_by_the_pinned_schema(self, value):
+        with pytest.raises(ValidationError):
+            self.validator.validate({"links": [{"rel": ["self"], "href": value}]})
+        with pytest.raises(ValueError, match="Siren URI must be a valid URI"):
+            SirenLink(rel=("self",), href=value)
+        with pytest.raises(ValueError, match="Siren relation must be an official relation token or URI"):
+            SirenLink(rel=(value,), href="https://api.example.com/records")
+
+    def test_public_uri_values_accept_every_owner_supported_by_the_pinned_schema(self):
+        document = SirenDocument(
+            actions=(SirenAction(name="inspect", href="http://"),),
+            entities=(SirenEmbeddedLink(rel=("self",), href="http://"),),
+            links=(SirenLink(rel=("http://",), href="http://"),),
+        )
+
+        self.validator.validate(document.model_dump(by_alias=True, mode="json", exclude_none=True))
+
+    @pytest.mark.parametrize("value", ("text", 1, 1.5))
+    def test_public_field_scalar_values_match_the_pinned_schema(self, value):
+        document = SirenDocument(
+            actions=(
+                SirenAction(
+                    name="update",
+                    href="https://api.example.com/records",
+                    fields=(SirenField(name="value", value=value),),
+                ),
+            ),
+        )
+
+        self.validator.validate(document.model_dump(by_alias=True, mode="json", exclude_none=True))
+
+    @pytest.mark.parametrize("value", ("text", 1, 1.5))
+    def test_public_field_value_objects_match_the_pinned_schema(self, value):
+        document = SirenDocument(
+            actions=(
+                SirenAction(
+                    name="update",
+                    href="https://api.example.com/records",
+                    fields=(SirenField(name="value", value=(SirenFieldValue(value=value),)),),
+                ),
+            ),
+        )
+
+        self.validator.validate(document.model_dump(by_alias=True, mode="json", exclude_none=True))
+
+    def test_public_field_values_reject_boolean_coercion(self):
+        with pytest.raises(ValueError):
+            SirenField(name="value", value=True)
+        with pytest.raises(ValueError):
+            SirenFieldValue(value=True)
 
     def test_public_models_reject_package_specific_action_field_members(self):
         with pytest.raises(ValueError, match="Extra inputs are not permitted"):
