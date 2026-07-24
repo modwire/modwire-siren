@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 
-from pytest_bdd import given, scenarios, then, when
+from pytest import mark
+from pytest_bdd import given, scenario, scenarios, then, when
 
 from modwire_siren import SirenLink
 
@@ -62,6 +63,11 @@ class LinkSteps:
     @then("creation is rejected", stacklevel=2)
     def link_creation_is_rejected() -> None:
         assert isinstance(LinkSteps.error, ValueError)
+
+@mark.xfail(strict=True, reason="SirenLink does not validate href as a URI")
+@scenario("../features/links.feature", "A link with a non-URI href is rejected")
+def test_a_link_with_a_non_uri_href_is_rejected() -> None:
+    pass
 
 
 scenarios("../features/links.feature")

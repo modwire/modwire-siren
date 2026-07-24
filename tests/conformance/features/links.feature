@@ -14,7 +14,6 @@ Feature: Siren links
 
   Rule: A link target is a URI
 
-    @xfail
     Scenario: A link with a non-URI href is rejected
       Given a public link with a non-URI href
       When it is created
