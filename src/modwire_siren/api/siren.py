@@ -120,8 +120,8 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     except Exception as error:
         raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
     try:
-        container = SirenApplicationContainer()
-        api = container.api_service().build(document, root_path)
-        return container.engine_factory().create(api)
+        application = SirenApplicationContainer().application()
+        api = application.api_service().build(document, root_path)
+        return application.engine_factory().create(api)
     except Exception as error:
         raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error

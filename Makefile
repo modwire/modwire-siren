@@ -1,22 +1,31 @@
-.PHONY: docs docs-check modwire service-check siren-spec verify
+.PHONY: docs docs-check modwire package-check quality service-check siren-spec verify
 
-PYTHON ?= uv run python
+PYTHON ?= python3
+RUN = PYTHONPATH=src $(PYTHON)
 
 modwire:
 	modwire report --architecture-root . --language python --summary
 
 docs:
-	uv run python scripts/generate_docs.py
+	$(RUN) scripts/generate_docs.py
 
 docs-check:
-	uv run python scripts/generate_docs.py --check
+	$(RUN) scripts/generate_docs.py --check
 
 service-check:
-	uv run python scripts/check_service_conventions.py
+	$(RUN) scripts/check_service_conventions.py
 
 siren-spec:
-	$(PYTHON) scripts/siren_spec.py
+	$(RUN) scripts/siren_spec.py
 
 verify: docs-check service-check siren-spec
-	uv run ruff check .
-	uv run pytest
+	$(RUN) -m ruff check .
+	$(RUN) -m pytest
+
+package-check:
+	rm -rf dist/quality
+	mkdir -p dist/quality
+	$(RUN) -m build --wheel --sdist --outdir dist/quality
+	$(RUN) -m twine check dist/quality/*
+
+quality: modwire verify package-check

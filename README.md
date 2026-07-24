@@ -15,7 +15,7 @@ python -m pip install modwire-siren
 For local development:
 
 ```bash
-uv sync --all-groups --frozen
+python -m pip install -e ".[dev]"
 make verify
 ```
 
