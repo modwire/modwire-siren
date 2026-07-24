@@ -119,13 +119,21 @@ engine = siren(app.openapi())  # FastAPI
 engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
 ```
 
-Supply request-specific data and allowed operation IDs in `SirenContext`, then return
-`engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
-entry point is mounted away from `/`.
+#### HTTP response contract
+
+`engine.project(context)` returns a `SirenDocument`, not a dictionary. Serialize it with
+`document.model_dump(by_alias=True, mode="json", exclude_none=True)` and send that payload as
+`application/vnd.siren+json`. The document contains only official Siren members; action fields
+never include the non-standard `required` member.
+
+Set `root_path` when the Siren entry point is mounted away from `/`.
 
 ### `SirenProjectionError`
 
 Indicate a Siren projection failure for the supplied request context.
+
+`engine.project(context)` raises this stable public type when the context cannot select a
+concrete resource, capability, route, or path value for a Siren response.
 
 ### `SirenLink`
 
@@ -151,6 +159,11 @@ Represent a Siren sub-entity linked by URI.
 
 Represent an official Siren entity document.
 
+Project an engine request into this immutable public value, then serialize it with
+`model_dump(by_alias=True, mode="json", exclude_none=True)` for an
+`application/vnd.siren+json` response. Navigation belongs in `links`; embedded sub-entities
+belong in `entities`.
+
 ### `SirenContext`
 
 Supply runtime state used to project a Siren document.
@@ -174,6 +187,10 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 ### `SirenCompilationError`
 
 Indicate an invalid or unsupported OpenAPI-to-Siren contract.
+
+`siren(openapi)` raises this stable public type when the OpenAPI document is invalid or its
+operations cannot be represented by official Siren. Required controls, unsupported parameter
+locations and HTTP methods, non-JSON bodies, and unmappable field schemas fail at startup.
 
 ### `SirenAction`
 

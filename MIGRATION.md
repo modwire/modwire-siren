@@ -24,7 +24,14 @@ document = engine.project(
         capabilities=frozenset({"get_record", "rename_record"}),
     )
 )
+
+response_body = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+# Send response_body as application/vnd.siren+json.
 ```
+
+`engine.project()` now returns the immutable public `SirenDocument`, not a dictionary. It emits
+only official Siren members: navigational transitions are `links`; related sub-entities are
+`entities`; action fields never include the non-standard `required` member.
 
 ## Removed APIs
 
@@ -67,7 +74,7 @@ paths:
       operationId: rename_record
 ```
 
-## Django and Ninja
+## HTTP framework integration
 
 The package no longer owns a Django or Ninja adapter. Keep your existing controller routes. At
 application setup, pass Ninja's generated OpenAPI document to `siren()`. At response time, build a
@@ -85,25 +92,37 @@ document = engine.project(
         capabilities=capabilities_for(request, result),
     )
 )
+
+response_body = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+# Return response_body with Content-Type: application/vnd.siren+json.
 ```
 
 Authorization and state remain application responsibilities. OpenAPI defines candidate actions;
 `capabilities` determines which actions are advertised in this response.
 
-## Manual construction
+## Deterministic rejections
 
-OpenAPI is the ordinary path. For exceptional cases, use `SirenBuilderService` directly:
+Only root `modwire_siren` imports are supported. There is no public builder or internal-engine
+construction path in version 2. Call `siren(openapi)` once at startup and handle the stable public
+error types at the boundary:
 
 ```python
-from modwire_siren.builder import SirenBuilderService
-from modwire_siren.engine import SirenEngine
+from modwire_siren import SirenCompilationError, SirenProjectionError, siren
 
-api = (
-    SirenBuilderService()
-    .add_resource("record", "record", "/records", "/records/{record_id}")
-    .add_operation("record", "entity", "get_record", "GET", "/records/{record_id}")
-    .build()
-)
+try:
+    engine = siren(openapi)
+except SirenCompilationError:
+    # Invalid OpenAPI or a source operation that official Siren cannot represent.
+    raise
 
-engine = SirenEngine(api)
+try:
+    document = engine.project(context)
+except SirenProjectionError:
+    # Invalid resource, capability, path value, or request context.
+    raise
 ```
+
+Required query or JSON-body controls, header and cookie parameters, non-JSON bodies, arrays,
+objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`, or
+`TRACE` operations fail during `siren(openapi)`. This lets consumers reject unsupported contracts
+before deployment rather than receiving a partial Siren response.
