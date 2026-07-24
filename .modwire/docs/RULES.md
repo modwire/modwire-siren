@@ -14,7 +14,8 @@
 - Keep `values` packages for immutable records only. `services` contains only injectable services; operation-bound
   state belongs in `state` and its coordinator constructs it for that operation instead of registering it.
 - Service collaborations are dataclass fields resolved by Wireup, never method parameters. Operation state receives
-  its collaborators in its constructor; methods receive only operation inputs.
+  its collaborators as dataclass fields; methods receive only operation inputs. Neither runtime nor compiler classes
+  declare constructors or use `TYPE_CHECKING` imports.
 - Use one unqualified implementation per interface. Multiple implementations require qualifiers; inject
   `Sequence[Interface]` only for plug-in pipelines, whose coordinator validates the selected behavior.
 - Comments are public-API docstrings only. User documentation explains use, not internal inventories.
