@@ -6,6 +6,7 @@ from openapi_spec_validator import validate
 
 from ..compiler import OpenApiSource, SirenApiService
 from ..runtime import SirenEngine
+from ..wiring import SirenApplicationContainer
 
 
 def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
@@ -97,4 +98,4 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     except Exception as error:
         raise ValueError(f"OpenAPI document is invalid: {error}") from error
     api = SirenApiService((OpenApiSource(root_path=root_path),)).build(document)
-    return SirenEngine(api)
+    return SirenApplicationContainer().engine_factory().create(api)

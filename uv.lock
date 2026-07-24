@@ -543,6 +543,7 @@ source = { editable = "." }
 dependencies = [
     { name = "openapi-spec-validator" },
     { name = "pydantic" },
+    { name = "wireup" },
 ]
 
 [package.optional-dependencies]
@@ -582,6 +583,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=6" },
+    { name = "wireup", specifier = ">=2.12.0" },
 ]
 provides-extras = ["dev"]
 
