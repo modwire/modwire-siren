@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from ...contracts import Contract
-from ...vocabulary import SirenRelation
+from ...vocabulary import SirenRelation, SirenUri
 
 
 class SirenLink(Contract):
@@ -10,5 +10,5 @@ class SirenLink(Contract):
     class_: tuple[str, ...] | None = Field(default=None, alias="class")
     title: str | None = None
     rel: tuple[SirenRelation, ...] = Field(min_length=1)
-    href: str
+    href: SirenUri
     type: str | None = None

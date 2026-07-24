@@ -2,8 +2,9 @@ import json
 from importlib.resources import files
 from typing import Any
 
-from pydantic import AnyUrl, TypeAdapter
 from pydantic_core import CoreSchema, core_schema
+
+from .uri import SirenUri
 
 
 class SirenRelation(str):
@@ -22,7 +23,7 @@ class SirenRelation(str):
         if value in cls.registered():
             return cls(value)
         try:
-            TypeAdapter(AnyUrl).validate_python(value)
+            SirenUri.validate(value)
         except ValueError as error:
             message = "Siren relation must be an official relation token or URI."
             raise ValueError(message) from error

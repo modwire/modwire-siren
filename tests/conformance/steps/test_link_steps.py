@@ -1,6 +1,5 @@
 from collections.abc import Mapping
 
-from pytest import mark
 from pytest_bdd import given, scenarios, then, when
 
 from modwire_siren import SirenLink
@@ -65,7 +64,3 @@ class LinkSteps:
         assert isinstance(LinkSteps.error, ValueError)
 
 scenarios("../features/links.feature")
-globals()["test_a_link_with_a_nonuri_href_is_rejected"] = mark.xfail(
-    strict=True,
-    reason="SirenLink does not validate href as a URI",
-)(globals()["test_a_link_with_a_nonuri_href_is_rejected"])
