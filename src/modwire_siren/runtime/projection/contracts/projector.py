@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
+from ...document import SirenDocument
 from ..values import SirenProjectionRequest
 
 
@@ -10,5 +10,5 @@ class SirenScopeProjector(ABC):
         pass
 
     @abstractmethod
-    def project(self, request: SirenProjectionRequest) -> dict[str, Any]:
+    def project(self, request: SirenProjectionRequest) -> SirenDocument:
         pass

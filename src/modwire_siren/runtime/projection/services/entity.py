@@ -4,6 +4,7 @@ from typing import Any
 
 from wireup import injectable
 
+from ...document import SirenDocument, SirenEmbeddedRepresentation, SirenLink
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
@@ -23,20 +24,20 @@ class SirenDefaultEntityDocumentService(SirenEntityDocumentService):
         value: Mapping[str, Any],
         context: SirenContext,
         rel: tuple[str, ...],
-    ) -> dict[str, Any]:
-        document: dict[str, Any] = {
-            "class": [resource.resource_class],
-            "properties": dict(value),
-            "actions": self.actions.actions(api, resource, "entity", context, value),
-            "links": [
-                {
-                    "rel": ["self"],
-                    "href": self.hrefs.href(
+    ) -> SirenDocument | SirenEmbeddedRepresentation:
+        fields = {
+            "class_": (resource.resource_class,),
+            "properties": value,
+            "actions": tuple(self.actions.actions(api, resource, "entity", context, value)) or None,
+            "links": (
+                SirenLink(
+                    rel=("self",),
+                    href=self.hrefs.href(
                         resource.entity.path if resource.entity else resource.collection.path, context, resource, value
                     ),
-                }
-            ],
+                ),
+            ),
         }
         if rel:
-            document["rel"] = list(rel)
-        return document
+            return SirenEmbeddedRepresentation(rel=rel, **fields)
+        return SirenDocument(**fields)

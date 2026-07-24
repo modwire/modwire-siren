@@ -52,5 +52,6 @@ class TestErrors:
                 capabilities=frozenset({"get_record"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/records/42"}]

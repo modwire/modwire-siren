@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import Any
 
+from ..document import SirenDocument
 from ..errors import SirenProjectionError
 from ..graph import SirenApi
 from ..projection import SirenProjectionService
@@ -12,7 +12,7 @@ class SirenEngine:
     api: SirenApi
     projection: SirenProjectionService
 
-    def project(self, context: SirenContext) -> dict[str, Any]:
+    def project(self, context: SirenContext) -> SirenDocument:
         try:
             return self.projection.project(self.api, context)
         except Exception as error:

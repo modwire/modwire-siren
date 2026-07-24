@@ -4,6 +4,7 @@ from typing import Any
 
 from wireup import injectable
 
+from ...document import SirenAction, SirenField
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
@@ -22,7 +23,7 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         scope: str,
         context: SirenContext,
         value: Mapping[str, Any],
-    ) -> list[dict[str, Any]]:
+    ) -> list[SirenAction]:
         names = resource.collection_operations if scope == "collection" else resource.entity_operations
         operations = {operation.name: operation for operation in api.operations}
         return [
@@ -38,14 +39,11 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         resource: SirenResource | None,
         value: Mapping[str, Any],
         include_query: bool = True,
-    ) -> dict[str, Any]:
-        action: dict[str, Any] = {
-            "name": operation.name,
-            "href": self.hrefs.href(operation.route.path, context, resource, value, include_query),
-            "method": operation.method,
-        }
-        if operation.media_type is not None:
-            action["type"] = operation.media_type
-        if operation.fields:
-            action["fields"] = [{"name": field.name, "type": field.type} for field in operation.fields]
-        return action
+    ) -> SirenAction:
+        return SirenAction(
+            name=operation.name,
+            href=self.hrefs.href(operation.route.path, context, resource, value, include_query),
+            method=operation.method,
+            type=operation.media_type,
+            fields=tuple(SirenField(name=field.name, type=field.type) for field in operation.fields) or None,
+        )

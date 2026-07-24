@@ -23,6 +23,7 @@ class TestConformance:
                 capabilities=frozenset({"list_widgets"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets"}]
         assert document["actions"] == [
@@ -42,6 +43,7 @@ class TestConformance:
                 capabilities=frozenset({"rename_widget"}),
             )
         )
+        entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert entity["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets/42"}]
         assert entity["actions"] == [
@@ -74,6 +76,7 @@ class TestConformance:
                 capabilities=frozenset({"list_widgets"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets"}]
         assert document["actions"] == [
@@ -93,6 +96,7 @@ class TestConformance:
                 capabilities=frozenset({"rename_widget"}),
             )
         )
+        entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert entity["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets/42"}]
         assert entity["actions"] == [

@@ -27,6 +27,8 @@ class TestRoutes:
                 capabilities=frozenset({"get_team_record", "archive_team_record"}),
             )
         )
+        collection = collection.model_dump(by_alias=True, mode="json", exclude_none=True)
+        entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert collection["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/api/v2/teams/north%2Feast/records"}
@@ -48,6 +50,7 @@ class TestRoutes:
                 capabilities=frozenset({"list_record_reports"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/api/v2/teams/team/records/record/reports"}
@@ -106,6 +109,7 @@ class TestRoutes:
                 capabilities=frozenset({"list_records"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["actions"] == [
             {"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}
@@ -138,9 +142,12 @@ class TestRoutes:
         with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
-        assert siren(ROUTE_POLICY_SCHEMA).project(
+        document = siren(ROUTE_POLICY_SCHEMA).project(
             SirenContext(base_url="https://api.example.com", scope="collection", resource="label")
-        )["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v2/labels"}]
+        )
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"] == [
+            {"rel": ["self"], "href": "https://api.example.com/api/v2/labels"}
+        ]
 
 
     def test_public_facade_rejects_indistinguishable_duplicate_resources_and_missing_path_values(self):
@@ -189,6 +196,7 @@ class TestRoutes:
                 capabilities=frozenset({"list_section_records"}),
             )
         )
+        document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/sections/section/records"}]
         assert [action["name"] for action in document["actions"]] == ["list_section_records"]
@@ -199,7 +207,8 @@ class TestRoutes:
         schema["paths"]["/api/"] = {"get": {"responses": {"200": {"description": "OK"}}}}
         engine = siren(schema, root_path="/api/")
 
-        assert engine.project(SirenContext(base_url="https://api.example.com", scope="root"))["links"] == [
+        document = engine.project(SirenContext(base_url="https://api.example.com", scope="root"))
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/api/"},
             {"rel": ["record"], "href": "https://api.example.com/records"},
         ]
@@ -226,11 +235,14 @@ class TestRoutes:
         with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
             siren(traced)
 
-        assert siren(SCHEMA).project(
+        document = siren(SCHEMA).project(
             SirenContext(
                 base_url="https://api.example.com",
                 scope="collection",
                 resource="record",
                 capabilities=frozenset({"list_records"}),
             )
-        )["actions"] == [{"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}]
+        )
+        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["actions"] == [
+            {"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}
+        ]
