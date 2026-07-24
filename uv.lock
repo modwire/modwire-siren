@@ -690,6 +690,7 @@ wheels = [
 name = "modwire-siren"
 source = { editable = "." }
 dependencies = [
+    { name = "gherkin-official" },
     { name = "jsonschema", extra = ["format-nongpl"] },
     { name = "openapi-spec-validator" },
     { name = "pydantic" },
@@ -729,6 +730,7 @@ requires-dist = [
     { name = "django", marker = "extra == 'dev'", specifier = ">=5.1,<6.1" },
     { name = "django-ninja-extra", marker = "extra == 'dev'", specifier = ">=0.30,<1" },
     { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.115,<1" },
+    { name = "gherkin-official", specifier = ">=29" },
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.26" },
     { name = "openapi-spec-validator", specifier = ">=0.9,<1" },
     { name = "packaging", marker = "extra == 'dev'", specifier = ">=25" },

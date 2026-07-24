@@ -8,23 +8,22 @@ from xml.etree import ElementTree
 from wireup import injectable
 
 from ..contracts import SirenBddEvidenceReader
-from ..values import SirenBddFeature, SirenBddScenario
+from ..values import SirenBddFeature, SirenBddScenario, SirenExpectedScenario, SirenJunitEvidence
+from .inventory import SirenGherkinScenarioInventory
 
 
 @injectable(as_type=SirenBddEvidenceReader)
 @dataclass(frozen=True)
 class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
-    def read(self, cucumber_report: Path) -> tuple[SirenBddFeature, ...]:
+    inventory: SirenGherkinScenarioInventory
+
+    def read(self, cucumber_report: Path, feature_directory: Path) -> tuple[SirenBddFeature, ...]:
         document = json.loads(cucumber_report.read_text())
-        if not isinstance(document, list):
+        if not isinstance(document, list) or not document:
             raise ValueError("Cucumber report must contain a feature list.")
-        expected_failures = self.expected_failures(cucumber_report.with_name("junit.xml"))
-        features = tuple(self.feature(value, expected_failures) for value in document)
-        identifiers = {scenario.identifier for feature in features for scenario in feature.scenarios}
-        unreported = expected_failures.difference(identifiers)
-        if unreported:
-            names = ", ".join(sorted(unreported))
-            raise ValueError(f"JUnit report has no matching Cucumber scenarios: {names}.")
+        junit = self.junit(cucumber_report.with_name("junit.xml"))
+        features = tuple(self.feature(value, junit.expected_failures) for value in document)
+        self.reconcile(self.inventory.read(feature_directory), features, junit)
         return features
 
     def feature(self, value: Any, expected_failures: frozenset[str]) -> SirenBddFeature:
@@ -34,7 +33,7 @@ class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
         scenarios = value.get("elements")
         if not isinstance(name, str) or not name:
             raise ValueError("Cucumber report feature must have a name.")
-        if not isinstance(scenarios, list):
+        if not isinstance(scenarios, list) or not scenarios:
             raise ValueError(f"Cucumber report feature {name!r} must contain scenarios.")
         return SirenBddFeature(name, tuple(self.scenario(value, expected_failures) for value in scenarios))
 
@@ -62,20 +61,60 @@ class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
         detail = ", ".join(statuses)
         raise ValueError(f"Cucumber report scenario {name!r} has unexpected results: {detail}.")
 
-    def expected_failures(self, junit_report: Path) -> frozenset[str]:
+    def junit(self, junit_report: Path) -> SirenJunitEvidence:
         document = ElementTree.parse(junit_report)
-        names: set[str] = set()
+        identifiers: set[str] = set()
+        expected_failures: set[str] = set()
         for testcase in document.findall(".//testcase"):
             name = testcase.get("name")
+            if not name:
+                raise ValueError("JUnit report contains a testcase without a name.")
+            if name in identifiers:
+                raise ValueError(f"JUnit report has duplicate testcase names: {name}.")
+            identifiers.add(name)
+            if testcase.find("failure") is not None or testcase.find("error") is not None:
+                raise ValueError(f"JUnit report contains an unsuccessful testcase: {name}.")
             skipped = testcase.find("skipped")
             if skipped is None:
                 continue
-            if not name or skipped.get("type") != "pytest.xfail":
+            if skipped.get("type") != "pytest.xfail":
                 raise ValueError("JUnit report contains a skipped test that is not a strict expected failure.")
-            if name in names:
-                raise ValueError(f"JUnit report has duplicate expected failure names: {name}.")
-            names.add(name)
-        return frozenset(names)
+            expected_failures.add(name)
+        if not identifiers:
+            raise ValueError("JUnit report contains no testcases.")
+        return SirenJunitEvidence(frozenset(identifiers), frozenset(expected_failures))
+
+    def reconcile(
+        self,
+        expected: tuple[SirenExpectedScenario, ...],
+        features: tuple[SirenBddFeature, ...],
+        junit: SirenJunitEvidence,
+    ) -> None:
+        reported = tuple((feature.name, scenario.name) for feature in features for scenario in feature.scenarios)
+        if len(reported) != len(set(reported)):
+            raise ValueError("Cucumber report contains duplicate scenarios.")
+        expected_labels = frozenset((scenario.feature, scenario.name) for scenario in expected)
+        reported_labels = frozenset(reported)
+        missing = expected_labels.difference(reported_labels)
+        if missing:
+            labels = ", ".join(f"{feature}: {scenario}" for feature, scenario in sorted(missing))
+            raise ValueError(f"Cucumber report is missing committed scenarios: {labels}.")
+        unexpected = reported_labels.difference(expected_labels)
+        if unexpected:
+            labels = ", ".join(f"{feature}: {scenario}" for feature, scenario in sorted(unexpected))
+            raise ValueError(f"Cucumber report contains unexpected scenarios: {labels}.")
+        identifiers = tuple(scenario.identifier for feature in features for scenario in feature.scenarios)
+        if len(identifiers) != len(set(identifiers)):
+            raise ValueError("Cucumber report contains duplicate scenario identifiers.")
+        cucumber_identifiers = frozenset(identifiers)
+        missing_junit = cucumber_identifiers.difference(junit.identifiers)
+        if missing_junit:
+            names = ", ".join(sorted(missing_junit))
+            raise ValueError(f"JUnit report is missing Cucumber scenarios: {names}.")
+        unexpected_junit = junit.identifiers.difference(cucumber_identifiers)
+        if unexpected_junit:
+            names = ", ".join(sorted(unexpected_junit))
+            raise ValueError(f"JUnit report contains non-Cucumber testcases: {names}.")
 
     def status(self, value: Any, scenario: str) -> str:
         if not isinstance(value, Mapping):

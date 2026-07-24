@@ -102,6 +102,19 @@ class SubEntitySteps:
     @then("creation is rejected", stacklevel=2)
     def sub_entity_creation_is_rejected() -> None:
         assert isinstance(SubEntitySteps.error, ValueError)
+        errors = SubEntitySteps.error.errors(include_url=False)
+        if SubEntitySteps.invalid_media_type is not None:
+            assert any(
+                error["loc"][0] == "type"
+                and error["msg"] == "Value error, Siren media type must use the official media-type grammar."
+                for error in errors
+            )
+        elif SubEntitySteps.missing_value_type is SirenEmbeddedLink:
+            assert errors[0]["loc"] == ("href",)
+            assert errors[0]["type"] == "missing"
+        else:
+            assert errors[0]["loc"] == ("rel",)
+            assert errors[0]["type"] == "missing"
 
 
 scenarios("../features/sub_entities.feature")

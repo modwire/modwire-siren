@@ -6,5 +6,5 @@ from ..values import SirenBddFeature
 
 class SirenBddEvidenceReader(ABC):
     @abstractmethod
-    def read(self, cucumber_report: Path) -> tuple[SirenBddFeature, ...]:
+    def read(self, cucumber_report: Path, feature_directory: Path) -> tuple[SirenBddFeature, ...]:
         raise NotImplementedError

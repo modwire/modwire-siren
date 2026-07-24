@@ -285,6 +285,23 @@ class ActionSteps:
     @then("creation is rejected", stacklevel=2)
     def action_creation_is_rejected() -> None:
         assert isinstance(ActionSteps.error, ValueError)
+        errors = ActionSteps.error.errors(include_url=False)
+        if ActionSteps.unsupported_method is not None:
+            assert any(error["loc"] == ("method",) and error["type"] == "enum" for error in errors)
+        elif ActionSteps.invalid_href is not None:
+            assert any(
+                error["loc"] == ("href",) and error["msg"] == "Value error, Siren URI must be a valid URI."
+                for error in errors
+            )
+        elif ActionSteps.invalid_media_type is not None:
+            assert any(
+                error["loc"][0] == "type"
+                and error["msg"] == "Value error, Siren media type must use the official media-type grammar."
+                for error in errors
+            )
+        else:
+            assert errors[0]["loc"] == ()
+            assert errors[0]["msg"] == "Value error, Siren document action names must be unique."
 
 
 scenarios("../features/actions.feature")

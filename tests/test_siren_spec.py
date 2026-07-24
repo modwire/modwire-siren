@@ -7,6 +7,62 @@ from pathlib import Path
 
 
 class TestSirenSpecCommand:
+    def test_command_fails_when_the_committed_gherkin_inventory_has_duplicates(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        feature = workspace / "tests/conformance/features/relations.feature"
+        shutil.copy2(feature, feature.with_name("relations_copy.feature"))
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "Gherkin feature inventory contains duplicate scenarios." in result.stderr
+
+    def test_command_fails_when_a_committed_scenario_has_no_cucumber_evidence(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        (workspace / "tests/conformance/steps/test_relation_steps.py").unlink()
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "Cucumber report is missing committed scenarios: Siren relations:" in result.stderr
+
+    def test_command_fails_when_junit_contains_a_non_cucumber_testcase(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        evidence = workspace / "tests/conformance/test_unmapped_evidence.py"
+        evidence.write_text("def test_unmapped_evidence() -> None:\n    pass\n")
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "JUnit report contains non-Cucumber testcases: test_unmapped_evidence." in result.stderr
+
+    def test_command_fails_when_junit_contains_an_ordinary_skip(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        evidence = workspace / "tests/conformance/test_skipped_evidence.py"
+        evidence.write_text(
+            "import pytest\n\n\ndef test_skipped_evidence() -> None:\n    pytest.skip(\"ordinary skip\")\n"
+        )
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "JUnit report contains a skipped test that is not a strict expected failure." in result.stderr
+
+    def test_command_fails_when_an_expected_failure_unexpectedly_passes(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        evidence = workspace / "tests/conformance/test_xpass_evidence.py"
+        evidence.write_text(
+            "import pytest\n\n\n"
+            "@pytest.mark.xfail(reason=\"tracked expected failure\")\n"
+            "def test_xpass_evidence() -> None:\n"
+            "    pass\n"
+        )
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "XPASS" in result.stderr
+
     def test_command_fails_after_a_public_schema_narrows_an_official_requirement(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
         field_value = workspace / "src/modwire_siren/runtime/document/values/field_value.py"
@@ -88,4 +144,5 @@ class TestSirenSpecCommand:
         shutil.copytree(project / "tests/conformance", workspace / "tests/conformance")
         shutil.copytree(project / "scripts", workspace / "scripts")
         shutil.copy2(project / "Makefile", workspace / "Makefile")
+        shutil.copy2(project / "pyproject.toml", workspace / "pyproject.toml")
         return workspace
