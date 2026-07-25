@@ -1,9 +1,9 @@
 from collections.abc import Mapping
 from typing import Any
 
+from modwire_siren.contexts.graph import SirenApi, SirenResource
 from modwire_siren.contexts.shared import BaseState, SirenRelation
 
-from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.contexts.runtime.graph import SirenApi, SirenOperation, SirenResource, SirenRoot
+from modwire_siren.contexts.graph import SirenApi, SirenOperation, SirenResource, SirenRoot
 from modwire_siren.contexts.shared import ModwireSirenError
 
 from ..contracts import SirenApiAssembler

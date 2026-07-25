@@ -4,7 +4,7 @@ from typing import Any
 
 from wireup import injectable
 
-from modwire_siren.contexts.runtime.graph import SirenApi
+from modwire_siren.contexts.graph import SirenApi
 
 from ...compatibility import SirenCompatibilityReport
 from ...sources import SirenSource

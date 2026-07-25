@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.contexts.runtime.graph import (
+from modwire_siren.contexts.graph import (
     SirenApi,
     SirenField,
     SirenOperation,

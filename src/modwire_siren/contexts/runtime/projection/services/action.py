@@ -4,10 +4,10 @@ from typing import Any
 
 from wireup import injectable
 
+from modwire_siren.contexts.graph import SirenApi, SirenOperation, SirenResource
 from modwire_siren.contexts.shared import SirenScope
 
 from ...document import SirenAction, SirenField
-from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
 from ..contracts import SirenActionDocumentService

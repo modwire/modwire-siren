@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from modwire_siren.contexts.graph import SirenApi, SirenOperation, SirenResource
 from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ...document import SirenAction
-from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
 
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from modwire_siren.contexts.runtime.graph import SirenApi
+from modwire_siren.contexts.graph import SirenApi
 from modwire_siren.contexts.shared import ModwireSirenError
 
 from ...compatibility import SirenCompatibilityFinding

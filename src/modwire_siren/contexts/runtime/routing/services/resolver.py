@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.contexts.graph import SirenApi, SirenResource
 from modwire_siren.contexts.shared import ModwireSirenError
 
-from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ..contracts import SirenResourceResolver
 

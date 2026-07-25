@@ -3,11 +3,11 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.contexts.graph import SirenApi
 from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ...capabilities import SirenCapabilityValidator
 from ...document import SirenDocument
-from ...graph import SirenApi
 from ...request import SirenContext
 from ...routing import SirenResourceResolver
 from ..contracts import SirenScopeProjector

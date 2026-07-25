@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from ...graph import SirenApi
+from modwire_siren.contexts.graph import SirenApi
+
 from ...projection import SirenProjectionService
 from ..state import SirenEngine
 
