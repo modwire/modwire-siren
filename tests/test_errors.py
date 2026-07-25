@@ -3,12 +3,12 @@ from copy import deepcopy
 import pytest
 from openapi_documents import SCHEMA
 
-from modwire_siren import SirenCompilationError, SirenContext, SirenProjectionError, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestErrors:
     def test_public_facade_chains_invalid_openapi_as_a_compilation_error(self):
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract") as raised:
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract") as raised:
             siren([])
 
         assert raised.value.__cause__ is not None
@@ -19,7 +19,7 @@ class TestErrors:
             "schema"
         ]["properties"]["title"] = {"type": "string", "enum": ["draft", "published"]}
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract") as raised:
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract") as raised:
             siren(invalid)
 
         assert raised.value.__cause__ is not None
@@ -38,7 +38,7 @@ class TestErrors:
         ],
     )
     def test_engine_chains_context_failures_as_projection_errors(self, context):
-        with pytest.raises(SirenProjectionError, match="Siren projection failed") as raised:
+        with pytest.raises(ModwireSirenError, match="Siren projection failed") as raised:
             siren(SCHEMA).project(context)
 
         assert raised.value.__cause__ is not None

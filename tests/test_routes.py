@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import ROUTE_POLICY_SCHEMA, SCHEMA
 
-from modwire_siren import SirenCompilationError, SirenContext, SirenProjectionError, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestRoutes:
@@ -139,7 +139,7 @@ class TestRoutes:
             }
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(ROUTE_POLICY_SCHEMA).project(
@@ -157,9 +157,9 @@ class TestRoutes:
             "get": {"operationId": "list_archived_records", "responses": {"200": {"description": "OK"}}},
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
-        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
+        with pytest.raises(ModwireSirenError, match="Siren projection failed"):
             siren(ROUTE_POLICY_SCHEMA).project(
                 SirenContext(base_url="https://api.example.com", scope="collection", resource="record")
             )
@@ -177,7 +177,7 @@ class TestRoutes:
         }
         engine = siren(schema)
 
-        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
+        with pytest.raises(ModwireSirenError, match="Siren projection failed"):
             engine.project(
                 SirenContext(
                     base_url="https://api.example.com",
@@ -223,7 +223,7 @@ class TestRoutes:
             }
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(referenced)
 
         traced = deepcopy(SCHEMA)
@@ -232,7 +232,7 @@ class TestRoutes:
             "responses": {"200": {"description": "OK"}},
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(traced)
 
         document = siren(SCHEMA).project(

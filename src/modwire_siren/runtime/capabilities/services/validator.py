@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...graph import SirenResource
 from ...request import SirenContext
 from ..contracts import SirenCapabilityValidator
@@ -14,4 +16,4 @@ class SirenDefaultCapabilityValidator(SirenCapabilityValidator):
         supported = set(resource.collection_operations) | set(resource.entity_operations)
         unknown = sorted(context.capabilities - supported)
         if unknown:
-            raise ValueError(f"Siren context declares unsupported capabilities for {resource.name!r}: {unknown}")
+            raise ModwireSirenError(f"Siren context declares unsupported capabilities for {resource.name!r}: {unknown}")

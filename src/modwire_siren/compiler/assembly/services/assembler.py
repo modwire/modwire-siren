@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....runtime.graph import SirenApi, SirenOperation, SirenResource, SirenRoot
 from ..contracts import SirenApiAssembler
 
@@ -27,7 +29,7 @@ class SirenDefaultApiAssembler(SirenApiAssembler):
         if existing != SirenRoot() and (
             existing.route != incoming.route or existing.title != incoming.title or existing.version != incoming.version
         ):
-            raise ValueError("Siren sources define conflicting roots")
+            raise ModwireSirenError("Siren sources define conflicting roots")
         return incoming.model_copy(
             update={"operations": tuple(dict.fromkeys((*existing.operations, *incoming.operations)))}
         )
@@ -43,7 +45,7 @@ class SirenDefaultApiAssembler(SirenApiAssembler):
             or existing.collection != incoming.collection
             or existing.entity != incoming.entity
         ):
-            raise ValueError(f"Siren sources define conflicting resource: {existing.reference}")
+            raise ModwireSirenError(f"Siren sources define conflicting resource: {existing.reference}")
         return existing.model_copy(
             update={
                 "collection_operations": tuple(
@@ -56,4 +58,4 @@ class SirenDefaultApiAssembler(SirenApiAssembler):
     def merge_operation(self, existing: SirenOperation | None, incoming: SirenOperation) -> SirenOperation:
         if existing is None or existing == incoming:
             return incoming
-        raise ValueError(f"Siren sources define conflicting operation: {incoming.name}")
+        raise ModwireSirenError(f"Siren sources define conflicting operation: {incoming.name}")

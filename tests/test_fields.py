@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import PARAMETER_MEDIA_SCHEMA
 
-from modwire_siren import SirenCompilationError, SirenContext, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestFields:
@@ -13,7 +13,7 @@ class TestFields:
             {"name": "page", "in": "header", "required": False, "schema": {"type": "string"}}
         )
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(PARAMETER_MEDIA_SCHEMA).project(
@@ -35,7 +35,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "content": {"application/json": {}}}
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -46,7 +46,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "schema": {"type": "integer"}},
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -61,7 +61,7 @@ class TestFields:
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
         invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"] = content
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize(
@@ -81,7 +81,7 @@ class TestFields:
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
         invalid["paths"]["/records"]["get"]["parameters"] = [parameter]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ class TestFields:
             {"name": "value", "in": "query", "required": False, "schema": schema}
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     def test_public_facade_rejects_required_json_body_controls(self):
@@ -110,7 +110,7 @@ class TestFields:
             "schema"
         ]["required"] = ["title"]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize("method", ["head", "options"])
@@ -121,7 +121,7 @@ class TestFields:
             "responses": {"200": {"description": "OK"}},
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     def test_public_facade_prefers_json_request_body_fields(self):

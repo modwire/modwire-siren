@@ -3,6 +3,8 @@ from typing import Any
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from .....runtime.graph import SirenApi
 from ....assembly.services import SirenBuilder
 from ....assembly.state import SirenAssembly
@@ -36,7 +38,7 @@ class OpenApiSource(SirenSource):
     def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
         paths = schema.get("paths")
         if not isinstance(paths, dict):
-            raise ValueError("OpenAPI schema requires an object-valued paths field")
+            raise ModwireSirenError("OpenAPI schema requires an object-valued paths field")
         info = schema.get("info", {})
         assembly = SirenAssembly().set_root(
             path=root_path,

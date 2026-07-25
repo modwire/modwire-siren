@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from modwire_siren.shared import ModwireSirenError
+
 from .....vocabulary import SirenScope
 from ..values import Resource
 
@@ -36,7 +38,7 @@ class RouteCatalog:
             selection = name, self.parameters(collection_path)
             existing_path = names.get(selection)
             if existing_path is not None and existing_path != collection_path:
-                raise ValueError(
+                raise ModwireSirenError(
                     f"OpenAPI routes derive duplicate resource {name!r}: {existing_path!r} and {collection_path!r}"
                 )
             names[selection] = collection_path
@@ -70,11 +72,11 @@ class RouteCatalog:
             if segments and not self.is_parameter(segments[-1]):
                 self.ownership_cache[path] = None
                 return None
-            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+            raise ModwireSirenError(f"OpenAPI route is unsupported: {path!r}")
         longest = max(candidate[0] for candidate in candidates)
         owners = [(resource, scope) for length, resource, scope in candidates if length == longest]
         if len(owners) != 1:
-            raise ValueError(f"OpenAPI route ownership is ambiguous: {path!r}")
+            raise ModwireSirenError(f"OpenAPI route ownership is ambiguous: {path!r}")
         self.ownership_cache[path] = owners[0]
         return owners[0]
 
@@ -91,14 +93,14 @@ class RouteCatalog:
             self.segment_cache[path] = ()
             return ()
         if not isinstance(path, str) or not path.startswith("/"):
-            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+            raise ModwireSirenError(f"OpenAPI route is unsupported: {path!r}")
         normalized = path[:-1] if path.endswith("/") else path
         segments = tuple(normalized[1:].split("/"))
         if any(
             not segment or (("{" in segment or "}" in segment) and not self.is_parameter(segment))
             for segment in segments
         ):
-            raise ValueError(f"OpenAPI route is unsupported: {path!r}")
+            raise ModwireSirenError(f"OpenAPI route is unsupported: {path!r}")
         self.segment_cache[path] = segments
         return segments
 
@@ -128,4 +130,4 @@ class RouteCatalog:
             return f"{normalized[:-3]}y"
         if self.is_plural(normalized):
             return normalized[:-1]
-        raise ValueError(f"OpenAPI collection path must be plural: {value!r}")
+        raise ModwireSirenError(f"OpenAPI collection path must be plural: {value!r}")

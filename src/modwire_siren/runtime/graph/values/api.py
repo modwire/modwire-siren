@@ -1,5 +1,7 @@
 from pydantic import Field, model_validator
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenScope
 from ...contracts import Contract
 from .operation import SirenOperation
@@ -17,9 +19,9 @@ class SirenApi(Contract):
         resource_references = tuple(resource.reference for resource in self.resources)
         operation_names = tuple(operation.name for operation in self.operations)
         if len(resource_references) != len(set(resource_references)):
-            raise ValueError("Siren resource references must be unique")
+            raise ModwireSirenError("Siren resource references must be unique")
         if len(operation_names) != len(set(operation_names)):
-            raise ValueError("Siren operation names must be unique")
+            raise ModwireSirenError("Siren operation names must be unique")
         unknown = {
             operation
             for resource in self.resources
@@ -27,10 +29,10 @@ class SirenApi(Contract):
             if operation not in operation_names
         }
         if unknown:
-            raise ValueError(f"Siren resources reference unknown operations: {sorted(unknown)}")
+            raise ModwireSirenError(f"Siren resources reference unknown operations: {sorted(unknown)}")
         unknown_root_operations = sorted(set(self.root.operations) - set(operation_names))
         if unknown_root_operations:
-            raise ValueError(f"Siren root references unknown operations: {unknown_root_operations}")
+            raise ModwireSirenError(f"Siren root references unknown operations: {unknown_root_operations}")
         resource_references_set = set(resource_references)
         unknown_resources = sorted(
             {
@@ -40,7 +42,7 @@ class SirenApi(Contract):
             }
         )
         if unknown_resources:
-            raise ValueError(f"Siren operations reference unknown resources: {unknown_resources}")
+            raise ModwireSirenError(f"Siren operations reference unknown resources: {unknown_resources}")
         resources = {resource.reference: resource for resource in self.resources}
         unowned = []
         for operation in self.operations:
@@ -54,5 +56,5 @@ class SirenApi(Contract):
             ):
                 unowned.append(operation.name)
         if unowned:
-            raise ValueError(f"Siren operations are not owned by their declared resource scope: {unowned}")
+            raise ModwireSirenError(f"Siren operations are not owned by their declared resource scope: {unowned}")
         return self

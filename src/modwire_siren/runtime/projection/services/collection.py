@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenRelation, SirenScope
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
@@ -21,7 +23,7 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
 
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
         if request.resource is None:
-            raise ValueError("Siren collection projection requires a resource")
+            raise ModwireSirenError("Siren collection projection requires a resource")
         return SirenDocument(
             class_=(SirenScope.COLLECTION, request.resource.resource_class),
             properties=request.context.value,

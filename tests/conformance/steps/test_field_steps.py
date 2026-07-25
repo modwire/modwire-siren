@@ -2,7 +2,7 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, scenarios, then, when
 
-from modwire_siren import SirenAction, SirenField, SirenFieldValue
+from modwire_siren import ModwireSirenError, SirenAction, SirenField, SirenFieldValue
 
 
 class FieldSteps:
@@ -11,7 +11,7 @@ class FieldSteps:
     fields: tuple[SirenField, ...] | None = None
     payload: Mapping[str, object] | None = None
     payloads: tuple[Mapping[str, object], ...] | None = None
-    error: ValueError | None = None
+    error: ModwireSirenError | ValueError | None = None
     unsupported_type: str | None = None
     duplicate_names: bool = False
 
@@ -133,7 +133,7 @@ class FieldSteps:
                     href="https://api.example.com/records/42",
                     fields=(SirenField(name="title"), SirenField(name="title")),
                 )
-        except ValueError as error:
+        except (ModwireSirenError, ValueError) as error:
             FieldSteps.error = error
 
     @staticmethod
@@ -216,13 +216,12 @@ class FieldSteps:
     @staticmethod
     @then("creation is rejected", stacklevel=2)
     def field_creation_is_rejected() -> None:
-        assert isinstance(FieldSteps.error, ValueError)
-        errors = FieldSteps.error.errors(include_url=False)
         if FieldSteps.unsupported_type is not None:
+            assert isinstance(FieldSteps.error, ValueError)
+            errors = FieldSteps.error.errors(include_url=False)
             assert any(error["loc"] == ("type",) and error["type"] == "enum" for error in errors)
         else:
-            assert errors[0]["loc"] == ()
-            assert errors[0]["msg"] == "Value error, Siren action field names must be unique."
+            assert str(FieldSteps.error) == "Siren action field names must be unique."
 
 
 scenarios("../features/fields.feature")

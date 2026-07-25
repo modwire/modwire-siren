@@ -2,6 +2,8 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
 
+from modwire_siren.shared import ModwireSirenError
+
 
 @dataclass(frozen=True)
 class ComponentResolver:
@@ -25,9 +27,9 @@ class ComponentResolver:
         if reference is None:
             return result
         if not isinstance(reference, str):
-            raise ValueError("OpenAPI component reference must be a string")
+            raise ModwireSirenError("OpenAPI component reference must be a string")
         if reference in trail:
-            raise ValueError(f"OpenAPI component reference cycle: {' -> '.join((*trail, reference))}")
+            raise ModwireSirenError(f"OpenAPI component reference cycle: {' -> '.join((*trail, reference))}")
         component_kind, name = self.address(reference, kind)
         cache_key = component_kind, name
         cached = self.reference_cache.get(cache_key)
@@ -36,7 +38,7 @@ class ComponentResolver:
         collection = self.components.get(component_kind) if isinstance(self.components, dict) else None
         target = collection.get(name) if isinstance(collection, dict) else None
         if not isinstance(target, dict):
-            raise ValueError(f"OpenAPI component reference is unknown: {reference}")
+            raise ModwireSirenError(f"OpenAPI component reference is unknown: {reference}")
         resolved = self.resolve(target, kind, (*trail, reference))
         self.reference_cache[cache_key] = resolved
         return deepcopy(resolved) | result
@@ -44,13 +46,13 @@ class ComponentResolver:
     def address(self, reference: str, expected_kind: str) -> tuple[str, str]:
         prefix = "#/components/"
         if not reference.startswith(prefix):
-            raise ValueError(f"OpenAPI component reference is unsupported: {reference}")
+            raise ModwireSirenError(f"OpenAPI component reference is unsupported: {reference}")
         parts = reference[len(prefix) :].split("/")
         if len(parts) != 2:
-            raise ValueError(f"OpenAPI component reference is invalid: {reference}")
+            raise ModwireSirenError(f"OpenAPI component reference is invalid: {reference}")
         kind, encoded_name = parts
         if kind != expected_kind:
-            raise ValueError(
+            raise ModwireSirenError(
                 f"OpenAPI component reference {reference!r} must target components/{expected_kind}, "
                 f"not components/{kind}"
             )
@@ -66,7 +68,7 @@ class ComponentResolver:
                 index += 1
                 continue
             if index + 1 == len(token) or token[index + 1] not in {"0", "1"}:
-                raise ValueError(f"OpenAPI component reference is invalid: {reference}")
+                raise ModwireSirenError(f"OpenAPI component reference is invalid: {reference}")
             decoded += "~" if token[index + 1] == "0" else "/"
             index += 2
         return decoded

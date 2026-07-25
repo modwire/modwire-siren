@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenRelation
 from ...document import SirenDocument, SirenEmbeddedRepresentation
 from ...graph import SirenApi, SirenResource
@@ -18,4 +20,4 @@ class SirenEntityDocumentService(ABC):
         context: SirenContext,
         rel: tuple[SirenRelation, ...],
     ) -> SirenDocument | SirenEmbeddedRepresentation:
-        raise NotImplementedError
+        raise ModwireSirenError

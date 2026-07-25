@@ -3,6 +3,8 @@ from typing import ClassVar
 from pydantic import Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenActionMethod, SirenMediaType, SirenUri
 from ...contracts import Contract
 from .field import SirenField
@@ -30,5 +32,5 @@ class SirenAction(Contract):
     def validate_field_names(self) -> "SirenAction":
         fields = self.fields or ()
         if len({field.name for field in fields}) != len(fields):
-            raise ValueError("Siren action field names must be unique.")
+            raise ModwireSirenError("Siren action field names must be unique.")
         return self

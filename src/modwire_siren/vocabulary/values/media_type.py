@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic_core import CoreSchema, core_schema
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...siren_schema import SirenSchemaReader
 
 
@@ -21,7 +23,7 @@ class SirenMediaType(str):
     def validate(cls, value: str) -> "SirenMediaType":
         if re.fullmatch(cls.schema()["pattern"], value) is None:
             message = "Siren media type must use the official media-type grammar."
-            raise ValueError(message)
+            raise ModwireSirenError(message)
         return cls(value)
 
     @classmethod

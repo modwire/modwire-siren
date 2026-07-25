@@ -4,8 +4,8 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..compiler.errors import SirenCompilationError
 from ..runtime.engine import SirenEngine
+from ..shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 
@@ -116,16 +116,16 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
 
     try:
         if not isinstance(openapi, Mapping):
-            raise TypeError("OpenAPI document must be a mapping")
+            raise ModwireSirenError("OpenAPI document must be a mapping")
         if not isinstance(root_path, str) or not root_path.startswith("/"):
-            raise ValueError("Siren root path must start with '/'")
+            raise ModwireSirenError("Siren root path must start with '/'")
         document = json.loads(json.dumps(openapi))
         validate(document)
     except Exception as error:
-        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+        raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error
     try:
         application = SirenApplicationContainer().application()
         api = application.api_service().build(document, root_path)
         return application.engine_factory().create(api)
     except Exception as error:
-        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+        raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error

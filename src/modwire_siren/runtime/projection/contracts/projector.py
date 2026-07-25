@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenScope
 from ...document import SirenDocument
 from ..state import SirenProjectionRequest
@@ -8,8 +10,8 @@ from ..state import SirenProjectionRequest
 class SirenScopeProjector(ABC):
     @abstractmethod
     def supports(self, scope: SirenScope) -> bool:
-        raise NotImplementedError
+        raise ModwireSirenError
 
     @abstractmethod
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
-        raise NotImplementedError
+        raise ModwireSirenError

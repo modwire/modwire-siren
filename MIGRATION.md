@@ -107,17 +107,17 @@ construction path in version 2. Call `siren(openapi)` once at startup and handle
 error types at the boundary:
 
 ```python
-from modwire_siren import SirenCompilationError, SirenProjectionError, siren
+from modwire_siren import ModwireSirenError, siren
 
 try:
     engine = siren(openapi)
-except SirenCompilationError:
+except ModwireSirenError:
     # Invalid OpenAPI or a source operation that official Siren cannot represent.
     raise
 
 try:
     document = engine.project(context)
-except SirenProjectionError:
+except ModwireSirenError:
     # Invalid resource, capability, path value, or request context.
     raise
 ```

@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...contracts import SirenContractSource, SirenImplementation
 from ...values import SirenCapability
 
@@ -17,5 +19,5 @@ class PydanticSirenImplementation(SirenImplementation):
         definitions = {capability.definition for capability in capabilities}
         if len(definitions) != len(capabilities):
             message = "Siren contract sources must provide unique official definitions."
-            raise ValueError(message)
+            raise ModwireSirenError(message)
         return capabilities

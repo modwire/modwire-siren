@@ -2,6 +2,8 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue, model_validator
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenScope
 from ...contracts import Contract
 
@@ -38,9 +40,9 @@ class SirenContext(Contract):
     @model_validator(mode="after")
     def validate_scope(self) -> "SirenContext":
         if self.scope == SirenScope.ROOT and self.resource is not None:
-            raise ValueError("Siren root context cannot declare a resource")
+            raise ModwireSirenError("Siren root context cannot declare a resource")
         if self.scope != SirenScope.ROOT and self.resource is None:
-            raise ValueError(f"Siren {self.scope} context requires a resource")
+            raise ModwireSirenError(f"Siren {self.scope} context requires a resource")
         if any(isinstance(value, (dict, list)) for _, value in self.query):
-            raise ValueError("Siren query values must be scalar")
+            raise ModwireSirenError("Siren query values must be scalar")
         return self

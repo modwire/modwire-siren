@@ -3,6 +3,8 @@ from typing import Any, ClassVar
 from jsonschema import FormatChecker
 from pydantic_core import CoreSchema, core_schema
 
+from modwire_siren.shared import ModwireSirenError
+
 
 class SirenUri(str):
     """Represent an official Siren URI value."""
@@ -21,5 +23,5 @@ class SirenUri(str):
     def validate(cls, value: str) -> "SirenUri":
         if not cls.checker.conforms(value, "uri"):
             message = "Siren URI must be a valid URI."
-            raise ValueError(message)
+            raise ModwireSirenError(message)
         return cls(value)

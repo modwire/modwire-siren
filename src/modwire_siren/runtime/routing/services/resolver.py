@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ..contracts import SirenResourceResolver
@@ -15,10 +17,10 @@ _PARAMETER = re.compile(r"\{([^}]+)\}")
 class SirenDefaultResourceResolver(SirenResourceResolver):
     def resolve(self, api: SirenApi, context: SirenContext) -> SirenResource:
         if context.resource is None:
-            raise ValueError(f"Siren {context.scope} context requires a resource")
+            raise ModwireSirenError(f"Siren {context.scope} context requires a resource")
         candidates = [resource for resource in api.resources if resource.name == context.resource]
         if not candidates:
-            raise ValueError(f"Siren context references unknown resource: {context.resource}")
+            raise ModwireSirenError(f"Siren context references unknown resource: {context.resource}")
         if len(candidates) == 1:
             return candidates[0]
         values = set(context.value) | set(context.path_values)
@@ -28,11 +30,13 @@ class SirenDefaultResourceResolver(SirenResourceResolver):
             if set(_PARAMETER.findall(resource.collection.path)).issubset(values)
         ]
         if not matches:
-            raise ValueError(f"Siren context cannot select resource {context.resource!r}: provide parent path values")
+            raise ModwireSirenError(
+                f"Siren context cannot select resource {context.resource!r}: provide parent path values"
+            )
         longest = max(len(_PARAMETER.findall(resource.collection.path)) for resource in matches)
         selected = [resource for resource in matches if len(_PARAMETER.findall(resource.collection.path)) == longest]
         if len(selected) != 1:
-            raise ValueError(
+            raise ModwireSirenError(
                 f"Siren context cannot select resource {context.resource!r}: matching routes are ambiguous"
             )
         return selected[0]

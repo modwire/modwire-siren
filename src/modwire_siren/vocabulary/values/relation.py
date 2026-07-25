@@ -2,6 +2,8 @@ from typing import Any
 
 from pydantic_core import CoreSchema, core_schema
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...siren_schema import SirenSchemaReader
 from .uri import SirenUri
 
@@ -23,9 +25,9 @@ class SirenRelation(str):
             return cls(value)
         try:
             SirenUri.validate(value)
-        except ValueError as error:
+        except ModwireSirenError as error:
             message = "Siren relation must be an official relation token or URI."
-            raise ValueError(message) from error
+            raise ModwireSirenError(message) from error
         return cls(value)
 
     @classmethod

@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import PARAMETER_MEDIA_SCHEMA
 
-from modwire_siren import SirenCompilationError, audit, siren
+from modwire_siren import ModwireSirenError, audit, siren
 
 
 class TestCompatibility:
@@ -74,5 +74,5 @@ class TestCompatibility:
             {"name": "page", "in": "query", "required": True, "schema": {"type": "integer"}}
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(incompatible)

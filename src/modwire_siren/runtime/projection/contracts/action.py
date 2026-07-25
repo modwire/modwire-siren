@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenScope
 from ...document import SirenAction
 from ...graph import SirenApi, SirenOperation, SirenResource
@@ -18,7 +20,7 @@ class SirenActionDocumentService(ABC):
         context: SirenContext,
         value: Mapping[str, Any],
     ) -> list[SirenAction]:
-        raise NotImplementedError
+        raise ModwireSirenError
 
     @abstractmethod
     def action(
@@ -29,4 +31,4 @@ class SirenActionDocumentService(ABC):
         value: Mapping[str, Any],
         include_query: bool = True,
     ) -> SirenAction:
-        raise NotImplementedError
+        raise ModwireSirenError

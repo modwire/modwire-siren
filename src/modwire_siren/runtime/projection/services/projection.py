@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenScope
 from ...capabilities import SirenCapabilityValidator
 from ...document import SirenDocument
@@ -26,5 +28,5 @@ class SirenProjectionService:
             self.capabilities.validate(resource, context)
         candidates = [projector for projector in self.projectors if projector.supports(context.scope)]
         if len(candidates) != 1:
-            raise ValueError(f"Siren scope {context.scope!r} requires exactly one projector")
+            raise ModwireSirenError(f"Siren scope {context.scope!r} requires exactly one projector")
         return candidates[0].project(SirenProjectionRequest(api, context, resource, context.value))

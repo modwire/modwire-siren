@@ -1,6 +1,6 @@
 boundaries:
   tags:
-    - {name: &module_tag module, match: src/modwire_siren/*, excluded_patterns: [src/modwire_siren/__init__.py, src/modwire_siren/_version.py, src/modwire_siren/wiring.py, src/modwire_siren/api]}
+    - {name: &module_tag module, match: src/modwire_siren/*, excluded_patterns: [src/modwire_siren/__init__.py, src/modwire_siren/_version.py, src/modwire_siren/wiring.py, src/modwire_siren/api, src/modwire_siren/shared]}
     - {name: tracked, match: "*"}
 
   flow:

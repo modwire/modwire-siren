@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
 from ....vocabulary import SirenScope
 from ..state import SirenAssembly
@@ -57,7 +59,7 @@ class SirenBuilder:
         index: dict[str, ResourceDraft] = {}
         for resource in resources:
             if resource.reference in index:
-                raise ValueError(f"Siren resource already exists: {resource.reference}")
+                raise ModwireSirenError(f"Siren resource already exists: {resource.reference}")
             index[resource.reference] = resource
         return index
 
@@ -67,14 +69,14 @@ class SirenBuilder:
         index: dict[str, OperationDraft] = {}
         for operation in operations:
             if operation.name in index:
-                raise ValueError(f"Siren operation already exists: {operation.name}")
+                raise ModwireSirenError(f"Siren operation already exists: {operation.name}")
             if operation.scope == SirenScope.ROOT:
                 if operation.resource is not None:
-                    raise ValueError(f"Siren root operation {operation.name!r} cannot reference a resource")
+                    raise ModwireSirenError(f"Siren root operation {operation.name!r} cannot reference a resource")
             else:
                 resource = resources.get(operation.resource)
                 if resource is None:
-                    raise ValueError(
+                    raise ModwireSirenError(
                         f"Siren operation {operation.name!r} references unknown resource {operation.resource!r}"
                     )
                 self.validate_operation_path(operation, resource)
@@ -84,7 +86,7 @@ class SirenBuilder:
     def validate_operation_path(self, operation: OperationDraft, resource: ResourceDraft) -> None:
         if operation.scope == SirenScope.ENTITY:
             if resource.entity_path is None:
-                raise ValueError(f"Siren resource {resource.name!r} has no entity path")
+                raise ModwireSirenError(f"Siren resource {resource.name!r} has no entity path")
             valid = operation.path == resource.entity_path or operation.path.startswith(f"{resource.entity_path}/")
         else:
             valid = operation.path == resource.collection_path or operation.path.startswith(
@@ -95,7 +97,7 @@ class SirenBuilder:
             ):
                 valid = False
         if not valid:
-            raise ValueError(
+            raise ModwireSirenError(
                 f"Siren operation {operation.name!r} path {operation.path!r} does not belong to "
                 f"{operation.scope} scope of resource {resource.name!r}"
             )
@@ -107,11 +109,11 @@ class SirenBuilder:
         names: dict[str, set[str]] = {}
         for item in fields:
             if item.operation not in operations:
-                raise ValueError(f"Siren field {item.name!r} references unknown operation {item.operation!r}")
+                raise ModwireSirenError(f"Siren field {item.name!r} references unknown operation {item.operation!r}")
             operation_fields = index.setdefault(item.operation, [])
             operation_names = names.setdefault(item.operation, set())
             if item.name in operation_names:
-                raise ValueError(f"Siren operation {item.operation!r} has duplicate field {item.name!r}")
+                raise ModwireSirenError(f"Siren operation {item.operation!r} has duplicate field {item.name!r}")
             operation_fields.append(item)
             operation_names.add(item.name)
         return {operation: tuple(items) for operation, items in index.items()}

@@ -6,10 +6,10 @@ from openapi_documents import SCHEMA
 
 import modwire_siren
 from modwire_siren import (
+    ModwireSirenError,
     SirenAction,
     SirenCompatibilityFinding,
     SirenCompatibilityReport,
-    SirenCompilationError,
     SirenContext,
     SirenDocument,
     SirenEmbeddedLink,
@@ -17,7 +17,6 @@ from modwire_siren import (
     SirenField,
     SirenFieldValue,
     SirenLink,
-    SirenProjectionError,
     audit,
     siren,
 )
@@ -32,15 +31,15 @@ class TestFacade:
         ],
     )
     def test_public_facade_rejects_invalid_inputs_before_the_happy_path(self, openapi, root_path):
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(openapi, root_path=root_path)
 
     def test_public_facade_exports_siren_contracts_and_composition_entry_points(self):
         assert modwire_siren.__all__ == [
+            "ModwireSirenError",
             "SirenAction",
             "SirenCompatibilityFinding",
             "SirenCompatibilityReport",
-            "SirenCompilationError",
             "SirenContext",
             "SirenDocument",
             "SirenEmbeddedLink",
@@ -48,35 +47,32 @@ class TestFacade:
             "SirenField",
             "SirenFieldValue",
             "SirenLink",
-            "SirenProjectionError",
             "audit",
             "siren",
         ]
         assert (
+            ModwireSirenError,
             SirenAction,
             SirenCompatibilityFinding,
             SirenCompatibilityReport,
-            SirenCompilationError,
             SirenDocument,
             SirenEmbeddedLink,
             SirenEmbeddedRepresentation,
             SirenField,
             SirenFieldValue,
             SirenLink,
-            SirenProjectionError,
             audit,
         ) == (
+            modwire_siren.ModwireSirenError,
             modwire_siren.SirenAction,
             modwire_siren.SirenCompatibilityFinding,
             modwire_siren.SirenCompatibilityReport,
-            modwire_siren.SirenCompilationError,
             modwire_siren.SirenDocument,
             modwire_siren.SirenEmbeddedLink,
             modwire_siren.SirenEmbeddedRepresentation,
             modwire_siren.SirenField,
             modwire_siren.SirenFieldValue,
             modwire_siren.SirenLink,
-            modwire_siren.SirenProjectionError,
             modwire_siren.audit,
         )
         parameters = signature(siren).parameters

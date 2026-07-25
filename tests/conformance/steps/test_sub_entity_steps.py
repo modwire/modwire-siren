@@ -2,13 +2,13 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, scenarios, then, when
 
-from modwire_siren import SirenEmbeddedLink, SirenEmbeddedRepresentation
+from modwire_siren import ModwireSirenError, SirenEmbeddedLink, SirenEmbeddedRepresentation
 
 
 class SubEntitySteps:
     value: SirenEmbeddedLink | SirenEmbeddedRepresentation | None = None
     payload: Mapping[str, object] | None = None
-    error: ValueError | None = None
+    error: ModwireSirenError | ValueError | None = None
     missing_value_type: type[SirenEmbeddedLink] | type[SirenEmbeddedRepresentation] | None = None
     invalid_media_type: str | None = None
 
@@ -75,7 +75,7 @@ class SubEntitySteps:
                 SubEntitySteps.value = SirenEmbeddedLink(rel=("item",))
             if SubEntitySteps.missing_value_type is SirenEmbeddedRepresentation:
                 SubEntitySteps.value = SirenEmbeddedRepresentation()
-        except ValueError as error:
+        except (ModwireSirenError, ValueError) as error:
             SubEntitySteps.error = error
 
     @staticmethod
@@ -101,18 +101,16 @@ class SubEntitySteps:
     @staticmethod
     @then("creation is rejected", stacklevel=2)
     def sub_entity_creation_is_rejected() -> None:
-        assert isinstance(SubEntitySteps.error, ValueError)
-        errors = SubEntitySteps.error.errors(include_url=False)
         if SubEntitySteps.invalid_media_type is not None:
-            assert any(
-                error["loc"][0] == "type"
-                and error["msg"] == "Value error, Siren media type must use the official media-type grammar."
-                for error in errors
-            )
+            assert str(SubEntitySteps.error) == "Siren media type must use the official media-type grammar."
         elif SubEntitySteps.missing_value_type is SirenEmbeddedLink:
+            assert isinstance(SubEntitySteps.error, ValueError)
+            errors = SubEntitySteps.error.errors(include_url=False)
             assert errors[0]["loc"] == ("href",)
             assert errors[0]["type"] == "missing"
         else:
+            assert isinstance(SubEntitySteps.error, ValueError)
+            errors = SubEntitySteps.error.errors(include_url=False)
             assert errors[0]["loc"] == ("rel",)
             assert errors[0]["type"] == "missing"
 

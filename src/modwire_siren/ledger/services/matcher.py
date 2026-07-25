@@ -4,6 +4,8 @@ from typing import Any
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ...conformance.implementation.values import SirenCapability
 from ...conformance.specification.values import SirenRequirement
 from ..contracts import SirenRequirementMatcher
@@ -128,7 +130,7 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
         for segment in reference.removeprefix("#/").split("/"):
             value = value[segment]
         if not isinstance(value, Mapping):
-            raise ValueError(f"Siren schema reference does not resolve to an object: {reference}")
+            raise ModwireSirenError(f"Siren schema reference does not resolve to an object: {reference}")
         return value
 
     def validate(self, schema: Mapping[str, Any]) -> None:
@@ -155,7 +157,7 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
         unsupported = set(schema).difference(supported)
         if unsupported:
             terms = ", ".join(sorted(unsupported))
-            raise ValueError(f"Unsupported Siren schema terms: {terms}")
+            raise ModwireSirenError(f"Unsupported Siren schema terms: {terms}")
 
     def enum(self, schema: Mapping[str, Any], document: Mapping[str, Any]) -> tuple[Any, ...]:
         if "$ref" in schema:

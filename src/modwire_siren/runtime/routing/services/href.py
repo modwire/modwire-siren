@@ -6,6 +6,8 @@ from urllib.parse import quote
 
 from wireup import injectable
 
+from modwire_siren.shared import ModwireSirenError
+
 from ....vocabulary import SirenUri
 from ...graph import SirenResource
 from ...request import SirenContext
@@ -34,7 +36,7 @@ class SirenDefaultHrefService(SirenHrefService):
             if path_value is None and resource is not None:
                 path_value = values.get(resource.identifier)
             if path_value is None:
-                raise ValueError(f"Siren link requires path value: {parameter}")
+                raise ModwireSirenError(f"Siren link requires path value: {parameter}")
             resolved_path = resolved_path.replace(f"{{{parameter}}}", quote(str(path_value), safe=""))
         href = f"{context.base_url.rstrip('/')}{resolved_path}"
         if not include_query or not context.query:

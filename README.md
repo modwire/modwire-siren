@@ -139,13 +139,6 @@ Call this during startup before `siren(openapi)` when a consumer needs every cur
 unsupported construct at once. The report exposes typed findings and `render()` for terminal
 or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
 
-### `SirenProjectionError`
-
-Indicate a Siren projection failure for the supplied request context.
-
-`engine.project(context)` raises this stable public type when the context cannot select a
-concrete resource, capability, route, or path value for a Siren response.
-
 ### `SirenLink`
 
 Describe a navigational Siren link.
@@ -195,14 +188,6 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
 
-### `SirenCompilationError`
-
-Indicate an invalid or unsupported OpenAPI-to-Siren contract.
-
-`siren(openapi)` raises this stable public type when the OpenAPI document is invalid or its
-operations cannot be represented by official Siren. Required controls, unsupported parameter
-locations and HTTP methods, non-JSON bodies, and unmappable field schemas fail at startup.
-
 ### `SirenCompatibilityReport`
 
 Expose deterministic OpenAPI-to-Siren compatibility findings.
@@ -215,16 +200,20 @@ Describe one OpenAPI construct outside the current official-Siren boundary.
 
 Describe an available Siren action.
 
+### `ModwireSirenError`
+
+Indicate a Modwire Siren operation failure.
+
 ## Public API
 
 The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
+| `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
-| `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
@@ -232,7 +221,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
-| `SirenProjectionError` | Indicate a Siren projection failure for the supplied request context. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->
