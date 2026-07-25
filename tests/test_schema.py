@@ -6,6 +6,7 @@ from jsonschema import Draft4Validator, FormatChecker, ValidationError
 
 import modwire_siren
 from modwire_siren import (
+    ModwireSirenError,
     SirenAction,
     SirenDocument,
     SirenEmbeddedLink,
@@ -17,7 +18,9 @@ from modwire_siren import (
 
 
 class TestSchema:
-    schema = json.loads(files(modwire_siren).joinpath("siren_schema/schema/siren.schema.json").read_text())
+    schema = json.loads(
+        files(modwire_siren).joinpath("contexts/shared/siren_schema/values/siren.schema.json").read_text()
+    )
     validator = Draft4Validator(schema, format_checker=FormatChecker())
 
     @pytest.mark.parametrize(
@@ -47,9 +50,9 @@ class TestSchema:
     def test_public_values_reject_uri_boundaries_rejected_by_the_pinned_schema(self, value):
         with pytest.raises(ValidationError):
             self.validator.validate({"links": [{"rel": ["self"], "href": value}]})
-        with pytest.raises(ValueError, match="Siren URI must be a valid URI"):
+        with pytest.raises(ModwireSirenError, match="Siren URI must be a valid URI"):
             SirenLink(rel=("self",), href=value)
-        with pytest.raises(ValueError, match="Siren relation must be an official relation token or URI"):
+        with pytest.raises(ModwireSirenError, match="Siren relation must be an official relation token or URI"):
             SirenLink(rel=(value,), href="https://api.example.com/records")
 
     def test_public_uri_values_accept_every_owner_supported_by_the_pinned_schema(self):

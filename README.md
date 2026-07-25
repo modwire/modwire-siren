@@ -12,10 +12,10 @@ Requires Python 3.12 or later.
 python -m pip install modwire-siren
 ```
 
-For local development:
+For local development, install `uv` and use the locked environment:
 
 ```bash
-python -m pip install -e ".[dev]"
+UV_CACHE_DIR=.dump/uv-cache uv sync --locked --all-groups
 make verify
 ```
 
@@ -93,22 +93,31 @@ and `#/components/schemas` references are resolved; external and path-item refer
 
 #### Action field support matrix
 
-Path parameters substitute into action URLs and never become fields. Optional query parameters
-and properties of an `application/json` object body become fields:
+Path parameters substitute into action URLs and never become fields. Query parameters and
+properties of an `application/json` object body become fields:
 
 | OpenAPI schema | Siren field type |
 | --- | --- |
-| `string` | `text` |
+| `string`, including `uuid` | `text` |
 | formatted `string` | matching Siren field type |
 | `integer` or `number` | `number` |
 | `boolean` | `checkbox` |
+| flat primitive array or repeated query parameter | `text` |
+| scalar `enum` | `radio` with selectable values |
+| flat array with an item `enum` | `checkbox` with selectable values |
 
 `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
 `datetime-local`, and `time`, respectively.
 
-Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
-objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
-or `TRACE` operations are rejected during this startup call.
+Required and nullable controls compile as ordinary standard Siren fields: validation remains
+server-enforced because official Siren has no `required` or `nullable` members. A flat array
+has one named `text` field; the OpenAPI serialization contract remains authoritative for
+submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+`null` are accepted when they normalize unambiguously.
+
+Header and cookie parameters, non-JSON bodies, objects, nested arrays, ambiguous
+compositions, unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are
+rejected during this startup call.
 
 Call `audit(openapi)` first when a consumer needs a deterministic list of every current
 incompatibility before using this strict fail-fast entry point.
@@ -138,13 +147,6 @@ Inspect a valid OpenAPI document against the current official-Siren support boun
 Call this during startup before `siren(openapi)` when a consumer needs every currently
 unsupported construct at once. The report exposes typed findings and `render()` for terminal
 or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
-
-### `SirenProjectionError`
-
-Indicate a Siren projection failure for the supplied request context.
-
-`engine.project(context)` raises this stable public type when the context cannot select a
-concrete resource, capability, route, or path value for a Siren response.
 
 ### `SirenLink`
 
@@ -195,14 +197,6 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
 
-### `SirenCompilationError`
-
-Indicate an invalid or unsupported OpenAPI-to-Siren contract.
-
-`siren(openapi)` raises this stable public type when the OpenAPI document is invalid or its
-operations cannot be represented by official Siren. Required controls, unsupported parameter
-locations and HTTP methods, non-JSON bodies, and unmappable field schemas fail at startup.
-
 ### `SirenCompatibilityReport`
 
 Expose deterministic OpenAPI-to-Siren compatibility findings.
@@ -215,16 +209,20 @@ Describe one OpenAPI construct outside the current official-Siren boundary.
 
 Describe an available Siren action.
 
+### `ModwireSirenError`
+
+Indicate a Modwire Siren operation failure.
+
 ## Public API
 
 The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
+| `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
-| `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
@@ -232,7 +230,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
-| `SirenProjectionError` | Indicate a Siren projection failure for the supplied request context. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

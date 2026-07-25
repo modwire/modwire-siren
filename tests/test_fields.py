@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import PARAMETER_MEDIA_SCHEMA
 
-from modwire_siren import SirenCompilationError, SirenContext, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestFields:
@@ -13,7 +13,7 @@ class TestFields:
             {"name": "page", "in": "header", "required": False, "schema": {"type": "string"}}
         )
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(PARAMETER_MEDIA_SCHEMA).project(
@@ -35,7 +35,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "content": {"application/json": {}}}
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -46,7 +46,7 @@ class TestFields:
             {"name": "filter", "in": "query", "required": False, "schema": {"type": "integer"}},
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -61,38 +61,25 @@ class TestFields:
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
         invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"] = content
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
-    @pytest.mark.parametrize(
-        ("parameter", "message"),
-        [
-            (
-                {"name": "page", "in": "query", "required": True, "schema": {"type": "integer"}},
-                "OpenAPI required query parameter is unsupported: page",
-            ),
-            (
-                {"name": "session", "in": "cookie", "required": False, "schema": {"type": "string"}},
-                "OpenAPI parameter location is unsupported: cookie",
-            ),
-        ],
-    )
-    def test_public_facade_rejects_unrepresentable_parameter_controls(self, parameter, message):
+    def test_public_facade_rejects_an_unrepresentable_parameter_control(self):
         invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
-        invalid["paths"]["/records"]["get"]["parameters"] = [parameter]
+        invalid["paths"]["/records"]["get"]["parameters"] = [
+            {"name": "session", "in": "cookie", "required": False, "schema": {"type": "string"}}
+        ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     @pytest.mark.parametrize(
         "schema",
         [
-            {"type": "array", "items": {"type": "string"}},
             {"type": "object"},
             {"type": "null"},
-            {"type": "string", "enum": ["draft", "published"]},
+            {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
             {"oneOf": [{"type": "string"}, {"type": "integer"}]},
-            {"type": "string", "format": "uuid"},
         ],
     )
     def test_public_facade_rejects_unmappable_field_schemas(self, schema):
@@ -101,17 +88,85 @@ class TestFields:
             {"name": "value", "in": "query", "required": False, "schema": schema}
         ]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
-    def test_public_facade_rejects_required_json_body_controls(self):
-        invalid = deepcopy(PARAMETER_MEDIA_SCHEMA)
-        invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
-            "schema"
-        ]["required"] = ["title"]
+    def test_public_facade_projects_common_openapi_controls(self):
+        document = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        document["paths"]["/records"]["parameters"] = []
+        document["paths"]["/records"]["get"]["parameters"] = [
+            {"name": "request_id", "in": "query", "required": True, "schema": {"type": "string", "format": "uuid"}},
+            {"name": "tags", "in": "query", "schema": {"type": "array", "items": {"type": "string"}}},
+            {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["draft", "published"]}},
+            {
+                "name": "scopes",
+                "in": "query",
+                "schema": {"type": "array", "items": {"type": "string", "enum": ["read", "write"]}},
+            },
+            {"name": "nickname", "in": "query", "schema": {"type": ["string", "null"]}},
+            {
+                "name": "external_id",
+                "in": "query",
+                "schema": {"oneOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]},
+            },
+            {
+                "name": "reference",
+                "in": "query",
+                "schema": {"allOf": [{"type": "string"}, {"format": "uuid"}]},
+            },
+        ]
+        body = document["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"][
+            "application/json"
+        ]["schema"]
+        body["required"] = ["title"]
+        body["properties"] = {
+            "title": {"type": "string"},
+            "visibility": {"type": "string", "enum": ["private", "public"]},
+        }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
-            siren(invalid)
+        engine = siren(document)
+        collection = engine.project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                capabilities=frozenset({"list_records"}),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+        entity = engine.project(
+            SirenContext(
+                base_url="https://api.example.com",
+                resource="record",
+                value={"id": "42"},
+                capabilities=frozenset({"replace_record"}),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert collection["actions"][0]["fields"] == [
+            {"name": "request_id", "type": "text"},
+            {"name": "tags", "type": "text"},
+            {
+                "name": "status",
+                "type": "radio",
+                "value": [{"value": "draft", "selected": False}, {"value": "published", "selected": False}],
+            },
+            {
+                "name": "scopes",
+                "type": "checkbox",
+                "value": [{"value": "read", "selected": False}, {"value": "write", "selected": False}],
+            },
+            {"name": "nickname", "type": "text"},
+            {"name": "external_id", "type": "text"},
+            {"name": "reference", "type": "text"},
+        ]
+        assert entity["actions"][0]["fields"] == [
+            {"name": "title", "type": "text"},
+            {
+                "name": "visibility",
+                "type": "radio",
+                "value": [{"value": "private", "selected": False}, {"value": "public", "selected": False}],
+            },
+        ]
 
     @pytest.mark.parametrize("method", ["head", "options"])
     def test_public_facade_rejects_unsupported_http_methods(self, method):
@@ -121,7 +176,7 @@ class TestFields:
             "responses": {"200": {"description": "OK"}},
         }
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
     def test_public_facade_prefers_json_request_body_fields(self):

@@ -33,7 +33,7 @@ dev = [
     "django>=5.1,<6.1",
     "django-ninja-extra>=0.30,<1",
     "fastapi>=0.115,<1",
-    "modwire-cli>=1.2.0",
+    "modwire-cli>=2.0.0",
     "packaging>=25",
     "pytest>=9",
     "pytest-bdd>=8.1,<9",
@@ -47,7 +47,7 @@ dev = [
     "django>=5.1,<6.1",
     "django-ninja-extra>=0.30,<1",
     "fastapi>=0.115,<1",
-    "modwire-cli>=1.2.0",
+    "modwire-cli>=2.0.0",
     "packaging>=25",
     "pytest>=9",
     "pytest-bdd>=8.1,<9",
@@ -65,7 +65,7 @@ tag-pattern = '^v(?P<version>\d+\.\d+\.\d+)$'
 fallback-version = "0.0.0"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/modwire_siren/runtime/_version.py"
+version-file = "src/modwire_siren/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/modwire_siren"]
@@ -76,10 +76,12 @@ include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.to
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
+cache_dir = ".dump/pytest-cache"
 filterwarnings = ["error"]
 xfail_strict = true
 
 [tool.ruff]
+cache-dir = ".dump/ruff-cache"
 line-length = 120
 extend-exclude = ["**/_version.py"]
 target-version = "py312"

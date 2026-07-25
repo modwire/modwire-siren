@@ -8,7 +8,7 @@ from pathlib import Path
 class TestWiring:
     def test_service_check_rejects_an_injectable_missing_from_its_feature_export(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        package = workspace / "src/modwire_siren/siren_schema/services/__init__.py"
+        package = workspace / "src/modwire_siren/contexts/shared/siren_schema/services/__init__.py"
         package.write_text(package.read_text().replace("from .reader import SirenSchemaReader\n", ""))
 
         result = self.command(workspace)
@@ -18,7 +18,7 @@ class TestWiring:
 
     def test_service_check_rejects_manual_container_construction_outside_wiring(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        service = workspace / "src/modwire_siren/runtime/routing/services/href.py"
+        service = workspace / "src/modwire_siren/contexts/runtime/routing/services/href.py"
         service.write_text(f"{service.read_text()}\ncreate_sync_container\n")
 
         result = self.command(workspace)
@@ -28,7 +28,7 @@ class TestWiring:
 
     def test_service_check_rejects_a_collaborator_passed_through_a_service_method(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        service = workspace / "src/modwire_siren/compiler/assembly/services/api.py"
+        service = workspace / "src/modwire_siren/contexts/compiler/assembly/services/api.py"
         service.write_text(
             service.read_text()
             + "\n    def rebuild(self, assembler: SirenApiAssembler) -> SirenApi:\n"
@@ -42,7 +42,7 @@ class TestWiring:
 
     def test_service_check_rejects_direct_construction_of_an_injectable_collaborator(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        service = workspace / "src/modwire_siren/runtime/routing/services/href.py"
+        service = workspace / "src/modwire_siren/contexts/runtime/routing/services/href.py"
         service.write_text(
             service.read_text()
             + "\n    def resolver(self) -> None:\n"

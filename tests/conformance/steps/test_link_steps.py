@@ -2,13 +2,13 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, scenarios, then, when
 
-from modwire_siren import SirenLink
+from modwire_siren import ModwireSirenError, SirenLink
 
 
 class LinkSteps:
     link: SirenLink | None = None
     payload: Mapping[str, object] | None = None
-    error: ValueError | None = None
+    error: ModwireSirenError | ValueError | None = None
     invalid_href: str | None = None
     invalid_media_type: str | None = None
 
@@ -58,7 +58,7 @@ class LinkSteps:
                     href=LinkSteps.invalid_href or "https://api.example.com/records/42",
                     type=LinkSteps.invalid_media_type,
                 )
-        except ValueError as error:
+        except (ModwireSirenError, ValueError) as error:
             LinkSteps.error = error
 
     @staticmethod
@@ -79,20 +79,13 @@ class LinkSteps:
     @staticmethod
     @then("creation is rejected", stacklevel=2)
     def link_creation_is_rejected() -> None:
-        assert isinstance(LinkSteps.error, ValueError)
-        errors = LinkSteps.error.errors(include_url=False)
         if LinkSteps.invalid_href is not None:
-            assert any(
-                error["loc"] == ("href",) and error["msg"] == "Value error, Siren URI must be a valid URI."
-                for error in errors
-            )
+            assert str(LinkSteps.error) == "Siren URI must be a valid URI."
         elif LinkSteps.invalid_media_type is not None:
-            assert any(
-                error["loc"][0] == "type"
-                and error["msg"] == "Value error, Siren media type must use the official media-type grammar."
-                for error in errors
-            )
+            assert str(LinkSteps.error) == "Siren media type must use the official media-type grammar."
         else:
+            assert isinstance(LinkSteps.error, ValueError)
+            errors = LinkSteps.error.errors(include_url=False)
             assert errors[0]["loc"] == ("rel",)
             assert errors[0]["type"] == "tuple_type"
 

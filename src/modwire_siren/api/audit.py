@@ -4,8 +4,8 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..runtime import SirenCompatibilityReport
-from ..runtime.errors import SirenCompilationError
+from ..contexts.compiler.compatibility import SirenCompatibilityReport
+from ..contexts.shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 
@@ -19,9 +19,9 @@ def audit(openapi: Mapping[str, Any]) -> SirenCompatibilityReport:
 
     try:
         if not isinstance(openapi, Mapping):
-            raise TypeError("OpenAPI document must be a mapping")
+            raise ModwireSirenError("OpenAPI document must be a mapping")
         document = json.loads(json.dumps(openapi))
         validate(document)
     except Exception as error:
-        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+        raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error
     return SirenApplicationContainer().application().api_service().audit(document)

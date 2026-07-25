@@ -646,21 +646,21 @@ wheels = [
 
 [[package]]
 name = "modwire-architecture"
-version = "6.0.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "modwire-extraction" },
     { name = "pydantic" },
     { name = "pydantic-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/14/7b/e0ad59df4797f766b0503aaf90b33b1c603c8cf8d1c9a0bdfe4101686b0b/modwire_architecture-6.0.0.tar.gz", hash = "sha256:d468ff371c3a0848859ceee185b8ff309628cdc5569092f6418a222e17d77c18", size = 96509, upload-time = "2026-07-17T17:34:04.418Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/70/c8d5e3899acc0acee702392900445583a32da6c7f5b54dbf68f7a7b301b5/modwire_architecture-7.0.0.tar.gz", hash = "sha256:15f31fbd8a214d039a0d8e99408f0548a27c9805f60f13c1f82317d989883fd7", size = 80919, upload-time = "2026-07-25T10:29:41.75Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/f4/d98c8822649ec5c119c9332f2c94fd9b84e332303d8feb2b70d882047377/modwire_architecture-6.0.0-py3-none-any.whl", hash = "sha256:65fca29186262b728be92406ce18a5889fe5d2fb834537863bc5854c4829b10f", size = 51959, upload-time = "2026-07-17T17:34:02.989Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/30/ab8356df47713c168b9254260e8d8f8f91e49205a518c11c638aaa494c21/modwire_architecture-7.0.0-py3-none-any.whl", hash = "sha256:dc24deccb9ff48f5e887be6dfefbd09dd35dae8c30cc0877e15399a8f1a7c72e", size = 51225, upload-time = "2026-07-25T10:29:40.466Z" },
 ]
 
 [[package]]
 name = "modwire-cli"
-version = "1.2.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "modwire-architecture" },
@@ -669,9 +669,9 @@ dependencies = [
     { name = "rich" },
     { name = "wireup" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/87/e0786751d1c9451c7368756957353e4789d63336a4d5400ded9a5b756f8c/modwire_cli-1.2.0.tar.gz", hash = "sha256:1c2ec871a0d807083deb3f4bc048e6392b873e7be7ff17c7532ba568d40842c8", size = 53648, upload-time = "2026-07-24T11:10:29.802Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/ce/ccf19824e2d8d802825e69940f78767e8148664198f9b805aa0d124169f3/modwire_cli-2.0.0.tar.gz", hash = "sha256:93aae45a23263d16b17d155b8a2ccba731f8be90ef6af8b7a609c0529fcdeea7", size = 53865, upload-time = "2026-07-25T10:47:10.989Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/dc/edf94ad753da22929252d64db9d775f8de7956122f0cac3daade751abfdc/modwire_cli-1.2.0-py3-none-any.whl", hash = "sha256:499f579ca7c17f7da2f61bf9986c2dfedcba8c2113b9d3c985e53a0a3ef35f03", size = 24391, upload-time = "2026-07-24T11:10:28.397Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/b5/c45293eccbdd90ea754778994eca1d40b5f44ebe3b7c819f8c29747b4573/modwire_cli-2.0.0-py3-none-any.whl", hash = "sha256:2f4d739adfaa6831ad07f1a782059fe5f5e71b456052ee32e2708a1b96b9422b", size = 24521, upload-time = "2026-07-25T10:47:09.794Z" },
 ]
 
 [[package]]
@@ -733,7 +733,7 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.115,<1" },
     { name = "gherkin-official", specifier = ">=29" },
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.26" },
-    { name = "modwire-cli", marker = "extra == 'dev'", specifier = ">=1.2.0" },
+    { name = "modwire-cli", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "openapi-spec-validator", specifier = ">=0.9,<1" },
     { name = "packaging", marker = "extra == 'dev'", specifier = ">=25" },
     { name = "pydantic", specifier = ">=2.12" },
@@ -751,7 +751,7 @@ dev = [
     { name = "django", specifier = ">=5.1,<6.1" },
     { name = "django-ninja-extra", specifier = ">=0.30,<1" },
     { name = "fastapi", specifier = ">=0.115,<1" },
-    { name = "modwire-cli", specifier = ">=1.2.0" },
+    { name = "modwire-cli", specifier = ">=2.0.0" },
     { name = "packaging", specifier = ">=25" },
     { name = "pytest", specifier = ">=9" },
     { name = "pytest-bdd", specifier = ">=8.1,<9" },

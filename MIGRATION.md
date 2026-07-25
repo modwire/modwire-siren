@@ -107,22 +107,25 @@ construction path in version 2. Call `siren(openapi)` once at startup and handle
 error types at the boundary:
 
 ```python
-from modwire_siren import SirenCompilationError, SirenProjectionError, siren
+from modwire_siren import ModwireSirenError, siren
 
 try:
     engine = siren(openapi)
-except SirenCompilationError:
+except ModwireSirenError:
     # Invalid OpenAPI or a source operation that official Siren cannot represent.
     raise
 
 try:
     document = engine.project(context)
-except SirenProjectionError:
+except ModwireSirenError:
     # Invalid resource, capability, path value, or request context.
     raise
 ```
 
-Required query or JSON-body controls, header and cookie parameters, non-JSON bodies, arrays,
-objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`, or
-`TRACE` operations fail during `siren(openapi)`. This lets consumers reject unsupported contracts
-before deployment rather than receiving a partial Siren response.
+Required and nullable query or JSON-body controls compile as ordinary standard Siren fields;
+their validation remains server-enforced because official Siren does not define `required` or
+`nullable` field members. UUIDs, flat primitive arrays, repeated query parameters, scalar enums,
+and unambiguous scalar compositions are also supported. Header and cookie parameters, non-JSON
+bodies, objects, nested arrays, ambiguous compositions, unsupported string formats, and `HEAD`,
+`OPTIONS`, or `TRACE` operations still fail during `siren(openapi)`. This lets consumers reject
+unsupported contracts before deployment rather than receiving a partial Siren response.

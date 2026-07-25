@@ -1,0 +1,121 @@
+from typing import Any, ClassVar
+
+from modwire_siren.contexts.shared import (
+    BaseState,
+    ModwireSirenError,
+    SirenActionMethod,
+    SirenHttpMethod,
+    SirenMediaType,
+    SirenScope,
+)
+
+from ..values import Field
+from .assembly import SirenAssembly
+from .components import ComponentResolver
+from .field_projection import OpenApiFieldProjection
+from .routes import RouteCatalog
+
+
+class OpenApiOperationCompiler(BaseState):
+    methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
+        SirenHttpMethod(value) for value in SirenActionMethod.values()
+    )
+    assembly: SirenAssembly
+    routes: RouteCatalog
+    components: ComponentResolver
+    projection: OpenApiFieldProjection
+
+    def compile(self) -> None:
+        for path, path_item in self.routes.paths.items():
+            if not isinstance(path_item, dict):
+                continue
+            if "$ref" in path_item:
+                raise ModwireSirenError(f"OpenAPI path item reference is unsupported: {path}")
+            segments = self.routes.segments(path)
+            if (
+                path.endswith("/")
+                and segments
+                and all(
+                    not self.routes.is_parameter(segment) and not self.routes.is_plural(segment)
+                    for segment in segments
+                )
+            ):
+                continue
+            for method, operation in path_item.items():
+                method_name = method.lower()
+                if method_name == "trace":
+                    raise ModwireSirenError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                try:
+                    operation_method = SirenHttpMethod(method.upper())
+                except ValueError:
+                    continue
+                if operation_method in {SirenHttpMethod.HEAD, SirenHttpMethod.OPTIONS}:
+                    raise ModwireSirenError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                if operation_method not in self.methods or not isinstance(operation, dict):
+                    continue
+                name = operation.get("operationId")
+                if not isinstance(name, str) or not name:
+                    raise ModwireSirenError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
+                ownership = self.routes.ownership(path)
+                if ownership is None and self.routes.parameters(path):
+                    continue
+                fields, media_type = self.fields(path_item, operation)
+                if ownership is None:
+                    self.assembly.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
+                    self.assembly.add_root_operation(name)
+                    for field in fields:
+                        self.assembly.add_field(name, field.name, field.type, field.values)
+                    continue
+                resource, scope = ownership
+                self.assembly.add_operation(resource.reference, scope, name, operation_method, path, media_type)
+                for field in fields:
+                    self.assembly.add_field(name, field.name, field.type, field.values)
+                if (
+                    scope == SirenScope.COLLECTION
+                    and path == resource.collection_path
+                    and not self.routes.parameters(path)
+                    and operation_method != SirenHttpMethod.GET
+                ):
+                    self.assembly.add_root_operation(name)
+
+    def fields(
+        self, path_item: dict[str, Any], operation: dict[str, Any]
+    ) -> tuple[tuple[Field, ...], SirenMediaType | None]:
+        parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
+        parameter_index: dict[tuple[str, str], dict[str, Any]] = {}
+        for parameter in parameters:
+            definition = self.components.parameter(parameter)
+            name = definition.get("name")
+            location = definition.get("in")
+            if not isinstance(name, str) or not isinstance(location, str):
+                raise ModwireSirenError("OpenAPI parameter requires string name and location")
+            if location == "path":
+                continue
+            if location != "query":
+                raise ModwireSirenError(f"OpenAPI parameter location is unsupported: {location}")
+            schema = definition.get("schema")
+            if not isinstance(schema, dict):
+                raise ModwireSirenError(f"OpenAPI parameter schema is required: {name}")
+            parameter_index[name, location] = definition
+        fields: list[Field] = []
+        for (name, _), definition in parameter_index.items():
+            fields.append(self.projection.field(name, definition["schema"]))
+        body = self.components.request_body(operation.get("requestBody", {}))
+        content = body.get("content", {}) if isinstance(body, dict) else {}
+        if content and (not isinstance(content, dict) or not isinstance(content.get("application/json"), dict)):
+            raise ModwireSirenError("OpenAPI request body must provide application/json")
+        media = content.get("application/json", {}) if isinstance(content, dict) else {}
+        schema = media.get("schema", {}) if isinstance(media, dict) else {}
+        if content and not isinstance(schema, dict):
+            raise ModwireSirenError("OpenAPI request body schema is required")
+        definition = self.components.schema(schema)
+        if content and definition.get("type") != "object":
+            raise ModwireSirenError("OpenAPI JSON request body must be an object")
+        properties = definition.get("properties", {})
+        if not isinstance(properties, dict):
+            raise ModwireSirenError("OpenAPI JSON request body properties must be an object")
+        for name, value in properties.items():
+            if not isinstance(name, str) or not isinstance(value, dict):
+                raise ModwireSirenError("OpenAPI JSON request body property is invalid")
+            fields.append(self.projection.field(name, value))
+        return tuple(fields), SirenMediaType.validate("application/json") if content else None
