@@ -110,6 +110,9 @@ Required query or JSON body controls, header and cookie parameters, non-JSON bod
 objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
 or `TRACE` operations are rejected during this startup call.
 
+Call `audit(openapi)` first when a consumer needs a deterministic list of every current
+incompatibility before using this strict fail-fast entry point.
+
 #### Framework integration is one startup call
 
 Give the framework-generated document directly to `siren()` after routes are registered:
@@ -127,6 +130,14 @@ engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
 never include the non-standard `required` member.
 
 Set `root_path` when the Siren entry point is mounted away from `/`.
+
+### `audit`
+
+Inspect a valid OpenAPI document against the current official-Siren support boundary.
+
+Call this during startup before `siren(openapi)` when a consumer needs every currently
+unsupported construct at once. The report exposes typed findings and `render()` for terminal
+or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
 
 ### `SirenProjectionError`
 
@@ -192,6 +203,14 @@ Indicate an invalid or unsupported OpenAPI-to-Siren contract.
 operations cannot be represented by official Siren. Required controls, unsupported parameter
 locations and HTTP methods, non-JSON bodies, and unmappable field schemas fail at startup.
 
+### `SirenCompatibilityReport`
+
+Expose deterministic OpenAPI-to-Siren compatibility findings.
+
+### `SirenCompatibilityFinding`
+
+Describe one OpenAPI construct outside the current official-Siren boundary.
+
 ### `SirenAction`
 
 Describe an available Siren action.
@@ -203,6 +222,8 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
 | `SirenAction` | Describe an available Siren action. | — |
+| `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
+| `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
@@ -212,5 +233,6 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
 | `SirenProjectionError` | Indicate a Siren projection failure for the supplied request context. | — |
+| `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

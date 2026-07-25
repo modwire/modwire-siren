@@ -5,17 +5,21 @@ from pathlib import Path
 class ServiceConventionChecker:
     def run(self) -> int:
         root = Path(__file__).parents[1] / "src" / "modwire_siren"
+        paths = tuple(sorted(path for path in root.glob("**/*.py") if path.name != "__init__.py"))
+        collaborators = self.collaborators(paths)
+        injectables = self.injectables(paths)
         failures: list[str] = []
-        for path in sorted(root.glob("**/*.py")):
-            if path.name != "__init__.py":
-                failures.extend(self.check(path, root))
+        for path in paths:
+            failures.extend(self.check(path, root, collaborators, injectables))
         failures.extend(self.check_composition())
         if not failures:
             return 0
         print("\n".join(failures))
         return 1
 
-    def check(self, path: Path, root: Path) -> list[str]:
+    def check(
+        self, path: Path, root: Path, collaborators: frozenset[str], injectables: frozenset[str]
+    ) -> list[str]:
         source = path.read_text()
         tree = ast.parse(source, filename=str(path))
         classes = tuple(item for item in tree.body if isinstance(item, ast.ClassDef))
@@ -46,7 +50,70 @@ class ServiceConventionChecker:
             if "dataclass(frozen=True)" not in decorators:
                 failures.append(f"{path}: {node.name} must be a frozen dataclass")
             failures.extend(self.check_export(path, root, node.name))
+            failures.extend(self.check_collaborator_parameters(path, node, collaborators))
+            failures.extend(self.check_injectable_construction(path, node, injectables))
         return failures
+
+    def collaborators(self, paths: tuple[Path, ...]) -> frozenset[str]:
+        names: set[str] = set()
+        for path in paths:
+            if "services" not in path.parts:
+                continue
+            tree = ast.parse(path.read_text(), filename=str(path))
+            for node in (item for item in tree.body if isinstance(item, ast.ClassDef)):
+                for member in node.body:
+                    if isinstance(member, ast.AnnAssign):
+                        names.update(self.annotation_names(member.annotation))
+        return frozenset(names)
+
+    def injectables(self, paths: tuple[Path, ...]) -> frozenset[str]:
+        names: set[str] = set()
+        for path in paths:
+            tree = ast.parse(path.read_text(), filename=str(path))
+            for node in (item for item in tree.body if isinstance(item, ast.ClassDef)):
+                if any(ast.unparse(decorator).startswith("injectable") for decorator in node.decorator_list):
+                    names.add(node.name)
+        return frozenset(names)
+
+    def check_collaborator_parameters(
+        self, path: Path, node: ast.ClassDef, collaborators: frozenset[str]
+    ) -> list[str]:
+        failures: list[str] = []
+        for method in (member for member in node.body if isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))):
+            parameters = (*method.args.posonlyargs, *method.args.args, *method.args.kwonlyargs)
+            for parameter in parameters:
+                if parameter.arg in {"self", "cls"} or parameter.annotation is None:
+                    continue
+                names = self.annotation_names(parameter.annotation) & collaborators
+                if names:
+                    rendered = ", ".join(sorted(names))
+                    failures.append(
+                        f"{path}: {node.name}.{method.name} receives collaborator {rendered} "
+                        "as a method parameter; inject it as a dataclass field"
+                    )
+        return failures
+
+    def check_injectable_construction(
+        self, path: Path, node: ast.ClassDef, injectables: frozenset[str]
+    ) -> list[str]:
+        failures: list[str] = []
+        for call in (item for item in ast.walk(node) if isinstance(item, ast.Call)):
+            name = self.call_name(call.func)
+            if name in injectables:
+                failures.append(
+                    f"{path}: {node.name} constructs injectable {name}; inject it as a dataclass field"
+                )
+        return failures
+
+    def annotation_names(self, annotation: ast.expr) -> set[str]:
+        return {item.id for item in ast.walk(annotation) if isinstance(item, ast.Name)}
+
+    def call_name(self, expression: ast.expr) -> str | None:
+        if isinstance(expression, ast.Name):
+            return expression.id
+        if isinstance(expression, ast.Attribute):
+            return expression.attr
+        return None
 
     def check_export(self, path: Path, root: Path, name: str) -> list[str]:
         relative = path.relative_to(root)

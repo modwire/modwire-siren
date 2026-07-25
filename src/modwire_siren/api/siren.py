@@ -91,6 +91,9 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
     or `TRACE` operations are rejected during this startup call.
 
+    Call `audit(openapi)` first when a consumer needs a deterministic list of every current
+    incompatibility before using this strict fail-fast entry point.
+
     #### Framework integration is one startup call
 
     Give the framework-generated document directly to `siren()` after routes are registered:
