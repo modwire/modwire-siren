@@ -4,7 +4,7 @@ PYTHON ?= python3
 RUN = PYTHONPATH=src $(PYTHON)
 
 modwire:
-	modwire report --architecture-root . --language python --summary
+	uv run modwire report --architecture-root . --language python --summary
 
 docs:
 	$(RUN) scripts/generate_docs.py

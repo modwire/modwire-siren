@@ -28,14 +28,16 @@ boundaries:
       - {name: tests, module_tag: *tests_tag}
       - {name: scripts, module_tag: *scripts_tag}
 
-# agent forbidden start
 shape:
-  max_classes_per_file: -1
-  max_interfaces_per_file: -1
-  max_types_per_file: -1
-  max_abstract_classes_per_file: -1
-  max_functions_per_file: 1
-  allow_optional_function_args: true
-  allow_optional_method_args: true
-  allow_optional_class_properties: true
-# agent forbidden end
+  realms:
+    - name: project
+      match: "src/modwire_siren/*"
+      shape:
+        max_classes_per_file: -1
+        max_interfaces_per_file: -1
+        max_types_per_file: -1
+        max_abstract_classes_per_file: -1
+        max_functions_per_file: 1
+        allow_optional_function_args: true
+        allow_optional_method_args: true
+        allow_optional_class_properties: true
