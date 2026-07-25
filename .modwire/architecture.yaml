@@ -3,8 +3,7 @@ boundaries:
     - {name: package, match: src/modwire_siren}
     - {
         name: &context_tag context,
-        match: src/modwire_siren/contexts/*,
-        excluded_patterns: [src/modwire_siren/contexts/__init__.py],
+        match: src/modwire_siren/contexts/*/__init__.py,
       }
     - {
         name: &module_tag module,
@@ -22,7 +21,6 @@ boundaries:
   flow:
     analyzers: [backward-flow, no-cycles, no-reentry]
     realms:
-      - {name: contexts, module_tag: *context_tag}
       - {name: api, module_tag: *api_tag}
       - {name: tests, module_tag: *tests_tag}
       - name: modules
