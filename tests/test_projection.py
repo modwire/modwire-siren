@@ -262,6 +262,7 @@ class TestProjection:
             SirenContext(
                 base_url="https://api.example.com",
                 scope="root",
+                path_values={"command_id": "command/42"},
                 query=(("format", "siren"),),
                 capabilities=frozenset({"search_records", "rebuild_index", "get_record", "run_command"}),
             )
@@ -287,5 +288,10 @@ class TestProjection:
                 "method": "POST",
                 "type": "application/json",
                 "fields": [{"name": "scope", "type": "text"}],
+            },
+            {
+                "name": "run_command",
+                "href": "https://api.example.com/commands/command%2F42/run",
+                "method": "POST",
             },
         ]

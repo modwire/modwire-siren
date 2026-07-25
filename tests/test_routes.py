@@ -58,7 +58,7 @@ class TestRoutes:
         assert [action["name"] for action in document["actions"]] == ["list_record_reports"]
 
 
-    def test_public_facade_ignores_standalone_static_command_endpoints_without_losing_resource_actions(self):
+    def test_public_facade_projects_standalone_commands_as_concrete_root_actions(self):
         schema = deepcopy(SCHEMA)
         schema["paths"].update(
             {
@@ -104,37 +104,47 @@ class TestRoutes:
         document = siren(schema).project(
             SirenContext(
                 base_url="https://api.example.com",
-                scope="collection",
-                resource="record",
-                capabilities=frozenset({"list_records"}),
+                scope="root",
+                path_values={"scaffolding_id": "scaffolding/42"},
+                capabilities=frozenset({
+                    "converge_scaffoldings",
+                    "get_scaffolding_schema",
+                    "bundle_scaffolding",
+                    "preview_scaffolding",
+                }),
             )
         )
         document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["actions"] == [
-            {"name": "list_records", "href": "https://api.example.com/records", "method": "GET"}
+            {
+                "name": "converge_scaffoldings",
+                "href": "https://api.example.com/scaffoldings/converge",
+                "method": "POST",
+            },
+            {
+                "name": "get_scaffolding_schema",
+                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/schema",
+                "method": "GET",
+            },
+            {
+                "name": "bundle_scaffolding",
+                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/bundle",
+                "method": "POST",
+            },
+            {
+                "name": "preview_scaffolding",
+                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/preview",
+                "method": "GET",
+            },
         ]
 
 
-    @pytest.mark.parametrize(
-        ("path", "parameters", "message"),
-        [
-            ("/", [], "OpenAPI route is unsupported"),
-            (
-                "/records/{record}/archive/{token}",
-                [
-                    {"name": "record", "in": "path", "required": True, "schema": {"type": "string"}},
-                    {"name": "token", "in": "path", "required": True, "schema": {"type": "string"}},
-                ],
-                "OpenAPI route is unsupported",
-            ),
-        ],
-    )
-    def test_public_facade_rejects_unowned_routes_and_recovers(self, path, parameters, message):
+    def test_public_facade_rejects_invalid_routes_and_recovers(self):
         invalid = deepcopy(SCHEMA)
         invalid["paths"] = {
-            path: {
-                "parameters": parameters,
+            "records": {
+                "parameters": [],
                 "get": {"operationId": "unknown", "responses": {"200": {"description": "OK"}}},
             }
         }
@@ -202,15 +212,22 @@ class TestRoutes:
         assert [action["name"] for action in document["actions"]] == ["list_section_records"]
 
 
-    def test_public_facade_ignores_trailing_slash_mounted_root_route(self):
+    def test_public_facade_projects_trailing_slash_mounted_root_route(self):
         schema = deepcopy(SCHEMA)
-        schema["paths"]["/api/"] = {"get": {"responses": {"200": {"description": "OK"}}}}
+        schema["paths"]["/api/"] = {
+            "get": {"operationId": "get_api_root", "responses": {"200": {"description": "OK"}}}
+        }
         engine = siren(schema, root_path="/api/")
 
-        document = engine.project(SirenContext(base_url="https://api.example.com", scope="root"))
-        assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"] == [
+        document = engine.project(SirenContext(
+            base_url="https://api.example.com", scope="root", capabilities=frozenset({"get_api_root"})
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+        assert document["links"] == [
             {"rel": ["self"], "href": "https://api.example.com/api/"},
             {"rel": ["collection"], "href": "https://api.example.com/records"},
+        ]
+        assert document["actions"] == [
+            {"name": "get_api_root", "href": "https://api.example.com/api/", "method": "GET"}
         ]
 
 
