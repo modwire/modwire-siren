@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import REFERENCED_SCHEMA
 
-from modwire_siren import SirenCompilationError, SirenContext, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestComponents:
@@ -11,7 +11,7 @@ class TestComponents:
         invalid = deepcopy(REFERENCED_SCHEMA)
         invalid["paths"]["/records/{record_id}"]["parameters"][0]["required"] = False
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(REFERENCED_SCHEMA).project(
@@ -35,7 +35,7 @@ class TestComponents:
         invalid = deepcopy(REFERENCED_SCHEMA)
         invalid["paths"]["/records"]["get"]["parameters"] = [{"$ref": reference}]
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
 
@@ -43,7 +43,7 @@ class TestComponents:
         cyclic = deepcopy(REFERENCED_SCHEMA)
         cyclic["components"]["schemas"]["Title"] = {"$ref": "#/components/schemas/Title"}
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(cyclic)
 
 

@@ -12,10 +12,10 @@ Requires Python 3.12 or later.
 python -m pip install modwire-siren
 ```
 
-For local development:
+For local development, install `uv` and use the locked environment:
 
 ```bash
-python -m pip install -e ".[dev]"
+UV_CACHE_DIR=.dump/uv-cache uv sync --locked --all-groups
 make verify
 ```
 
@@ -93,22 +93,39 @@ and `#/components/schemas` references are resolved; external and path-item refer
 
 #### Action field support matrix
 
-Path parameters substitute into action URLs and never become fields. Optional query parameters
-and properties of an `application/json` object body become fields:
+Path parameters substitute into action URLs and never become fields. Query parameters and
+properties of an `application/json` object body become fields:
 
 | OpenAPI schema | Siren field type |
 | --- | --- |
-| `string` | `text` |
+| `string`, including `uuid` | `text` |
 | formatted `string` | matching Siren field type |
 | `integer` or `number` | `number` |
 | `boolean` | `checkbox` |
+| flat primitive array or repeated query parameter | `text` |
+| scalar `enum` | `radio` with selectable values |
+| flat array with an item `enum` | `checkbox` with selectable values |
+| object, map, or nested array | delegated; no synthetic field |
+| header or cookie parameter | delegated; no synthetic field |
+| one non-JSON request media type | delegated action with that media type |
 
 `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
 `datetime-local`, and `time`, respectively.
 
-Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
-objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
-or `TRACE` operations are rejected during this startup call.
+Required and nullable controls compile as ordinary standard Siren fields: validation remains
+server-enforced because official Siren has no `required` or `nullable` members. A flat array
+has one named `text` field; the OpenAPI serialization contract remains authoritative for
+submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+`null` are accepted when they normalize unambiguously.
+
+Structured values, header and cookie parameters, and one non-JSON request body are delegated
+to the API contract and client transport; official Siren has no standard members for their
+paths, serialization, or placement. Multiple non-JSON media types, ambiguous compositions,
+unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
+this startup call.
+
+Call `audit(openapi)` first when a consumer needs a deterministic list of every current
+incompatibility before using this strict fail-fast entry point.
 
 #### Framework integration is one startup call
 
@@ -128,12 +145,20 @@ never include the non-standard `required` member.
 
 Set `root_path` when the Siren entry point is mounted away from `/`.
 
-### `SirenProjectionError`
+### `audit`
 
-Indicate a Siren projection failure for the supplied request context.
+Inspect a valid OpenAPI document against the current official-Siren support boundary.
 
-`engine.project(context)` raises this stable public type when the context cannot select a
-concrete resource, capability, route, or path value for a Siren response.
+Call this during startup before `siren(openapi)` when a consumer needs every currently
+unsupported construct at once. The report exposes typed findings and `render()` for terminal
+or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
+
+### `SirenRelationship`
+
+Describe a runtime relationship to another OpenAPI resource.
+
+A relationship projects as a navigational link by default. Set `embedded` when the related
+resource values should be included as a Siren embedded representation instead.
 
 ### `SirenLink`
 
@@ -180,21 +205,27 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `resource` | Derived singular resource name; required outside root. |
 | `value` | Entity or collection properties and entity path parameters. |
 | `items` | Entity mappings for a collection. |
-| `path_values` | Missing path parameters, such as a parent resource ID. |
+| `item_capabilities` | Optional permitted operation IDs for each collection item. |
+| `relationships` | Linked or embedded related resources for this document. |
+| `path_values` | Missing path parameters, such as a parent resource ID or a root command target. |
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
 
-### `SirenCompilationError`
+### `SirenCompatibilityReport`
 
-Indicate an invalid or unsupported OpenAPI-to-Siren contract.
+Expose deterministic OpenAPI-to-Siren compatibility findings.
 
-`siren(openapi)` raises this stable public type when the OpenAPI document is invalid or its
-operations cannot be represented by official Siren. Required controls, unsupported parameter
-locations and HTTP methods, non-JSON bodies, and unmappable field schemas fail at startup.
+### `SirenCompatibilityFinding`
+
+Describe one OpenAPI construct outside the current official-Siren boundary.
 
 ### `SirenAction`
 
 Describe an available Siren action.
+
+### `ModwireSirenError`
+
+Indicate a Modwire Siren operation failure.
 
 ## Public API
 
@@ -202,8 +233,10 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
+| `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
-| `SirenCompilationError` | Indicate an invalid or unsupported OpenAPI-to-Siren contract. | — |
+| `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
+| `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
@@ -211,6 +244,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
-| `SirenProjectionError` | Indicate a Siren projection failure for the supplied request context. | — |
+| `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
+| `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

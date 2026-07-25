@@ -4,7 +4,8 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..runtime import SirenCompilationError, SirenEngine
+from ..contexts.runtime.engine import SirenEngine
+from ..contexts.shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 
@@ -74,22 +75,39 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
 
     #### Action field support matrix
 
-    Path parameters substitute into action URLs and never become fields. Optional query parameters
-    and properties of an `application/json` object body become fields:
+    Path parameters substitute into action URLs and never become fields. Query parameters and
+    properties of an `application/json` object body become fields:
 
     | OpenAPI schema | Siren field type |
     | --- | --- |
-    | `string` | `text` |
+    | `string`, including `uuid` | `text` |
     | formatted `string` | matching Siren field type |
     | `integer` or `number` | `number` |
     | `boolean` | `checkbox` |
+    | flat primitive array or repeated query parameter | `text` |
+    | scalar `enum` | `radio` with selectable values |
+    | flat array with an item `enum` | `checkbox` with selectable values |
+    | object, map, or nested array | delegated; no synthetic field |
+    | header or cookie parameter | delegated; no synthetic field |
+    | one non-JSON request media type | delegated action with that media type |
 
     `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
     `datetime-local`, and `time`, respectively.
 
-    Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
-    objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
-    or `TRACE` operations are rejected during this startup call.
+    Required and nullable controls compile as ordinary standard Siren fields: validation remains
+    server-enforced because official Siren has no `required` or `nullable` members. A flat array
+    has one named `text` field; the OpenAPI serialization contract remains authoritative for
+    submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+    `null` are accepted when they normalize unambiguously.
+
+    Structured values, header and cookie parameters, and one non-JSON request body are delegated
+    to the API contract and client transport; official Siren has no standard members for their
+    paths, serialization, or placement. Multiple non-JSON media types, ambiguous compositions,
+    unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
+    this startup call.
+
+    Call `audit(openapi)` first when a consumer needs a deterministic list of every current
+    incompatibility before using this strict fail-fast entry point.
 
     #### Framework integration is one startup call
 
@@ -112,16 +130,16 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
 
     try:
         if not isinstance(openapi, Mapping):
-            raise TypeError("OpenAPI document must be a mapping")
+            raise ModwireSirenError("OpenAPI document must be a mapping")
         if not isinstance(root_path, str) or not root_path.startswith("/"):
-            raise ValueError("Siren root path must start with '/'")
+            raise ModwireSirenError("Siren root path must start with '/'")
         document = json.loads(json.dumps(openapi))
         validate(document)
     except Exception as error:
-        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+        raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error
     try:
         application = SirenApplicationContainer().application()
         api = application.api_service().build(document, root_path)
         return application.engine_factory().create(api)
     except Exception as error:
-        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+        raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error

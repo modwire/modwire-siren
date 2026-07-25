@@ -1,6 +1,6 @@
-from .api import siren
-from .runtime import SirenCompilationError, SirenContext, SirenProjectionError
-from .runtime.document import (
+from .api import audit, siren
+from .contexts.compiler.compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
+from .contexts.runtime.document import (
     SirenAction,
     SirenDocument,
     SirenEmbeddedLink,
@@ -9,10 +9,14 @@ from .runtime.document import (
     SirenFieldValue,
     SirenLink,
 )
+from .contexts.runtime.request import SirenContext, SirenRelationship
+from .contexts.shared import ModwireSirenError
 
 __all__ = [
+    "ModwireSirenError",
     "SirenAction",
-    "SirenCompilationError",
+    "SirenCompatibilityFinding",
+    "SirenCompatibilityReport",
     "SirenContext",
     "SirenDocument",
     "SirenEmbeddedLink",
@@ -20,6 +24,7 @@ __all__ = [
     "SirenField",
     "SirenFieldValue",
     "SirenLink",
-    "SirenProjectionError",
+    "SirenRelationship",
+    "audit",
     "siren",
 ]

@@ -8,7 +8,7 @@ import pytest
 from framework_fixtures.django_ninja_extra.openapi_fixture import DjangoNinjaExtraOpenApiFixture
 from framework_fixtures.fastapi.openapi_fixture import FastApiOpenApiFixture
 
-from modwire_siren import SirenCompilationError, SirenContext, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestConformance:
@@ -32,7 +32,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
                 "type": "application/x-www-form-urlencoded",
-                "fields": [{"name": "page", "type": "number"}],
+                "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
         ]
 
@@ -53,7 +53,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "text"}],
+                "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }
         ]
 
@@ -66,7 +66,7 @@ class TestConformance:
         invalid = deepcopy(openapi)
         invalid["paths"]["/api/v1/widgets"]["get"]["responses"] = {999: {"description": "Invalid"}}
 
-        with pytest.raises(SirenCompilationError, match="Invalid or unsupported OpenAPI contract"):
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(invalid)
 
         document = siren(openapi).project(
@@ -86,7 +86,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
                 "type": "application/x-www-form-urlencoded",
-                "fields": [{"name": "page", "type": "number"}],
+                "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
         ]
 
@@ -107,7 +107,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "text"}],
+                "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }
         ]
 

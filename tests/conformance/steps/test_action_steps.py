@@ -2,7 +2,7 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, parsers, scenarios, then, when
 
-from modwire_siren import SirenAction, SirenDocument, SirenField
+from modwire_siren import ModwireSirenError, SirenAction, SirenDocument, SirenField
 
 
 class ActionSteps:
@@ -11,7 +11,7 @@ class ActionSteps:
     document: SirenDocument | None = None
     payload: Mapping[str, object] | None = None
     payloads: tuple[Mapping[str, object], ...] | None = None
-    error: ValueError | None = None
+    error: ModwireSirenError | ValueError | None = None
     unsupported_method: str | None = None
     invalid_href: str | None = None
     invalid_media_type: str | None = None
@@ -214,7 +214,7 @@ class ActionSteps:
                         SirenAction(name="update", href="https://api.example.com/records/42"),
                     ),
                 )
-        except ValueError as error:
+        except (ModwireSirenError, ValueError) as error:
             ActionSteps.error = error
 
     @staticmethod
@@ -284,24 +284,16 @@ class ActionSteps:
     @staticmethod
     @then("creation is rejected", stacklevel=2)
     def action_creation_is_rejected() -> None:
-        assert isinstance(ActionSteps.error, ValueError)
-        errors = ActionSteps.error.errors(include_url=False)
         if ActionSteps.unsupported_method is not None:
+            assert isinstance(ActionSteps.error, ValueError)
+            errors = ActionSteps.error.errors(include_url=False)
             assert any(error["loc"] == ("method",) and error["type"] == "enum" for error in errors)
         elif ActionSteps.invalid_href is not None:
-            assert any(
-                error["loc"] == ("href",) and error["msg"] == "Value error, Siren URI must be a valid URI."
-                for error in errors
-            )
+            assert str(ActionSteps.error) == "Siren URI must be a valid URI."
         elif ActionSteps.invalid_media_type is not None:
-            assert any(
-                error["loc"][0] == "type"
-                and error["msg"] == "Value error, Siren media type must use the official media-type grammar."
-                for error in errors
-            )
+            assert str(ActionSteps.error) == "Siren media type must use the official media-type grammar."
         else:
-            assert errors[0]["loc"] == ()
-            assert errors[0]["msg"] == "Value error, Siren document action names must be unique."
+            assert str(ActionSteps.error) == "Siren document action names must be unique."
 
 
 scenarios("../features/actions.feature")

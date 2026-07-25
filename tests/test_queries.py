@@ -1,15 +1,15 @@
 import pytest
 from openapi_documents import ROUTE_POLICY_SCHEMA, SCHEMA
 
-from modwire_siren import SirenContext, SirenProjectionError, siren
+from modwire_siren import ModwireSirenError, SirenContext, siren
 
 
 class TestQueries:
     def test_public_facade_rejects_nonscalar_query_values_and_recovers(self):
-        with pytest.raises(ValueError, match="Siren query values must be scalar"):
+        with pytest.raises(ModwireSirenError, match="Siren query values must be scalar"):
             SirenContext(base_url="https://api.example.com", scope="root", query=(("tag", ["one", "two"]),))
 
-        with pytest.raises(SirenProjectionError, match="Siren projection failed"):
+        with pytest.raises(ModwireSirenError, match="Siren projection failed"):
             siren(ROUTE_POLICY_SCHEMA).project(
                 SirenContext(
                     base_url="https://api.example.com",

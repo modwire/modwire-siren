@@ -2,13 +2,13 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, scenarios, then, when
 
-from modwire_siren import SirenEmbeddedRepresentation, SirenLink
+from modwire_siren import ModwireSirenError, SirenEmbeddedRepresentation, SirenLink
 
 
 class RelationSteps:
     value: SirenEmbeddedRepresentation | SirenLink | None = None
     payload: Mapping[str, object] | None = None
-    error: ValueError | None = None
+    error: ModwireSirenError | None = None
     invalid: bool = False
 
     @staticmethod
@@ -44,7 +44,7 @@ class RelationSteps:
         try:
             if RelationSteps.invalid:
                 RelationSteps.value = SirenLink(rel=("invalid relation",), href="https://api.example.com/42")
-        except ValueError as error:
+        except ModwireSirenError as error:
             RelationSteps.error = error
 
     @staticmethod
@@ -56,13 +56,7 @@ class RelationSteps:
     @staticmethod
     @then("creation is rejected", stacklevel=2)
     def relation_creation_is_rejected() -> None:
-        assert isinstance(RelationSteps.error, ValueError)
-        errors = RelationSteps.error.errors(include_url=False)
-        assert any(
-            error["loc"] == ("rel", 0)
-            and error["msg"] == "Value error, Siren relation must be an official relation token or URI."
-            for error in errors
-        )
+        assert str(RelationSteps.error) == "Siren relation must be an official relation token or URI."
 
     @staticmethod
     @then("the link has its relation URI", stacklevel=2)
