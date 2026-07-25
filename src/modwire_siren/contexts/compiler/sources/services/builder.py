@@ -56,7 +56,13 @@ class SirenBuilder:
                     route=SirenRoute(path=operation.path),
                     media_type=operation.media_type,
                     fields=tuple(
-                        SirenField(name=item.name, type=item.type, values=item.values)
+                        SirenField(
+                            name=item.name,
+                            type=item.type,
+                            values=item.values,
+                            title=item.title,
+                            default=item.default,
+                        )
                         for item in fields.get(operation.name, ())
                     ),
                 )

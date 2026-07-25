@@ -51,7 +51,11 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
                 SirenField(
                     name=field.name,
                     type=field.type,
-                    value=tuple(SirenFieldValue(value=value) for value in field.values) or None,
+                    title=field.title,
+                    value=(
+                        tuple(SirenFieldValue(value=value, selected=value == field.default) for value in field.values)
+                        if field.values else field.default
+                    ),
                 )
                 for field in operation.fields
             ) or None,
