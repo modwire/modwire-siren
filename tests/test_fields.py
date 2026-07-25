@@ -160,7 +160,12 @@ class TestFields:
         body["required"] = ["title"]
         body["properties"] = {
             "title": {"type": "string"},
-            "visibility": {"type": "string", "enum": ["private", "public"]},
+            "visibility": {
+                "type": "string",
+                "title": "Visibility",
+                "enum": ["private", "public"],
+                "default": "public",
+            },
         }
 
         engine = siren(document)
@@ -203,7 +208,8 @@ class TestFields:
             {
                 "name": "visibility",
                 "type": "radio",
-                "value": [{"value": "private", "selected": False}, {"value": "public", "selected": False}],
+                "title": "Visibility",
+                "value": [{"value": "private", "selected": False}, {"value": "public", "selected": True}],
             },
         ]
 

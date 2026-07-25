@@ -63,7 +63,15 @@ class SirenAssembly(BaseState):
         return self
 
     def add_field(
-        self, operation: str, name: str, type: SirenFieldType, values: tuple[str | int | float, ...] = ()
+        self, operation: str, name: str, type: SirenFieldType, values: tuple[str | int | float, ...] = (),
+        title: str | None = None, default: str | int | float | None = None,
     ) -> "SirenAssembly":
-        self.fields.append(FieldDraft(operation=operation, name=name, type=type, values=values))
+        self.fields.append(FieldDraft(
+            operation=operation,
+            name=name,
+            type=type,
+            values=values,
+            title=title,
+            default=default,
+        ))
         return self

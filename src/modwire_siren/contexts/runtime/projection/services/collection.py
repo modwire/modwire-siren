@@ -28,9 +28,16 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
             properties=request.context.value,
             entities=tuple(
                 self.entities.entity(
-                    request.api, request.resource, item, request.context, (SirenRelation.validate("item"),)
+                    request.api,
+                    request.resource,
+                    item,
+                    request.context.model_copy(update={
+                        "capabilities": request.context.item_capabilities[index]
+                        if request.context.item_capabilities else request.context.capabilities,
+                    }),
+                    (SirenRelation.validate("item"),),
                 )
-                for item in request.context.items
+                for index, item in enumerate(request.context.items)
             ) or None,
             actions=tuple(self.actions.actions(
                 request.api, request.resource, SirenScope.COLLECTION, request.context, request.context.value

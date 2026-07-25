@@ -39,6 +39,39 @@ class TestProjection:
             }
         ]
 
+    def test_public_facade_projects_item_specific_capabilities(self):
+        document = siren(SCHEMA).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                items=(
+                    {"id": "42", "title": "Draft"},
+                    {"id": "43", "title": "Published"},
+                ),
+                capabilities=frozenset({"list_records"}),
+                item_capabilities=(
+                    frozenset({"get_record", "rename_record"}),
+                    frozenset({"get_record"}),
+                ),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert [[action["name"] for action in item["actions"]] for item in document["entities"]] == [
+            ["get_record", "rename_record"],
+            ["get_record"],
+        ]
+
+    def test_public_facade_rejects_misaligned_item_capabilities(self):
+        with pytest.raises(ModwireSirenError, match="Siren item capabilities must align with collection items"):
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                items=({"id": "42"},),
+                item_capabilities=(frozenset({"get_record"}), frozenset({"rename_record"})),
+            )
+
     def test_public_facade_projects_an_entity_with_concrete_links_and_allowed_actions(self):
         document = siren(SCHEMA).project(
             SirenContext(

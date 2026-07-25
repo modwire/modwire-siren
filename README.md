@@ -198,6 +198,7 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `resource` | Derived singular resource name; required outside root. |
 | `value` | Entity or collection properties and entity path parameters. |
 | `items` | Entity mappings for a collection. |
+| `item_capabilities` | Optional permitted operation IDs for each collection item. |
 | `path_values` | Missing path parameters, such as a parent resource ID. |
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
