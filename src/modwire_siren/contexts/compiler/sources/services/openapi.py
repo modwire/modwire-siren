@@ -8,7 +8,7 @@ from modwire_siren.contexts.shared import ModwireSirenError
 
 from ...compatibility import SirenCompatibilityFinding
 from ..contracts import SirenSource
-from ..state import ComponentResolver, OpenApiCompatibilityInspection, RouteCatalog
+from ..state import ComponentResolver, OpenApiCompatibilityInspection, OpenApiFieldProjection, RouteCatalog
 from ..state.assembly import SirenAssembly
 from ..state.compiler import OpenApiOperationCompiler
 from .builder import SirenBuilder
@@ -30,8 +30,10 @@ class OpenApiSource(SirenSource):
                     remediation="Use an object-valued paths field.",
                 ),
             )
+        components = ComponentResolver(components=schema.get("components", {}))
         return OpenApiCompatibilityInspection(
-            components=ComponentResolver(components=schema.get("components", {})),
+            components=components,
+            projection=OpenApiFieldProjection(components=components),
             routes=RouteCatalog(paths=paths),
         ).inspect()
 
@@ -55,9 +57,11 @@ class OpenApiSource(SirenSource):
                 resource.entity_path,
                 resource.identifier,
             )
+        components = ComponentResolver(components=schema.get("components", {}))
         OpenApiOperationCompiler(
             assembly=assembly,
             routes=routes,
-            components=ComponentResolver(components=schema.get("components", {})),
+            components=components,
+            projection=OpenApiFieldProjection(components=components),
         ).compile()
         return self.builder.build(assembly)

@@ -4,7 +4,6 @@ from modwire_siren.contexts.shared import (
     BaseState,
     ModwireSirenError,
     SirenActionMethod,
-    SirenFieldType,
     SirenHttpMethod,
     SirenMediaType,
     SirenScope,
@@ -13,6 +12,7 @@ from modwire_siren.contexts.shared import (
 from ..values import Field
 from .assembly import SirenAssembly
 from .components import ComponentResolver
+from .field_projection import OpenApiFieldProjection
 from .routes import RouteCatalog
 
 
@@ -23,6 +23,7 @@ class OpenApiOperationCompiler(BaseState):
     assembly: SirenAssembly
     routes: RouteCatalog
     components: ComponentResolver
+    projection: OpenApiFieldProjection
 
     def compile(self) -> None:
         for path, path_item in self.routes.paths.items():
@@ -63,12 +64,12 @@ class OpenApiOperationCompiler(BaseState):
                     self.assembly.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
                     self.assembly.add_root_operation(name)
                     for field in fields:
-                        self.assembly.add_field(name, field.name, field.type)
+                        self.assembly.add_field(name, field.name, field.type, field.values)
                     continue
                 resource, scope = ownership
                 self.assembly.add_operation(resource.reference, scope, name, operation_method, path, media_type)
                 for field in fields:
-                    self.assembly.add_field(name, field.name, field.type)
+                    self.assembly.add_field(name, field.name, field.type, field.values)
                 if (
                     scope == SirenScope.COLLECTION
                     and path == resource.collection_path
@@ -98,9 +99,7 @@ class OpenApiOperationCompiler(BaseState):
             parameter_index[name, location] = definition
         fields: list[Field] = []
         for (name, _), definition in parameter_index.items():
-            if definition.get("required"):
-                raise ModwireSirenError(f"OpenAPI required query parameter is unsupported: {name}")
-            fields.append(Field(name=name, type=self.field_type(name, self.components.schema(definition["schema"]))))
+            fields.append(self.projection.field(name, definition["schema"]))
         body = self.components.request_body(operation.get("requestBody", {}))
         content = body.get("content", {}) if isinstance(body, dict) else {}
         if content and (not isinstance(content, dict) or not isinstance(content.get("application/json"), dict)):
@@ -115,32 +114,8 @@ class OpenApiOperationCompiler(BaseState):
         properties = definition.get("properties", {})
         if not isinstance(properties, dict):
             raise ModwireSirenError("OpenAPI JSON request body properties must be an object")
-        if definition.get("required"):
-            raise ModwireSirenError("OpenAPI required JSON body field is unsupported")
         for name, value in properties.items():
             if not isinstance(name, str) or not isinstance(value, dict):
                 raise ModwireSirenError("OpenAPI JSON request body property is invalid")
-            fields.append(Field(name=name, type=self.field_type(name, self.components.schema(value))))
+            fields.append(self.projection.field(name, value))
         return tuple(fields), SirenMediaType.validate("application/json") if content else None
-
-    def field_type(self, name: str, definition: dict[str, Any]) -> SirenFieldType:
-        unsupported = {"allOf", "anyOf", "const", "contains", "enum", "if", "items", "not", "oneOf", "prefixItems"}
-        if unsupported & definition.keys() or definition.get("nullable") is True:
-            raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
-        schema_type = definition.get("type")
-        if schema_type == "string":
-            formats = {
-                "date": SirenFieldType.validate("date"),
-                "date-time": SirenFieldType.validate("datetime-local"),
-                "email": SirenFieldType.validate("email"),
-                "time": SirenFieldType.validate("time"),
-                "uri": SirenFieldType.validate("url"),
-            }
-            field_type = formats.get(definition.get("format"), SirenFieldType.default())
-            if definition.get("format") is None or field_type != SirenFieldType.default():
-                return field_type
-        if schema_type in {"integer", "number"}:
-            return SirenFieldType.validate("number")
-        if schema_type == "boolean":
-            return SirenFieldType.validate("checkbox")
-        raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")

@@ -38,28 +38,14 @@ class TestCompatibility:
         assert report.compatible is False
         assert [(finding.category, finding.location) for finding in report.findings] == [
             ("parameter-location", "#/paths/~1records/get/parameters/0"),
-            ("required-control", "#/paths/~1records/get/parameters/1"),
-            ("field-schema", "#/paths/~1records/get/parameters/2/schema"),
             ("http-method", "#/paths/~1records/head"),
-            (
-                "required-control",
-                "#/paths/~1records~1{record_id}/patch/requestBody/content/application~1json/schema/required/0",
-            ),
         ]
         assert report.render() == (
             "OpenAPI-to-Siren compatibility findings:\n"
             "- #/paths/~1records/get/parameters/0 [parameter-location]: OpenAPI parameter location is unsupported: "
             "header. Remediation: Use a path parameter or an optional query parameter.\n"
-            "- #/paths/~1records/get/parameters/1 [required-control]: OpenAPI required query parameter is unsupported: "
-            "query. Remediation: Make the control optional in the Siren-facing contract or use a documented extension "
-            "policy.\n"
-            "- #/paths/~1records/get/parameters/2/schema [field-schema]: OpenAPI field schema is unsupported: tags. "
-            "Remediation: Use an optional scalar field schema that maps to an official Siren field type.\n"
             "- #/paths/~1records/head [http-method]: OpenAPI operation method is unsupported: HEAD /records. "
-            "Remediation: Use an official Siren action method: GET, POST, PUT, PATCH, or DELETE.\n"
-            "- #/paths/~1records~1{record_id}/patch/requestBody/content/application~1json/schema/required/0 "
-            "[required-control]: OpenAPI required JSON body field is unsupported: title. Remediation: Make the control "
-            "optional in the Siren-facing contract or use a documented extension policy."
+            "Remediation: Use an official Siren action method: GET, POST, PUT, PATCH, or DELETE."
         )
 
     def test_public_facade_reports_a_compatible_contract_without_changing_fail_fast_compilation(self):
@@ -71,7 +57,7 @@ class TestCompatibility:
 
         incompatible = deepcopy(PARAMETER_MEDIA_SCHEMA)
         incompatible["paths"]["/records"]["get"]["parameters"] = [
-            {"name": "page", "in": "query", "required": True, "schema": {"type": "integer"}}
+            {"name": "page", "in": "query", "schema": {"type": "object"}}
         ]
 
         with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):

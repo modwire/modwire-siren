@@ -75,22 +75,31 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
 
     #### Action field support matrix
 
-    Path parameters substitute into action URLs and never become fields. Optional query parameters
-    and properties of an `application/json` object body become fields:
+    Path parameters substitute into action URLs and never become fields. Query parameters and
+    properties of an `application/json` object body become fields:
 
     | OpenAPI schema | Siren field type |
     | --- | --- |
-    | `string` | `text` |
+    | `string`, including `uuid` | `text` |
     | formatted `string` | matching Siren field type |
     | `integer` or `number` | `number` |
     | `boolean` | `checkbox` |
+    | flat primitive array or repeated query parameter | `text` |
+    | scalar `enum` | `radio` with selectable values |
+    | flat array with an item `enum` | `checkbox` with selectable values |
 
     `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
     `datetime-local`, and `time`, respectively.
 
-    Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
-    objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
-    or `TRACE` operations are rejected during this startup call.
+    Required and nullable controls compile as ordinary standard Siren fields: validation remains
+    server-enforced because official Siren has no `required` or `nullable` members. A flat array
+    has one named `text` field; the OpenAPI serialization contract remains authoritative for
+    submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+    `null` are accepted when they normalize unambiguously.
+
+    Header and cookie parameters, non-JSON bodies, objects, nested arrays, ambiguous
+    compositions, unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are
+    rejected during this startup call.
 
     Call `audit(openapi)` first when a consumer needs a deterministic list of every current
     incompatibility before using this strict fail-fast entry point.

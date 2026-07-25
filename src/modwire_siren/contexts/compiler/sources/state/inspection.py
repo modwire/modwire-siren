@@ -2,15 +2,17 @@ from typing import Any
 
 from pydantic import Field
 
-from modwire_siren.contexts.shared import BaseState, SirenActionMethod, SirenHttpMethod
+from modwire_siren.contexts.shared import BaseState, ModwireSirenError, SirenActionMethod, SirenHttpMethod
 
 from ...compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver
+from .field_projection import OpenApiFieldProjection
 from .routes import RouteCatalog
 
 
 class OpenApiCompatibilityInspection(BaseState):
     components: ComponentResolver
+    projection: OpenApiFieldProjection
     routes: RouteCatalog
     findings: list[SirenCompatibilityFinding] = Field(default_factory=list)
     operation_ids: set[str] = Field(default_factory=set)
@@ -129,13 +131,6 @@ class OpenApiCompatibilityInspection(BaseState):
                     "Use a path parameter or an optional query parameter.",
                 )
                 continue
-            if definition.get("required"):
-                self.add(
-                    pointer,
-                    "required-control",
-                    f"OpenAPI required query parameter is unsupported: {name}",
-                    "Make the control optional in the Siren-facing contract or use a documented extension policy.",
-                )
             schema = definition.get("schema")
             if not isinstance(schema, dict):
                 self.add(
@@ -200,15 +195,6 @@ class OpenApiCompatibilityInspection(BaseState):
                 "Use object properties for Siren fields.",
             )
             return
-        required = definition.get("required", ())
-        if isinstance(required, list):
-            for index, name in enumerate(required):
-                self.add(
-                    self.location_from(schema_location, "required", str(index)),
-                    "required-control",
-                    f"OpenAPI required JSON body field is unsupported: {name}",
-                    "Make the control optional in the Siren-facing contract or use a documented extension policy.",
-                )
         for name, value in properties.items():
             if not isinstance(name, str) or not isinstance(value, dict):
                 self.add(
@@ -222,21 +208,13 @@ class OpenApiCompatibilityInspection(BaseState):
 
     def field(self, name: str, schema: dict[str, Any], location: str) -> None:
         try:
-            definition = self.components.schema(schema)
-        except ValueError as error:
-            self.add(location, "component-reference", str(error), "Use a resolvable local component reference.")
-            return
-        unsupported = {"allOf", "anyOf", "const", "contains", "enum", "if", "items", "not", "oneOf", "prefixItems"}
-        schema_type = definition.get("type")
-        supported = schema_type in {"integer", "number", "boolean"}
-        if schema_type == "string":
-            supported = definition.get("format") in {None, "date", "date-time", "email", "time", "uri"}
-        if unsupported & definition.keys() or definition.get("nullable") is True or not supported:
+            self.projection.field(name, schema)
+        except (ModwireSirenError, ValueError):
             self.add(
                 location,
                 "field-schema",
                 f"OpenAPI field schema is unsupported: {name}",
-                "Use an optional scalar field schema that maps to an official Siren field type.",
+                "Use a flat scalar schema that maps to an official Siren field type.",
             )
 
     def add(self, location: str, category: str, detail: str, remediation: str) -> None:

@@ -7,7 +7,7 @@ from wireup import injectable
 from modwire_siren.contexts.graph import SirenApi, SirenOperation, SirenResource
 from modwire_siren.contexts.shared import SirenScope
 
-from ...document import SirenAction, SirenField
+from ...document import SirenAction, SirenField, SirenFieldValue
 from ...request import SirenContext
 from ...routing import SirenHrefService
 from ..contracts import SirenActionDocumentService
@@ -47,5 +47,12 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
             href=self.hrefs.href(operation.route.path, context, resource, value, include_query),
             method=operation.method,
             type=operation.media_type,
-            fields=tuple(SirenField(name=field.name, type=field.type) for field in operation.fields) or None,
+            fields=tuple(
+                SirenField(
+                    name=field.name,
+                    type=field.type,
+                    value=tuple(SirenFieldValue(value=value) for value in field.values) or None,
+                )
+                for field in operation.fields
+            ) or None,
         )

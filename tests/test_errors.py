@@ -13,16 +13,28 @@ class TestErrors:
 
         assert raised.value.__cause__ is not None
 
-    def test_public_facade_chains_unsupported_openapi_mapping_as_a_compilation_error(self):
-        invalid = deepcopy(SCHEMA)
-        invalid["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
+    def test_public_facade_projects_a_supported_openapi_enum_control(self):
+        document = deepcopy(SCHEMA)
+        document["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
             "schema"
         ]["properties"]["title"] = {"type": "string", "enum": ["draft", "published"]}
 
-        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract") as raised:
-            siren(invalid)
+        result = siren(document).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                resource="record",
+                value={"record_id": "42"},
+                capabilities=frozenset({"rename_record"}),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert raised.value.__cause__ is not None
+        assert result["actions"][0]["fields"] == [
+            {
+                "name": "title",
+                "type": "radio",
+                "value": [{"value": "draft", "selected": False}, {"value": "published", "selected": False}],
+            }
+        ]
 
     @pytest.mark.parametrize(
         "context",
