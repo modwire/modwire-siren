@@ -7,5 +7,5 @@ from ..values import SirenCapability
 
 class SirenContractSource(ABC):
     @abstractmethod
-    def capability(self) -> SirenCapability:
+    def capabilities(self) -> tuple[SirenCapability, ...]:
         raise ModwireSirenError
