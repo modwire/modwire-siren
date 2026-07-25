@@ -1,9 +1,10 @@
 # Architecture
 
-`api`, `contexts/compiler`, `contexts/runtime`, `contexts/conformance`, and `contexts/ledger` respectively compose the
-public callable, compile OpenAPI, project Siren documents, provide conformance inputs, and assess conformance.
-`shared/siren_schema` is dependency-free shared infrastructure for the pinned schema, provenance, and immutable reader.
-Root `__init__.py` exports only.
+`api`, `contexts/compiler`, `contexts/runtime`, and `contexts/conformance` respectively compose the public callable,
+compile OpenAPI, project Siren documents, and assess conformance. Conformance owns its specification,
+implementation, and ledger modules. `shared` is a dependency-free context whose foundation, vocabulary, and
+Siren-schema modules supply common state, values, and the pinned schema with its provenance. Root `__init__.py`
+files export only.
 
 Contexts are feature packages: roots expose only public types and composition entry points; a capability's
 contracts, values, and services stay beneath that capability. `.modwire/architecture.yaml` is the authority for

@@ -5,8 +5,8 @@ from wireup import injectable
 
 from modwire_siren.shared import ModwireSirenError
 
-from ...contracts import SirenContractSource, SirenImplementation
-from ...values import SirenCapability
+from ..contracts import SirenContractSource, SirenImplementation
+from ..values import SirenCapability
 
 
 @injectable(as_type=SirenImplementation)

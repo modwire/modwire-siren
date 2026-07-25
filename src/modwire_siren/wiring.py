@@ -7,7 +7,7 @@ from types import ModuleType
 from wireup import create_sync_container
 
 from .contexts.compiler import SirenApiService
-from .contexts.ledger import SirenConformanceService
+from .contexts.conformance import SirenConformanceService
 from .contexts.runtime.engine import SirenEngineFactory
 
 

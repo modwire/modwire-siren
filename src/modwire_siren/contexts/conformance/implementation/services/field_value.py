@@ -4,9 +4,9 @@ from wireup import injectable
 
 from modwire_siren.contexts.runtime.document import SirenFieldValue
 
-from ....contracts import SirenContractSource
-from ....values import SirenCapability
-from ..exporter import SirenSerializationSchemaExporter
+from ..contracts import SirenContractSource
+from ..values import SirenCapability
+from .exporter import SirenSerializationSchemaExporter
 
 
 @injectable(as_type=SirenContractSource, qualifier=SirenFieldValue)
