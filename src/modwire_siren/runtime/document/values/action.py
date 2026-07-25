@@ -3,14 +3,13 @@ from typing import ClassVar
 from pydantic import Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import BaseValue, ModwireSirenError
 
 from ....vocabulary import SirenActionMethod, SirenMediaType, SirenUri
-from ...contracts import Contract
 from .field import SirenField
 
 
-class SirenAction(Contract):
+class SirenAction(BaseValue):
     """Describe an available Siren action."""
 
     default_media_type: ClassVar[SirenMediaType] = SirenMediaType.default()
@@ -19,7 +18,8 @@ class SirenAction(Contract):
     method: SirenActionMethod = SirenActionMethod.default()
     href: SirenUri
     title: str | None = None
-    type: SirenMediaType | SkipJsonSchema[None] = Field(default=None, json_schema_extra={"default": default_media_type})
+    type: SirenMediaType | SkipJsonSchema[None] = Field(
+        default=None, json_schema_extra={"default": default_media_type})
     fields: tuple[SirenField, ...] | None = None
 
     @model_validator(mode="after")

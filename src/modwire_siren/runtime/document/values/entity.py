@@ -4,12 +4,13 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue
 
-from ...contracts import Contract
+from modwire_siren.shared import BaseValue
+
 from .action import SirenAction
 from .link import SirenLink
 
 
-class SirenEntity(Contract):
+class SirenEntity(BaseValue):
     class_: tuple[str, ...] | None = Field(default=None, alias="class")
     title: str | None = None
     properties: Mapping[str, JsonValue] | None = None

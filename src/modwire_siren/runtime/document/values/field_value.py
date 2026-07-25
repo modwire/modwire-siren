@@ -1,9 +1,9 @@
 from pydantic import StrictFloat, StrictInt
 
-from ...contracts import Contract
+from modwire_siren.shared import BaseValue
 
 
-class SirenFieldValue(Contract):
+class SirenFieldValue(BaseValue):
     """Describe a selectable Siren action field value."""
 
     value: str | StrictInt | StrictFloat

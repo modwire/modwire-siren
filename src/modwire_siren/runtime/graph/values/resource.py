@@ -1,8 +1,9 @@
-from ...contracts import Contract
+from modwire_siren.shared import BaseValue
+
 from .route import SirenRoute
 
 
-class SirenResource(Contract):
+class SirenResource(BaseValue):
     reference: str
     name: str
     resource_class: str

@@ -1,7 +1,8 @@
+from modwire_siren.shared import BaseValue
+
 from ....vocabulary import SirenFieldType
-from ...contracts import Contract
 
 
-class SirenField(Contract):
+class SirenField(BaseValue):
     name: str
     type: SirenFieldType

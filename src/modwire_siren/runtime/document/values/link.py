@@ -1,10 +1,11 @@
 from pydantic import Field
 
+from modwire_siren.shared import BaseValue
+
 from ....vocabulary import SirenMediaType, SirenRelation, SirenUri
-from ...contracts import Contract
 
 
-class SirenLink(Contract):
+class SirenLink(BaseValue):
     """Describe a navigational Siren link."""
 
     class_: tuple[str, ...] | None = Field(default=None, alias="class")

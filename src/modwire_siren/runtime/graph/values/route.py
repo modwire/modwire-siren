@@ -1,5 +1,5 @@
-from ...contracts import Contract
+from modwire_siren.shared import BaseValue
 
 
-class SirenRoute(Contract):
+class SirenRoute(BaseValue):
     path: str

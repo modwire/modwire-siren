@@ -1,11 +1,12 @@
 from pydantic import StrictFloat, StrictInt
 
+from modwire_siren.shared import BaseValue
+
 from ....vocabulary import SirenFieldType
-from ...contracts import Contract
 from .field_value import SirenFieldValue
 
 
-class SirenField(Contract):
+class SirenField(BaseValue):
     """Describe an official Siren action field."""
 
     name: str

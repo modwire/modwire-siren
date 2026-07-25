@@ -1,8 +1,9 @@
-from ...contracts import Contract
+from modwire_siren.shared import BaseValue
+
 from .route import SirenRoute
 
 
-class SirenRoot(Contract):
+class SirenRoot(BaseValue):
     route: SirenRoute = SirenRoute(path="/")
     title: str = ""
     version: str = ""
