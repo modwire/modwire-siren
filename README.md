@@ -12,10 +12,10 @@ Requires Python 3.12 or later.
 python -m pip install modwire-siren
 ```
 
-For local development:
+For local development, install `uv` and use the locked environment:
 
 ```bash
-python -m pip install -e ".[dev]"
+uv sync --locked --all-groups
 make verify
 ```
 

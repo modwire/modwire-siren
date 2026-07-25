@@ -12,7 +12,8 @@ class TestQualityGate:
         assert "$(RUN) -m build --wheel --sdist --outdir dist/quality" in makefile
         assert "$(RUN) -m twine check dist/quality/*" in makefile
         assert "- run: make quality" in workflow
-        assert "python -m pip install -e \".[dev]\"" in workflow
-        assert "setup-uv" not in workflow
+        assert "uv sync --locked --all-groups" in workflow
+        assert "astral-sh/setup-uv" in workflow
+        assert "python -m pip install -e \".[dev]\"" not in workflow
         assert "if: always()" in workflow
         assert "path: dist/quality/" in workflow

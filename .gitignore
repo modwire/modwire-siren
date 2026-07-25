@@ -5,3 +5,4 @@ __pycache__/
 *.py[cod]
 dist/
 src/modwire_siren/_version.py
+.dev/

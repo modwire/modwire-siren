@@ -1,10 +1,11 @@
 .PHONY: docs docs-check modwire package-check quality service-check siren-spec verify
 
-PYTHON ?= python3
+UV ?= uv
+PYTHON ?= $(UV) run --locked python
 RUN = PYTHONPATH=src $(PYTHON)
 
 modwire:
-	uv run modwire report --architecture-root . --language python --summary
+	$(UV) run --locked modwire report --architecture-root . --language python --summary
 
 docs:
 	$(RUN) scripts/generate_docs.py
