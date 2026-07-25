@@ -30,7 +30,7 @@ boundaries:
 shape:
   realms:
     - name: project
-      match: "src/modwire_siren/**/*"
+      match: "src/modwire_siren/*"
       shape:
         max_classes_per_file: -1
         max_interfaces_per_file: -1

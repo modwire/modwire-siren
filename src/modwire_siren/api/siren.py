@@ -87,6 +87,9 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     | flat primitive array or repeated query parameter | `text` |
     | scalar `enum` | `radio` with selectable values |
     | flat array with an item `enum` | `checkbox` with selectable values |
+    | object, map, or nested array | delegated; no synthetic field |
+    | header or cookie parameter | delegated; no synthetic field |
+    | one non-JSON request media type | delegated action with that media type |
 
     `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
     `datetime-local`, and `time`, respectively.
@@ -97,9 +100,11 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
     `null` are accepted when they normalize unambiguously.
 
-    Header and cookie parameters, non-JSON bodies, objects, nested arrays, ambiguous
-    compositions, unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are
-    rejected during this startup call.
+    Structured values, header and cookie parameters, and one non-JSON request body are delegated
+    to the API contract and client transport; official Siren has no standard members for their
+    paths, serialization, or placement. Multiple non-JSON media types, ambiguous compositions,
+    unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
+    this startup call.
 
     Call `audit(openapi)` first when a consumer needs a deterministic list of every current
     incompatibility before using this strict fail-fast entry point.

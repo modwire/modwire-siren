@@ -123,6 +123,8 @@ class OpenApiCompatibilityInspection(BaseState):
                 continue
             if parameter_location == "path":
                 continue
+            if parameter_location in {"header", "cookie"}:
+                continue
             if parameter_location != "query":
                 self.add(
                     pointer,
@@ -153,16 +155,37 @@ class OpenApiCompatibilityInspection(BaseState):
         if not content:
             return
         content_location = self.location_from(body_location, "content")
-        media_location = self.location_from(content_location, "application/json")
-        if not isinstance(content, dict) or not isinstance(content.get("application/json"), dict):
+        if not isinstance(content, dict):
             self.add(
                 content_location,
                 "body-media-type",
-                "OpenAPI request body must provide application/json",
-                "Use an application/json object request body.",
+                "OpenAPI request body content must be an object",
+                "Use an object-valued content map.",
             )
             return
-        media = content["application/json"]
+        media_name = "application/json" if "application/json" in content else None
+        if media_name is None and len(content) == 1:
+            media_name = next(iter(content))
+        if not isinstance(media_name, str):
+            self.add(
+                content_location,
+                "body-media-type",
+                "OpenAPI request body media types are ambiguous",
+                "Provide application/json or exactly one declared request media type.",
+            )
+            return
+        media = content.get(media_name)
+        if not isinstance(media, dict):
+            self.add(
+                self.location_from(content_location, media_name),
+                "body-media-type",
+                "OpenAPI request body media type is invalid",
+                "Use an object-valued media type entry.",
+            )
+            return
+        if media_name != "application/json":
+            return
+        media_location = self.location_from(content_location, media_name)
         schema = media.get("schema", {})
         schema_location = self.location_from(media_location, "schema")
         if not isinstance(schema, dict):
@@ -210,6 +233,8 @@ class OpenApiCompatibilityInspection(BaseState):
         try:
             self.projection.field(name, schema)
         except (ModwireSirenError, ValueError):
+            if self.projection.delegated(schema):
+                return
             self.add(
                 location,
                 "field-schema",

@@ -20,13 +20,8 @@ class TestCompatibility:
             },
         ]
         document["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"] = {
-            "application/json": {
-                "schema": {
-                    "type": "object",
-                    "required": ["title"],
-                    "properties": {"title": {"type": "string"}},
-                }
-            }
+            "text/plain": {"schema": {"type": "string"}},
+            "application/xml": {"schema": {"type": "string"}},
         }
         document["paths"]["/records"]["head"] = {
             "operationId": "head_records",
@@ -37,15 +32,15 @@ class TestCompatibility:
 
         assert report.compatible is False
         assert [(finding.category, finding.location) for finding in report.findings] == [
-            ("parameter-location", "#/paths/~1records/get/parameters/0"),
             ("http-method", "#/paths/~1records/head"),
+            ("body-media-type", "#/paths/~1records~1{record_id}/patch/requestBody/content"),
         ]
         assert report.render() == (
             "OpenAPI-to-Siren compatibility findings:\n"
-            "- #/paths/~1records/get/parameters/0 [parameter-location]: OpenAPI parameter location is unsupported: "
-            "header. Remediation: Use a path parameter or an optional query parameter.\n"
             "- #/paths/~1records/head [http-method]: OpenAPI operation method is unsupported: HEAD /records. "
-            "Remediation: Use an official Siren action method: GET, POST, PUT, PATCH, or DELETE."
+            "Remediation: Use an official Siren action method: GET, POST, PUT, PATCH, or DELETE.\n"
+            "- #/paths/~1records~1{record_id}/patch/requestBody/content [body-media-type]: OpenAPI request body media "
+            "types are ambiguous. Remediation: Provide application/json or exactly one declared request media type."
         )
 
     def test_public_facade_reports_a_compatible_contract_without_changing_fail_fast_compilation(self):
@@ -57,7 +52,7 @@ class TestCompatibility:
 
         incompatible = deepcopy(PARAMETER_MEDIA_SCHEMA)
         incompatible["paths"]["/records"]["get"]["parameters"] = [
-            {"name": "page", "in": "query", "schema": {"type": "object"}}
+            {"name": "page", "in": "query", "schema": {"type": "string", "format": "hostname"}}
         ]
 
         with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):

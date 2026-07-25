@@ -91,6 +91,8 @@ class OpenApiOperationCompiler(BaseState):
                 raise ModwireSirenError("OpenAPI parameter requires string name and location")
             if location == "path":
                 continue
+            if location in {"header", "cookie"}:
+                continue
             if location != "query":
                 raise ModwireSirenError(f"OpenAPI parameter location is unsupported: {location}")
             schema = definition.get("schema")
@@ -99,12 +101,25 @@ class OpenApiOperationCompiler(BaseState):
             parameter_index[name, location] = definition
         fields: list[Field] = []
         for (name, _), definition in parameter_index.items():
-            fields.append(self.projection.field(name, definition["schema"]))
+            try:
+                fields.append(self.projection.field(name, definition["schema"]))
+            except ModwireSirenError:
+                if not self.projection.delegated(definition["schema"]):
+                    raise
         body = self.components.request_body(operation.get("requestBody", {}))
         content = body.get("content", {}) if isinstance(body, dict) else {}
-        if content and (not isinstance(content, dict) or not isinstance(content.get("application/json"), dict)):
-            raise ModwireSirenError("OpenAPI request body must provide application/json")
-        media = content.get("application/json", {}) if isinstance(content, dict) else {}
+        if content and not isinstance(content, dict):
+            raise ModwireSirenError("OpenAPI request body content must be an object")
+        media_name = "application/json" if isinstance(content, dict) and "application/json" in content else None
+        if media_name is None and isinstance(content, dict) and len(content) == 1:
+            media_name = next(iter(content))
+        if content and not isinstance(media_name, str):
+            raise ModwireSirenError("OpenAPI request body media types are ambiguous")
+        media = content.get(media_name, {}) if isinstance(content, dict) and media_name else {}
+        if content and not isinstance(media, dict):
+            raise ModwireSirenError("OpenAPI request body media type is invalid")
+        if media_name != "application/json":
+            return tuple(fields), SirenMediaType.validate(media_name) if media_name else None
         schema = media.get("schema", {}) if isinstance(media, dict) else {}
         if content and not isinstance(schema, dict):
             raise ModwireSirenError("OpenAPI request body schema is required")
@@ -117,5 +132,9 @@ class OpenApiOperationCompiler(BaseState):
         for name, value in properties.items():
             if not isinstance(name, str) or not isinstance(value, dict):
                 raise ModwireSirenError("OpenAPI JSON request body property is invalid")
-            fields.append(self.projection.field(name, value))
+            try:
+                fields.append(self.projection.field(name, value))
+            except ModwireSirenError:
+                if not self.projection.delegated(value):
+                    raise
         return tuple(fields), SirenMediaType.validate("application/json") if content else None
