@@ -125,7 +125,9 @@ except ModwireSirenError:
 Required and nullable query or JSON-body controls compile as ordinary standard Siren fields;
 their validation remains server-enforced because official Siren does not define `required` or
 `nullable` field members. UUIDs, flat primitive arrays, repeated query parameters, scalar enums,
-and unambiguous scalar compositions are also supported. Header and cookie parameters, non-JSON
-bodies, objects, nested arrays, ambiguous compositions, unsupported string formats, and `HEAD`,
-`OPTIONS`, or `TRACE` operations still fail during `siren(openapi)`. This lets consumers reject
-unsupported contracts before deployment rather than receiving a partial Siren response.
+and unambiguous scalar compositions are also supported. Structured values, header and cookie
+parameters, and a sole non-JSON request media type are delegated to the API contract and client
+transport rather than emitted as non-standard Siren fields. Multiple non-JSON media types,
+ambiguous compositions, unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations
+still fail during `siren(openapi)`. This lets consumers reject unsupported contracts before
+deployment rather than receiving a partial Siren response.

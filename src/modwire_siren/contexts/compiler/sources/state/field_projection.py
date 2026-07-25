@@ -9,6 +9,27 @@ from .components import ComponentResolver
 class OpenApiFieldProjection(BaseState):
     components: ComponentResolver
 
+    def delegated(self, schema: dict[str, Any]) -> bool:
+        definition = self.components.schema(schema)
+        schema_type = definition.get("type")
+        if schema_type == "object":
+            return True
+        if schema_type == "array":
+            items = definition.get("items")
+            if not isinstance(items, dict):
+                return False
+            item_type = self.components.schema(items).get("type")
+            return item_type in {"array", "object"} or self.delegated(items)
+        if isinstance(schema_type, list) and set(schema_type).issubset({"object", "null"}):
+            return "object" in schema_type
+        for keyword in ("allOf", "anyOf", "oneOf"):
+            variants = definition.get(keyword)
+            if variants is not None:
+                return isinstance(variants, list) and bool(variants) and all(
+                    isinstance(variant, dict) and self.delegated(variant) for variant in variants
+                )
+        return False
+
     def field(self, name: str, schema: dict[str, Any]) -> Field:
         definition = self.definition(name, schema)
         values = self.values(name, definition)
