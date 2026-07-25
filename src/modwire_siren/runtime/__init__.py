@@ -1,3 +1,4 @@
+from .compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
 from .contracts import Contract
 from .engine import SirenEngine
 from .errors import SirenCompilationError, SirenProjectionError
@@ -7,6 +8,8 @@ from .request import SirenContext
 __all__ = [
     "Contract",
     "SirenApi",
+    "SirenCompatibilityFinding",
+    "SirenCompatibilityReport",
     "SirenCompilationError",
     "SirenContext",
     "SirenEngine",

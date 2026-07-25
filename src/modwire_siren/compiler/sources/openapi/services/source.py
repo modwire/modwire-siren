@@ -3,16 +3,32 @@ from typing import Any
 
 from wireup import injectable
 
-from .....runtime import SirenApi
+from .....runtime import SirenApi, SirenCompatibilityFinding
 from ....assembly.state import SirenBuilder
 from ...contracts import SirenSource
-from ..state import ComponentResolver, RouteCatalog
+from ..state import ComponentResolver, OpenApiCompatibilityInspection, RouteCatalog
 from ..state.compiler import OpenApiOperationCompiler
 
 
 @injectable(as_type=SirenSource)
 @dataclass(frozen=True)
 class OpenApiSource(SirenSource):
+    def audit(self, schema: dict[str, Any]) -> tuple[SirenCompatibilityFinding, ...]:
+        paths = schema.get("paths")
+        if not isinstance(paths, dict):
+            return (
+                SirenCompatibilityFinding(
+                    "#/paths",
+                    "route",
+                    "OpenAPI schema requires an object-valued paths field",
+                    "Use an object-valued paths field.",
+                ),
+            )
+        return OpenApiCompatibilityInspection(
+            ComponentResolver(schema.get("components", {})),
+            RouteCatalog(paths),
+        ).inspect()
+
     def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
         paths = schema.get("paths")
         if not isinstance(paths, dict):

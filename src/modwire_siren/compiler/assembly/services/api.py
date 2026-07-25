@@ -4,7 +4,7 @@ from typing import Any
 
 from wireup import injectable
 
-from ....runtime import SirenApi
+from ....runtime import SirenApi, SirenCompatibilityReport
 from ...sources import SirenSource
 from ..contracts import SirenApiAssembler
 
@@ -19,3 +19,8 @@ class SirenApiService:
 
     def build(self, schema: dict[str, Any], root_path: str = "/") -> SirenApi:
         return self.assembler.assemble(tuple(source.load(schema, root_path) for source in self.sources))
+
+    def audit(self, schema: dict[str, Any]) -> SirenCompatibilityReport:
+        findings = tuple(finding for source in self.sources for finding in source.audit(schema))
+        ordered = sorted(findings, key=lambda finding: (finding.location, finding.category))
+        return SirenCompatibilityReport(tuple(ordered))

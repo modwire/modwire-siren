@@ -26,6 +26,34 @@ class TestWiring:
         assert result.returncode != 0
         assert "containers belong only in wiring.py" in result.stdout
 
+    def test_service_check_rejects_a_collaborator_passed_through_a_service_method(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        service = workspace / "src/modwire_siren/compiler/assembly/services/api.py"
+        service.write_text(
+            service.read_text()
+            + "\n    def rebuild(self, assembler: SirenApiAssembler) -> SirenApi:\n"
+            + "        return assembler.assemble(())\n"
+        )
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "SirenApiService.rebuild receives collaborator SirenApiAssembler as a method parameter" in result.stdout
+
+    def test_service_check_rejects_direct_construction_of_an_injectable_collaborator(self, tmp_path: Path):
+        workspace = self.workspace(tmp_path)
+        service = workspace / "src/modwire_siren/runtime/routing/services/href.py"
+        service.write_text(
+            service.read_text()
+            + "\n    def resolver(self) -> None:\n"
+            + "        SirenDefaultResourceResolver()\n"
+        )
+
+        result = self.command(workspace)
+
+        assert result.returncode != 0
+        assert "SirenDefaultHrefService constructs injectable SirenDefaultResourceResolver" in result.stdout
+
     def test_service_check_resolves_every_public_composition_entry_point(self):
         result = self.command(Path(__file__).parents[1])
 

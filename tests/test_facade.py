@@ -7,6 +7,8 @@ from openapi_documents import SCHEMA
 import modwire_siren
 from modwire_siren import (
     SirenAction,
+    SirenCompatibilityFinding,
+    SirenCompatibilityReport,
     SirenCompilationError,
     SirenContext,
     SirenDocument,
@@ -16,6 +18,7 @@ from modwire_siren import (
     SirenFieldValue,
     SirenLink,
     SirenProjectionError,
+    audit,
     siren,
 )
 
@@ -35,6 +38,8 @@ class TestFacade:
     def test_public_facade_exports_siren_contracts_and_composition_entry_points(self):
         assert modwire_siren.__all__ == [
             "SirenAction",
+            "SirenCompatibilityFinding",
+            "SirenCompatibilityReport",
             "SirenCompilationError",
             "SirenContext",
             "SirenDocument",
@@ -44,10 +49,13 @@ class TestFacade:
             "SirenFieldValue",
             "SirenLink",
             "SirenProjectionError",
+            "audit",
             "siren",
         ]
         assert (
             SirenAction,
+            SirenCompatibilityFinding,
+            SirenCompatibilityReport,
             SirenCompilationError,
             SirenDocument,
             SirenEmbeddedLink,
@@ -56,8 +64,11 @@ class TestFacade:
             SirenFieldValue,
             SirenLink,
             SirenProjectionError,
+            audit,
         ) == (
             modwire_siren.SirenAction,
+            modwire_siren.SirenCompatibilityFinding,
+            modwire_siren.SirenCompatibilityReport,
             modwire_siren.SirenCompilationError,
             modwire_siren.SirenDocument,
             modwire_siren.SirenEmbeddedLink,
@@ -66,12 +77,14 @@ class TestFacade:
             modwire_siren.SirenFieldValue,
             modwire_siren.SirenLink,
             modwire_siren.SirenProjectionError,
+            modwire_siren.audit,
         )
         parameters = signature(siren).parameters
         assert tuple(parameters) == ("openapi", "root_path")
         assert parameters["openapi"].kind is Parameter.POSITIONAL_OR_KEYWORD
         assert parameters["root_path"].kind is Parameter.KEYWORD_ONLY
         assert parameters["root_path"].default == "/"
+        assert tuple(signature(audit).parameters) == ("openapi",)
 
 
     def test_public_facade_uses_an_explicit_mounted_root_path(self):
