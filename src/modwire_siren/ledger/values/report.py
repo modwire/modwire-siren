@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..evidence.values import SirenBddFeature
+from .feature import SirenBddFeature
 from .finding import SirenFinding
 
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ...specification.values import SirenRequirement
+from ...conformance.specification.values import SirenRequirement
 
 
 @dataclass(frozen=True)

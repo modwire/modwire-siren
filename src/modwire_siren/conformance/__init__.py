@@ -1,5 +1,1 @@
-"""Provide development-time Siren conformance tooling."""
-
-from .ledger import SirenConformanceService
-
-__all__ = ["SirenConformanceService"]
+"""Provide Siren specification and implementation conformance inputs."""

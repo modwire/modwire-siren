@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ...implementation.values import SirenCapability
-from ...specification.values import SirenRequirement
+from ...conformance.implementation.values import SirenCapability
+from ...conformance.specification.values import SirenRequirement
 from ..values import SirenConformanceReport
 
 

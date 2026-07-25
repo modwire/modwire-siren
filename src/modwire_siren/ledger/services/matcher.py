@@ -4,8 +4,8 @@ from typing import Any
 
 from wireup import injectable
 
-from ...implementation.values import SirenCapability
-from ...specification.values import SirenRequirement
+from ...conformance.implementation.values import SirenCapability
+from ...conformance.specification.values import SirenRequirement
 from ..contracts import SirenRequirementMatcher
 from ..values import SirenConformanceReport, SirenFinding
 

@@ -3,10 +3,9 @@ from pathlib import Path
 
 from wireup import injectable
 
-from ...implementation.contracts import SirenImplementation
-from ...specification.contracts import SirenSpecification
-from ..contracts import SirenRequirementMatcher
-from ..evidence.contracts import SirenBddEvidenceReader
+from ...conformance.implementation.contracts import SirenImplementation
+from ...conformance.specification.contracts import SirenSpecification
+from ..contracts import SirenBddEvidenceReader, SirenRequirementMatcher
 from ..values import SirenConformanceReport
 from .renderer import SirenLedgerRenderer
 from .verdict import SirenLedgerVerdict
