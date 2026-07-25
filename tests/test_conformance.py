@@ -32,7 +32,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
                 "type": "application/x-www-form-urlencoded",
-                "fields": [{"name": "page", "type": "number"}],
+                "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
         ]
 
@@ -53,7 +53,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "text"}],
+                "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }
         ]
 
@@ -86,7 +86,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
                 "type": "application/x-www-form-urlencoded",
-                "fields": [{"name": "page", "type": "number"}],
+                "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
         ]
 
@@ -107,7 +107,7 @@ class TestConformance:
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
                 "type": "application/json",
-                "fields": [{"name": "title", "type": "text"}],
+                "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }
         ]
 
