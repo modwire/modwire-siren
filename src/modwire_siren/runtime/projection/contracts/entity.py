@@ -18,4 +18,4 @@ class SirenEntityDocumentService(ABC):
         context: SirenContext,
         rel: tuple[SirenRelation, ...],
     ) -> SirenDocument | SirenEmbeddedRepresentation:
-        pass
+        raise NotImplementedError

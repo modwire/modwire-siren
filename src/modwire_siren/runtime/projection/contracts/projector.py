@@ -8,8 +8,8 @@ from ..values import SirenProjectionRequest
 class SirenScopeProjector(ABC):
     @abstractmethod
     def supports(self, scope: SirenScope) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
-        pass
+        raise NotImplementedError

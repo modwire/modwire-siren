@@ -18,7 +18,7 @@ class SirenActionDocumentService(ABC):
         context: SirenContext,
         value: Mapping[str, Any],
     ) -> list[SirenAction]:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def action(
@@ -29,4 +29,4 @@ class SirenActionDocumentService(ABC):
         value: Mapping[str, Any],
         include_query: bool = True,
     ) -> SirenAction:
-        pass
+        raise NotImplementedError

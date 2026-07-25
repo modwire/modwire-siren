@@ -7,4 +7,4 @@ from ...request import SirenContext
 class SirenResourceResolver(ABC):
     @abstractmethod
     def resolve(self, api: SirenApi, context: SirenContext) -> SirenResource:
-        pass
+        raise NotImplementedError

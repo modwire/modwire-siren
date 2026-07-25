@@ -7,4 +7,4 @@ from ...request import SirenContext
 class SirenCapabilityValidator(ABC):
     @abstractmethod
     def validate(self, resource: SirenResource, context: SirenContext) -> None:
-        pass
+        raise NotImplementedError

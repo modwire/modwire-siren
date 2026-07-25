@@ -17,4 +17,4 @@ class SirenHrefService(ABC):
         value: Mapping[str, Any] | None = None,
         include_query: bool = True,
     ) -> SirenUri:
-        pass
+        raise NotImplementedError
