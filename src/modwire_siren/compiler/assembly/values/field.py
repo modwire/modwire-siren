@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ....runtime.vocabulary import SirenFieldType
+from ....vocabulary import SirenFieldType
 
 
 @dataclass(frozen=True)

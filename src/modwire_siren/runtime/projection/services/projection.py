@@ -3,12 +3,12 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from ....vocabulary import SirenScope
 from ...capabilities import SirenCapabilityValidator
 from ...document import SirenDocument
 from ...graph import SirenApi
 from ...request import SirenContext
 from ...routing import SirenResourceResolver
-from ...vocabulary import SirenScope
 from ..contracts import SirenScopeProjector
 from ..values import SirenProjectionRequest
 

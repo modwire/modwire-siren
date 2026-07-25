@@ -1,5 +1,5 @@
+from ...vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 from ..contracts import Contract
-from ..vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 from .field import SirenField
 from .route import SirenRoute
 

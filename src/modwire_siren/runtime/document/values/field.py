@@ -1,7 +1,7 @@
 from pydantic import StrictFloat, StrictInt
 
+from ....vocabulary import SirenFieldType
 from ...contracts import Contract
-from ...vocabulary import SirenFieldType
 from .field_value import SirenFieldValue
 
 

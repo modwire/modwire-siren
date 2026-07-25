@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic_core import CoreSchema, core_schema
 
-from ....siren_schema import SirenSchemaReader
+from ...siren_schema import SirenSchemaReader
 
 
 class SirenMediaType(str):

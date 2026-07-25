@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from ....vocabulary import SirenScope
 from ...document import SirenAction
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
-from ...vocabulary import SirenScope
 
 
 class SirenActionDocumentService(ABC):

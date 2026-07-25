@@ -3,8 +3,8 @@ from typing import ClassVar
 from pydantic import Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
+from ....vocabulary import SirenActionMethod, SirenMediaType, SirenUri
 from ...contracts import Contract
-from ...vocabulary import SirenActionMethod, SirenMediaType, SirenUri
 from .field import SirenField
 
 

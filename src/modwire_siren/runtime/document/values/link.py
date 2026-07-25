@@ -1,7 +1,7 @@
 from pydantic import Field
 
+from ....vocabulary import SirenMediaType, SirenRelation, SirenUri
 from ...contracts import Contract
-from ...vocabulary import SirenMediaType, SirenRelation, SirenUri
 
 
 class SirenLink(Contract):

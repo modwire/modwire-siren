@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from ....vocabulary import SirenRelation, SirenScope
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
-from ...vocabulary import SirenRelation, SirenScope
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 

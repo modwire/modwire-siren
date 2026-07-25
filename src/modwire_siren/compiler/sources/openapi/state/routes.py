@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from .....runtime.vocabulary import SirenScope
+from .....vocabulary import SirenScope
 from ..values import Resource
 
 

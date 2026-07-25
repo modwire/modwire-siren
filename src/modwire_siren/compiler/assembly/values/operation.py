@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ....runtime.vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
+from ....vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 
 
 @dataclass(frozen=True)

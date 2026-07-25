@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from ....vocabulary import SirenUri
 from ...graph import SirenResource
 from ...request import SirenContext
-from ...vocabulary import SirenUri
 
 
 class SirenHrefService(ABC):

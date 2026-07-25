@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from wireup import injectable
 
 from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
-from ....runtime.vocabulary import SirenScope
+from ....vocabulary import SirenScope
 from ..state import SirenAssembly
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 

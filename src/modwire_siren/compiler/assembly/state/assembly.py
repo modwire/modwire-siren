@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
+from ....vocabulary import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .....runtime import SirenCompatibilityFinding
-from .....runtime.vocabulary import SirenActionMethod, SirenHttpMethod
+from .....vocabulary import SirenActionMethod, SirenHttpMethod
 from .components import ComponentResolver
 from .routes import RouteCatalog
 

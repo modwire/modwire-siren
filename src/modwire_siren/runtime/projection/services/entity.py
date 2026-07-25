@@ -4,11 +4,11 @@ from typing import Any
 
 from wireup import injectable
 
+from ....vocabulary import SirenRelation, SirenScope
 from ...document import SirenDocument, SirenEmbeddedRepresentation, SirenLink
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
-from ...vocabulary import SirenRelation, SirenScope
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService
 
 

@@ -1,5 +1,5 @@
+from ...vocabulary import SirenFieldType
 from ..contracts import Contract
-from ..vocabulary import SirenFieldType
 
 
 class SirenField(Contract):

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from ....vocabulary import SirenScope
 from ...document import SirenDocument
-from ...vocabulary import SirenScope
 from ..contracts import SirenEntityDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 

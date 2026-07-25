@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
+from ....vocabulary import SirenHttpMethod, SirenScope
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
-from ...vocabulary import SirenHttpMethod, SirenScope
 from ..contracts import SirenActionDocumentService, SirenScopeProjector
 from ..values import SirenProjectionRequest
 

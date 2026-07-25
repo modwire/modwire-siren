@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
+from ....vocabulary import SirenScope
 from ...document import SirenDocument
-from ...vocabulary import SirenScope
 from ..values import SirenProjectionRequest
 
 
