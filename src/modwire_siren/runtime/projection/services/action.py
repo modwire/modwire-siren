@@ -4,9 +4,11 @@ from typing import Any
 
 from wireup import injectable
 
+from ...document import SirenAction, SirenField
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
 from ...routing import SirenHrefService
+from ...vocabulary import SirenScope
 from ..contracts import SirenActionDocumentService
 
 
@@ -19,11 +21,11 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         self,
         api: SirenApi,
         resource: SirenResource,
-        scope: str,
+        scope: SirenScope,
         context: SirenContext,
         value: Mapping[str, Any],
-    ) -> list[dict[str, Any]]:
-        names = resource.collection_operations if scope == "collection" else resource.entity_operations
+    ) -> list[SirenAction]:
+        names = resource.collection_operations if scope == SirenScope.COLLECTION else resource.entity_operations
         operations = {operation.name: operation for operation in api.operations}
         return [
             self.action(operations[name], context, resource, value)
@@ -38,17 +40,11 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
         resource: SirenResource | None,
         value: Mapping[str, Any],
         include_query: bool = True,
-    ) -> dict[str, Any]:
-        action: dict[str, Any] = {
-            "name": operation.name,
-            "href": self.hrefs.href(operation.route.path, context, resource, value, include_query),
-            "method": operation.method,
-        }
-        if operation.media_type is not None:
-            action["type"] = operation.media_type
-        if operation.fields:
-            action["fields"] = [
-                {"name": field.name, "type": field.definition.get("type", "text"), "required": field.required}
-                for field in operation.fields
-            ]
-        return action
+    ) -> SirenAction:
+        return SirenAction(
+            name=operation.name,
+            href=self.hrefs.href(operation.route.path, context, resource, value, include_query),
+            method=operation.method,
+            type=operation.media_type,
+            fields=tuple(SirenField(name=field.name, type=field.type) for field in operation.fields) or None,
+        )

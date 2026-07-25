@@ -20,6 +20,8 @@ classifiers = [
 ]
 
 dependencies = [
+    "gherkin-official>=29",
+    "jsonschema[format-nongpl]>=4.26",
     "openapi-spec-validator>=0.9,<1",
     "pydantic>=2.12",
     "wireup>=2.12.0",
@@ -31,8 +33,10 @@ dev = [
     "django>=5.1,<6.1",
     "django-ninja-extra>=0.30,<1",
     "fastapi>=0.115,<1",
+    "modwire-cli>=1.2.0",
     "packaging>=25",
     "pytest>=9",
+    "pytest-bdd>=8.1,<9",
     "ruff>=0.14",
     "twine>=6",
 ]
@@ -46,6 +50,7 @@ dev = [
     "modwire-cli>=1.2.0",
     "packaging>=25",
     "pytest>=9",
+    "pytest-bdd>=8.1,<9",
     "ruff>=0.14",
     "twine>=6",
 ]
@@ -72,6 +77,7 @@ include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.to
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
 filterwarnings = ["error"]
+xfail_strict = true
 
 [tool.ruff]
 line-length = 120

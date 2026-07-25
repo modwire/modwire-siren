@@ -1,9 +1,9 @@
 from collections.abc import Mapping
-from typing import Literal
 
 from pydantic import Field, JsonValue, model_validator
 
 from ..contracts import Contract
+from ..vocabulary import SirenScope
 
 
 class SirenContext(Contract):
@@ -27,7 +27,7 @@ class SirenContext(Contract):
     """
 
     base_url: str
-    scope: Literal["root", "collection", "entity"] = "entity"
+    scope: SirenScope = SirenScope.ENTITY
     resource: str | None = None
     value: Mapping[str, JsonValue] = Field(default_factory=dict)
     items: tuple[Mapping[str, JsonValue], ...] = ()
@@ -37,9 +37,9 @@ class SirenContext(Contract):
 
     @model_validator(mode="after")
     def validate_scope(self) -> "SirenContext":
-        if self.scope == "root" and self.resource is not None:
+        if self.scope == SirenScope.ROOT and self.resource is not None:
             raise ValueError("Siren root context cannot declare a resource")
-        if self.scope != "root" and self.resource is None:
+        if self.scope != SirenScope.ROOT and self.resource is None:
             raise ValueError(f"Siren {self.scope} context requires a resource")
         if any(isinstance(value, (dict, list)) for _, value in self.query):
             raise ValueError("Siren query values must be scalar")

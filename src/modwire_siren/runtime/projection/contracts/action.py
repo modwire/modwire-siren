@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from ...document import SirenAction
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenScope
 
 
 class SirenActionDocumentService(ABC):
@@ -12,10 +14,10 @@ class SirenActionDocumentService(ABC):
         self,
         api: SirenApi,
         resource: SirenResource,
-        scope: str,
+        scope: SirenScope,
         context: SirenContext,
         value: Mapping[str, Any],
-    ) -> list[dict[str, Any]]:
+    ) -> list[SirenAction]:
         pass
 
     @abstractmethod
@@ -26,5 +28,5 @@ class SirenActionDocumentService(ABC):
         resource: SirenResource | None,
         value: Mapping[str, Any],
         include_query: bool = True,
-    ) -> dict[str, Any]:
+    ) -> SirenAction:
         pass

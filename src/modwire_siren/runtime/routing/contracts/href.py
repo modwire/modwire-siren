@@ -4,6 +4,7 @@ from typing import Any
 
 from ...graph import SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenUri
 
 
 class SirenHrefService(ABC):
@@ -15,5 +16,5 @@ class SirenHrefService(ABC):
         resource: SirenResource | None,
         value: Mapping[str, Any] | None = None,
         include_query: bool = True,
-    ) -> str:
+    ) -> SirenUri:
         pass

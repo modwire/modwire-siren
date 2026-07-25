@@ -4,7 +4,7 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..runtime import SirenEngine
+from ..runtime import SirenCompilationError, SirenEngine
 from ..wiring import SirenApplicationContainer
 
 
@@ -35,7 +35,6 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "required": ["title"],
                                     "properties": {"title": {"type": "string"}},
                                 }
                             }
@@ -57,7 +56,9 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
         )
     )
 
-    assert document["actions"][0] == {
+    payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+    assert payload["actions"][0] == {
         "name": "get_record",
         "href": "https://api.example.com/records/42",
         "method": "GET",
@@ -71,6 +72,25 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     needs a unique `operationId`. Local `#/components/parameters`, `#/components/requestBodies`,
     and `#/components/schemas` references are resolved; external and path-item references are not.
 
+    #### Action field support matrix
+
+    Path parameters substitute into action URLs and never become fields. Optional query parameters
+    and properties of an `application/json` object body become fields:
+
+    | OpenAPI schema | Siren field type |
+    | --- | --- |
+    | `string` | `text` |
+    | formatted `string` | matching Siren field type |
+    | `integer` or `number` | `number` |
+    | `boolean` | `checkbox` |
+
+    `email`, `uri`, `date`, `date-time`, and `time` map to `email`, `url`, `date`,
+    `datetime-local`, and `time`, respectively.
+
+    Required query or JSON body controls, header and cookie parameters, non-JSON bodies, arrays,
+    objects, nulls, composed schemas, enums, unsupported string formats, and `HEAD`, `OPTIONS`,
+    or `TRACE` operations are rejected during this startup call.
+
     #### Framework integration is one startup call
 
     Give the framework-generated document directly to `siren()` after routes are registered:
@@ -80,22 +100,28 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
     ```
 
-    Supply request-specific data and allowed operation IDs in `SirenContext`, then return
-    `engine.project(context)` as `application/vnd.siren+json`. Set `root_path` when the Siren
-    entry point is mounted away from `/`.
+    #### HTTP response contract
+
+    `engine.project(context)` returns a `SirenDocument`, not a dictionary. Serialize it with
+    `document.model_dump(by_alias=True, mode="json", exclude_none=True)` and send that payload as
+    `application/vnd.siren+json`. The document contains only official Siren members; action fields
+    never include the non-standard `required` member.
+
+    Set `root_path` when the Siren entry point is mounted away from `/`.
     """
 
-    if not isinstance(openapi, Mapping):
-        raise TypeError("OpenAPI document must be a mapping")
-    if not isinstance(root_path, str) or not root_path.startswith("/"):
-        raise ValueError("Siren root path must start with '/'")
     try:
+        if not isinstance(openapi, Mapping):
+            raise TypeError("OpenAPI document must be a mapping")
+        if not isinstance(root_path, str) or not root_path.startswith("/"):
+            raise ValueError("Siren root path must start with '/'")
         document = json.loads(json.dumps(openapi))
         validate(document)
-    except RecursionError as error:
-        raise ValueError("OpenAPI document is invalid: cyclic reference") from error
     except Exception as error:
-        raise ValueError(f"OpenAPI document is invalid: {error}") from error
-    container = SirenApplicationContainer()
-    api = container.api_service().build(document, root_path)
-    return container.engine_factory().create(api)
+        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error
+    try:
+        application = SirenApplicationContainer().application()
+        api = application.api_service().build(document, root_path)
+        return application.engine_factory().create(api)
+    except Exception as error:
+        raise SirenCompilationError("Invalid or unsupported OpenAPI contract") from error

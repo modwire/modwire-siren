@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
+from ...document import SirenDocument, SirenEmbeddedRepresentation
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenRelation
 
 
 class SirenEntityDocumentService(ABC):
@@ -14,6 +16,6 @@ class SirenEntityDocumentService(ABC):
         resource: SirenResource,
         value: Mapping[str, Any],
         context: SirenContext,
-        rel: tuple[str, ...],
-    ) -> dict[str, Any]:
+        rel: tuple[SirenRelation, ...],
+    ) -> SirenDocument | SirenEmbeddedRepresentation:
         pass

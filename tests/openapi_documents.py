@@ -14,7 +14,6 @@ SCHEMA = {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "required": ["title"],
                                 "properties": {"title": {"type": "string"}},
                             }
                         }
@@ -56,7 +55,6 @@ REFERENCED_SCHEMA = {
         },
         "requestBodies": {
             "RenameRecord": {
-                "required": True,
                 "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RenameRecord"}}},
             }
         },
@@ -64,7 +62,6 @@ REFERENCED_SCHEMA = {
             "PageSize": {"type": "integer"},
             "RenameRecord": {
                 "type": "object",
-                "required": ["title"],
                 "properties": {"title": {"$ref": "#/components/schemas/Title", "type": "string"}},
             },
             "Title": {"type": "integer"},
@@ -123,7 +120,7 @@ PARAMETER_MEDIA_SCHEMA = {
             "get": {
                 "operationId": "list_records",
                 "parameters": [
-                    {"name": "page", "in": "query", "required": True, "schema": {"type": "string"}},
+                    {"name": "page", "in": "query", "required": False, "schema": {"type": "string"}},
                 ],
                 "responses": {"200": {"description": "OK"}},
             },
@@ -138,7 +135,6 @@ PARAMETER_MEDIA_SCHEMA = {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "required": ["title"],
                                 "properties": {"title": {"type": "string"}},
                             }
                         },

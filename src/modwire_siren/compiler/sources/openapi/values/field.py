@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Any
+
+from .....runtime.vocabulary import SirenFieldType
 
 
 @dataclass(frozen=True)
 class Field:
     name: str
-    definition: dict[str, Any]
-    required: bool
+    type: SirenFieldType

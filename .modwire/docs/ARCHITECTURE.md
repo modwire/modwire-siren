@@ -1,23 +1,13 @@
 # Architecture
 
-`modwire-siren` has three bounded contexts and a technical package entry:
+`api`, `compiler`, `runtime`, and `conformance` respectively compose the public callable, compile OpenAPI,
+project Siren documents, and assess conformance. `siren_schema` is dependency-free shared infrastructure for the
+pinned schema, provenance, and immutable reader. Root `__init__.py` exports only.
 
-- `api` composes the public `siren` callable.
-- `compiler` turns OpenAPI into an immutable Siren contract.
-- `runtime` owns contracts and projects them with request context.
-- `wiring.py` is technical composition plumbing, not a bounded context. It discovers registrations across
-  bounded contexts and assembles them without becoming part of their domain logic.
-- Root `__init__.py` is exports only; it is the technical package entry.
+Contexts are feature packages: roots expose only public types and composition entry points; a capability's
+contracts, values, and services stay beneath that capability. `.modwire/architecture.yaml` is the authority for
+allowed dependencies; `make modwire` enforces it for source, tests, and scripts.
 
-`.modwire/architecture.yaml` makes those dependencies explicit. `make modwire` scopes the map to the source package; architectural rules belong in boundary rules, not an aspirational file-shape baseline.
-
-Each bounded context uses feature subpackages with minimal `__init__.py` APIs. A context root contains only
-its public types and composition entry points. When a capability has collaborating contracts, values, or
-services, place them under that capability rather than adding a flat sibling module to the context root.
-
-Only `wiring.py` may scan registrations across contexts. The public `api` facade is its composition entry point;
-all other bounded-context code receives dependencies and never creates or queries a container.
-
-Every injectable belongs in its feature's `services` package, whose `__init__.py` re-exports every decorated
-registration beneath it. `wiring.py` discovers only `**.services`; projectors and factories are services for
-registration purposes.
+`wiring.py` alone scans registrations across contexts and builds containers. It discovers only `**.services`;
+each feature service package re-exports its decorated injectables. The API facade and conformance command are the
+composition entry points; other code receives dependencies rather than creating or querying containers.

@@ -4,6 +4,7 @@ from typing import Any
 
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
+from ...vocabulary import SirenRelation
 
 
 @dataclass(frozen=True)
@@ -12,4 +13,4 @@ class SirenProjectionRequest:
     context: SirenContext
     resource: SirenResource | None
     value: Mapping[str, Any]
-    rel: tuple[str, ...] = ()
+    rel: tuple[SirenRelation, ...] = ()

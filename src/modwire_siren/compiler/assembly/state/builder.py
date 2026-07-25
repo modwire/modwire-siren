@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from pydantic import JsonValue
-
-from ....runtime import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from ....runtime.vocabulary import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 
@@ -36,7 +35,13 @@ class SirenBuilder:
         return self
 
     def add_operation(
-        self, resource: str | None, scope: str, name: str, method: str, path: str, media_type: str | None = None
+        self,
+        resource: str | None,
+        scope: SirenScope,
+        name: str,
+        method: SirenHttpMethod,
+        path: str,
+        media_type: SirenMediaType | None = None,
     ) -> "SirenBuilder":
         self._operations.append(OperationDraft(resource, scope, name, method, path, media_type))
         return self
@@ -45,10 +50,8 @@ class SirenBuilder:
         self._root_operations.append(name)
         return self
 
-    def add_field(
-        self, operation: str, name: str, definition: Mapping[str, JsonValue], required: bool = False
-    ) -> "SirenBuilder":
-        self._fields.append(FieldDraft(operation, name, definition, required))
+    def add_field(self, operation: str, name: str, type: SirenFieldType) -> "SirenBuilder":
+        self._fields.append(FieldDraft(operation, name, type))
         return self
 
     def build(self) -> SirenApi:
@@ -71,8 +74,8 @@ class SirenBuilder:
                     identifier=resource.identifier,
                     collection=SirenRoute(path=resource.collection_path),
                     entity=SirenRoute(path=resource.entity_path) if resource.entity_path else None,
-                    collection_operations=resource_operations.get((resource.reference, "collection"), ()),
-                    entity_operations=resource_operations.get((resource.reference, "entity"), ()),
+                    collection_operations=resource_operations.get((resource.reference, SirenScope.COLLECTION), ()),
+                    entity_operations=resource_operations.get((resource.reference, SirenScope.ENTITY), ()),
                 )
                 for resource in resources.values()
             ),
@@ -85,7 +88,7 @@ class SirenBuilder:
                     route=SirenRoute(path=operation.path),
                     media_type=operation.media_type,
                     fields=tuple(
-                        SirenField(name=item.name, definition=item.definition, required=item.required)
+                        SirenField(name=item.name, type=item.type)
                         for item in fields.get(operation.name, ())
                     ),
                 )
@@ -106,9 +109,7 @@ class SirenBuilder:
         for operation in self._operations:
             if operation.name in index:
                 raise ValueError(f"Siren operation already exists: {operation.name}")
-            if operation.scope not in {"root", "collection", "entity"}:
-                raise ValueError(f"Siren operation {operation.name!r} has invalid scope {operation.scope!r}")
-            if operation.scope == "root":
+            if operation.scope == SirenScope.ROOT:
                 if operation.resource is not None:
                     raise ValueError(f"Siren root operation {operation.name!r} cannot reference a resource")
             else:
@@ -123,7 +124,7 @@ class SirenBuilder:
 
     @staticmethod
     def validate_operation_path(operation: OperationDraft, resource: ResourceDraft) -> None:
-        if operation.scope == "entity":
+        if operation.scope == SirenScope.ENTITY:
             if resource.entity_path is None:
                 raise ValueError(f"Siren resource {resource.name!r} has no entity path")
             valid = operation.path == resource.entity_path or operation.path.startswith(f"{resource.entity_path}/")
@@ -156,8 +157,10 @@ class SirenBuilder:
         return {operation: tuple(fields) for operation, fields in index.items()}
 
     @staticmethod
-    def resource_operation_index(operations: Mapping[str, OperationDraft]) -> dict[tuple[str, str], tuple[str, ...]]:
-        index: dict[tuple[str, str], list[str]] = {}
+    def resource_operation_index(
+        operations: Mapping[str, OperationDraft],
+    ) -> dict[tuple[str, SirenScope], tuple[str, ...]]:
+        index: dict[tuple[str, SirenScope], list[str]] = {}
         for operation in operations.values():
             if operation.resource is not None:
                 index.setdefault((operation.resource, operation.scope), []).append(operation.name)

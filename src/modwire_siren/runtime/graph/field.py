@@ -1,11 +1,7 @@
-from collections.abc import Mapping
-
-from pydantic import Field, JsonValue
-
 from ..contracts import Contract
+from ..vocabulary import SirenFieldType
 
 
 class SirenField(Contract):
     name: str
-    definition: Mapping[str, JsonValue] = Field(default_factory=dict)
-    required: bool = False
+    type: SirenFieldType
