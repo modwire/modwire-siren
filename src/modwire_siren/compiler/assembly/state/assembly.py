@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
-from ....vocabulary import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.shared import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
+
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 

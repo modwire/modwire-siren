@@ -1,12 +1,13 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic_core import CoreSchema, PydanticCustomError, core_schema
-
-from ...siren_schema import SirenSchemaReader
 
 
 class SirenActionMethod(str):
     """Represent an official Siren action method."""
+
+    default_value: ClassVar[str] = "GET"
+    official_values: ClassVar[tuple[str, ...]] = ("DELETE", "GET", "PATCH", "POST", "PUT")
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type: object, handler: Any) -> CoreSchema:
@@ -18,11 +19,11 @@ class SirenActionMethod(str):
 
     @classmethod
     def default(cls) -> "SirenActionMethod":
-        return cls.validate(SirenSchemaReader.official().default("Action", "method"))
+        return cls.validate(cls.default_value)
 
     @classmethod
     def values(cls) -> frozenset[str]:
-        return frozenset(SirenSchemaReader.official().enum("Action", "method"))
+        return frozenset(cls.official_values)
 
     @classmethod
     def validate(cls, value: str) -> "SirenActionMethod":
@@ -32,5 +33,13 @@ class SirenActionMethod(str):
 
     @classmethod
     def schema(cls) -> dict[str, Any]:
-        document = SirenSchemaReader.official()
-        return document.thaw(document.member("Action", "method"))
+        return {
+            "default": cls.default_value,
+            "description": (
+                "An enumerated attribute mapping to a protocol method. For HTTP, these values may be GET, PUT, "
+                "POST, DELETE, or PATCH. As new methods are introduced, this list can be extended. If this "
+                "attribute is omitted, GET should be assumed."
+            ),
+            "enum": list(cls.official_values),
+            "type": "string",
+        }

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ....vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.shared import SirenHttpMethod, SirenMediaType, SirenScope
 
 
 @dataclass(frozen=True)

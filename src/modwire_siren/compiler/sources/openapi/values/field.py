@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .....vocabulary import SirenFieldType
+from modwire_siren.shared import SirenFieldType
 
 
 @dataclass(frozen=True)

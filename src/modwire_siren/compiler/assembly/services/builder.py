@@ -3,10 +3,9 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import ModwireSirenError, SirenScope
 
 from ....runtime.graph import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
-from ....vocabulary import SirenScope
 from ..state import SirenAssembly
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 

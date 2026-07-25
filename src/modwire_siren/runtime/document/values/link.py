@@ -1,8 +1,6 @@
 from pydantic import Field
 
-from modwire_siren.shared import BaseValue
-
-from ....vocabulary import SirenMediaType, SirenRelation, SirenUri
+from modwire_siren.shared import BaseValue, SirenMediaType, SirenRelation, SirenUri
 
 
 class SirenLink(BaseValue):

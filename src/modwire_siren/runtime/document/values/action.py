@@ -3,9 +3,8 @@ from typing import ClassVar
 from pydantic import Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
-from modwire_siren.shared import BaseValue, ModwireSirenError
+from modwire_siren.shared import BaseValue, ModwireSirenError, SirenActionMethod, SirenMediaType, SirenUri
 
-from ....vocabulary import SirenActionMethod, SirenMediaType, SirenUri
 from .field import SirenField
 
 

@@ -1,12 +1,33 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic_core import CoreSchema, PydanticCustomError, core_schema
-
-from ...siren_schema import SirenSchemaReader
 
 
 class SirenFieldType(str):
     """Represent an official Siren field type."""
+
+    default_value: ClassVar[str] = "text"
+    official_values: ClassVar[tuple[str, ...]] = (
+        "hidden",
+        "text",
+        "search",
+        "tel",
+        "url",
+        "email",
+        "password",
+        "datetime",
+        "date",
+        "month",
+        "week",
+        "time",
+        "datetime-local",
+        "number",
+        "range",
+        "color",
+        "checkbox",
+        "radio",
+        "file",
+    )
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type: object, handler: Any) -> CoreSchema:
@@ -18,11 +39,11 @@ class SirenFieldType(str):
 
     @classmethod
     def default(cls) -> "SirenFieldType":
-        return cls.validate(SirenSchemaReader.official().default("Field", "type"))
+        return cls.validate(cls.default_value)
 
     @classmethod
     def values(cls) -> frozenset[str]:
-        return frozenset(SirenSchemaReader.official().enum("Field", "type"))
+        return frozenset(cls.official_values)
 
     @classmethod
     def validate(cls, value: str) -> "SirenFieldType":
@@ -32,5 +53,9 @@ class SirenFieldType(str):
 
     @classmethod
     def schema(cls) -> dict[str, Any]:
-        document = SirenSchemaReader.official()
-        return document.thaw(document.member("Field", "type"))
+        return {
+            "default": cls.default_value,
+            "description": "The input type of the field. This is a subset of the input types specified by HTML5.",
+            "enum": list(cls.official_values),
+            "type": "string",
+        }

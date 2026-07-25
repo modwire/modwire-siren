@@ -1,8 +1,7 @@
 from pydantic import StrictFloat, StrictInt
 
-from modwire_siren.shared import BaseValue
+from modwire_siren.shared import BaseValue, SirenFieldType
 
-from ....vocabulary import SirenFieldType
 from .field_value import SirenFieldValue
 
 

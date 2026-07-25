@@ -1,9 +1,15 @@
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import (
+    ModwireSirenError,
+    SirenActionMethod,
+    SirenFieldType,
+    SirenHttpMethod,
+    SirenMediaType,
+    SirenScope,
+)
 
-from .....vocabulary import SirenActionMethod, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 from ....assembly.state import SirenAssembly
 from ..values import Field
 from .components import ComponentResolver

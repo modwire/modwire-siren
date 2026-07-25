@@ -4,7 +4,8 @@ from typing import Any
 
 from wireup import injectable
 
-from ....vocabulary import SirenScope
+from modwire_siren.shared import SirenScope
+
 from ...document import SirenAction, SirenField
 from ...graph import SirenApi, SirenOperation, SirenResource
 from ...request import SirenContext

@@ -2,9 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import Any
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import ModwireSirenError, SirenUri
 
-from ....vocabulary import SirenUri
 from ...graph import SirenResource
 from ...request import SirenContext
 

@@ -1,6 +1,5 @@
-from modwire_siren.shared import BaseValue
+from modwire_siren.shared import BaseValue, SirenHttpMethod, SirenMediaType, SirenScope
 
-from ....vocabulary import SirenHttpMethod, SirenMediaType, SirenScope
 from .field import SirenField
 from .route import SirenRoute
 

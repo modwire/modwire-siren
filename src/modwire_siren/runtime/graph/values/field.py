@@ -1,6 +1,4 @@
-from modwire_siren.shared import BaseValue
-
-from ....vocabulary import SirenFieldType
+from modwire_siren.shared import BaseValue, SirenFieldType
 
 
 class SirenField(BaseValue):

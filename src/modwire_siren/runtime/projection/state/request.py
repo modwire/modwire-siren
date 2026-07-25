@@ -2,7 +2,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from ....vocabulary import SirenRelation
+from modwire_siren.shared import SirenRelation
+
 from ...graph import SirenApi, SirenResource
 from ...request import SirenContext
 

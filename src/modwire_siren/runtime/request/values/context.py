@@ -2,9 +2,7 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue, model_validator
 
-from modwire_siren.shared import BaseValue, ModwireSirenError
-
-from ....vocabulary import SirenScope
+from modwire_siren.shared import BaseValue, ModwireSirenError, SirenScope
 
 
 class SirenContext(BaseValue):

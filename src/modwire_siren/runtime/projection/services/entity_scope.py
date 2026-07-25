@@ -2,9 +2,8 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import ModwireSirenError, SirenScope
 
-from ....vocabulary import SirenScope
 from ...document import SirenDocument
 from ..contracts import SirenEntityDocumentService, SirenScopeProjector
 from ..state import SirenProjectionRequest

@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from .....vocabulary import SirenActionMethod, SirenHttpMethod
+from modwire_siren.shared import SirenActionMethod, SirenHttpMethod
+
 from ....compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver
 from .routes import RouteCatalog
