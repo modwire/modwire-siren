@@ -7,7 +7,7 @@ from ....vocabulary import SirenHttpMethod, SirenScope
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
 from ..contracts import SirenActionDocumentService, SirenScopeProjector
-from ..values import SirenProjectionRequest
+from ..state import SirenProjectionRequest
 
 _PARAMETER = re.compile(r"\{([^}]+)\}")
 

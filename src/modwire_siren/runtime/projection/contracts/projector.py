@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from ....vocabulary import SirenScope
 from ...document import SirenDocument
-from ..values import SirenProjectionRequest
+from ..state import SirenProjectionRequest
 
 
 class SirenScopeProjector(ABC):

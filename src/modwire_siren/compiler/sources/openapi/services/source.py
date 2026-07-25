@@ -3,9 +3,10 @@ from typing import Any
 
 from wireup import injectable
 
-from .....runtime import SirenApi, SirenCompatibilityFinding
+from .....runtime.graph import SirenApi
 from ....assembly.services import SirenBuilder
 from ....assembly.state import SirenAssembly
+from ....compatibility import SirenCompatibilityFinding
 from ...contracts import SirenSource
 from ..state import ComponentResolver, OpenApiCompatibilityInspection, RouteCatalog
 from ..state.compiler import OpenApiOperationCompiler

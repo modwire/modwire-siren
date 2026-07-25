@@ -6,7 +6,7 @@ from ....vocabulary import SirenRelation, SirenScope
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService
 from ..contracts import SirenActionDocumentService, SirenEntityDocumentService, SirenScopeProjector
-from ..values import SirenProjectionRequest
+from ..state import SirenProjectionRequest
 
 
 @injectable(as_type=SirenScopeProjector, qualifier=SirenScope.COLLECTION)

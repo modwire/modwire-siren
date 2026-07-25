@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from ....runtime import SirenApi, SirenOperation, SirenResource, SirenRoot
+from ....runtime.graph import SirenApi, SirenOperation, SirenResource, SirenRoot
 from ..contracts import SirenApiAssembler
 
 

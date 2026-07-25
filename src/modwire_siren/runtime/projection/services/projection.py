@@ -10,7 +10,7 @@ from ...graph import SirenApi
 from ...request import SirenContext
 from ...routing import SirenResourceResolver
 from ..contracts import SirenScopeProjector
-from ..values import SirenProjectionRequest
+from ..state import SirenProjectionRequest
 
 
 @injectable

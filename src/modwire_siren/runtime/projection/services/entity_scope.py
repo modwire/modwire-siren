@@ -5,7 +5,7 @@ from wireup import injectable
 from ....vocabulary import SirenScope
 from ...document import SirenDocument
 from ..contracts import SirenEntityDocumentService, SirenScopeProjector
-from ..values import SirenProjectionRequest
+from ..state import SirenProjectionRequest
 
 
 @injectable(as_type=SirenScopeProjector, qualifier=SirenScope.ENTITY)

@@ -1,7 +1,7 @@
 from pydantic import Field, model_validator
 
-from ...vocabulary import SirenScope
-from ..contracts import Contract
+from ....vocabulary import SirenScope
+from ...contracts import Contract
 from .operation import SirenOperation
 from .resource import SirenResource
 from .root import SirenRoot

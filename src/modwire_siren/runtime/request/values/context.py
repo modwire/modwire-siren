@@ -2,8 +2,8 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue, model_validator
 
-from ...vocabulary import SirenScope
-from ..contracts import Contract
+from ....vocabulary import SirenScope
+from ...contracts import Contract
 
 
 class SirenContext(Contract):

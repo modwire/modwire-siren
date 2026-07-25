@@ -4,7 +4,8 @@ from typing import Any
 
 from openapi_spec_validator import validate
 
-from ..runtime import SirenCompilationError, SirenEngine
+from ..compiler.errors import SirenCompilationError
+from ..runtime.engine import SirenEngine
 from ..wiring import SirenApplicationContainer
 
 

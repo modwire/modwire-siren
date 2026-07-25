@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from .....runtime import SirenCompatibilityFinding
 from .....vocabulary import SirenActionMethod, SirenHttpMethod
+from ....compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver
 from .routes import RouteCatalog
 

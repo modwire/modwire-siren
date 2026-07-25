@@ -4,7 +4,7 @@ from wireup import injectable
 
 from ...graph import SirenApi
 from ...projection import SirenProjectionService
-from ..engine import SirenEngine
+from ..state import SirenEngine
 
 
 @injectable

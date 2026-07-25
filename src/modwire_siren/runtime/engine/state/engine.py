@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from ..document import SirenDocument
-from ..errors import SirenProjectionError
-from ..graph import SirenApi
-from ..projection import SirenProjectionService
-from ..request import SirenContext
+from ...document import SirenDocument
+from ...errors import SirenProjectionError
+from ...graph import SirenApi
+from ...projection import SirenProjectionService
+from ...request import SirenContext
 
 
 @dataclass(frozen=True)

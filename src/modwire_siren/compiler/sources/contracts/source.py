@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ....runtime import SirenApi, SirenCompatibilityFinding
+from ....runtime.graph import SirenApi
+from ...compatibility import SirenCompatibilityFinding
 
 
 class SirenSource(ABC):

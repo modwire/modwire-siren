@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ....runtime import SirenApi
+from ....runtime.graph import SirenApi
 
 
 class SirenApiAssembler(ABC):
