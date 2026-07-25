@@ -1,6 +1,6 @@
 boundaries:
   tags:
-    - {name: &module_tag module, match: src/modwire_siren/*, excluded_patterns: [src/modwire_siren/__init__.py, src/modwire_siren/_version.py, src/modwire_siren/wiring.py, src/modwire_siren/api, src/modwire_siren/shared]}
+    - {name: &module_tag module, match: src/modwire_siren/contexts/*}
     - {name: tracked, match: "*"}
 
   flow:
@@ -10,7 +10,7 @@ boundaries:
 shape:
   realms:
     - name: project
-      match: "src/modwire_siren/*"
+      match: "src/modwire_siren/**/*"
       shape:
         max_classes_per_file: -1
         max_interfaces_per_file: -1

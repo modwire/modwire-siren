@@ -1,6 +1,6 @@
 from .api import audit, siren
-from .compiler.compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
-from .runtime.document import (
+from .contexts.compiler.compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
+from .contexts.runtime.document import (
     SirenAction,
     SirenDocument,
     SirenEmbeddedLink,
@@ -9,7 +9,7 @@ from .runtime.document import (
     SirenFieldValue,
     SirenLink,
 )
-from .runtime.request import SirenContext
+from .contexts.runtime.request import SirenContext
 from .shared import ModwireSirenError
 
 __all__ = [

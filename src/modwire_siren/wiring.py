@@ -6,9 +6,9 @@ from types import ModuleType
 
 from wireup import create_sync_container
 
-from .compiler import SirenApiService
-from .ledger import SirenConformanceService
-from .runtime.engine import SirenEngineFactory
+from .contexts.compiler import SirenApiService
+from .contexts.ledger import SirenConformanceService
+from .contexts.runtime.engine import SirenEngineFactory
 
 
 @dataclass(frozen=True)
