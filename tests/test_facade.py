@@ -17,6 +17,7 @@ from modwire_siren import (
     SirenField,
     SirenFieldValue,
     SirenLink,
+    SirenRelationship,
     audit,
     siren,
 )
@@ -47,6 +48,7 @@ class TestFacade:
             "SirenField",
             "SirenFieldValue",
             "SirenLink",
+            "SirenRelationship",
             "audit",
             "siren",
         ]
@@ -61,6 +63,7 @@ class TestFacade:
             SirenField,
             SirenFieldValue,
             SirenLink,
+            SirenRelationship,
             audit,
         ) == (
             modwire_siren.ModwireSirenError,
@@ -73,6 +76,7 @@ class TestFacade:
             modwire_siren.SirenField,
             modwire_siren.SirenFieldValue,
             modwire_siren.SirenLink,
+            modwire_siren.SirenRelationship,
             modwire_siren.audit,
         )
         parameters = signature(siren).parameters
