@@ -1,3 +1,3 @@
-from .builder import SirenBuilder
+from .assembly import SirenAssembly
 
-__all__ = ["SirenBuilder"]
+__all__ = ["SirenAssembly"]

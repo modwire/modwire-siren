@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from .....runtime.vocabulary import SirenActionMethod, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
-from ....assembly.state import SirenBuilder
+from ....assembly.state import SirenAssembly
 from ..values import Field
 from .components import ComponentResolver
 from .routes import RouteCatalog
@@ -13,7 +13,7 @@ class OpenApiOperationCompiler:
     methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
         SirenHttpMethod(value) for value in SirenActionMethod.values()
     )
-    builder: SirenBuilder
+    assembly: SirenAssembly
     routes: RouteCatalog
     components: ComponentResolver
 
@@ -53,22 +53,22 @@ class OpenApiOperationCompiler:
                     continue
                 fields, media_type = self.fields(path_item, operation)
                 if ownership is None:
-                    self.builder.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
-                    self.builder.add_root_operation(name)
+                    self.assembly.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
+                    self.assembly.add_root_operation(name)
                     for field in fields:
-                        self.builder.add_field(name, field.name, field.type)
+                        self.assembly.add_field(name, field.name, field.type)
                     continue
                 resource, scope = ownership
-                self.builder.add_operation(resource.reference, scope, name, operation_method, path, media_type)
+                self.assembly.add_operation(resource.reference, scope, name, operation_method, path, media_type)
                 for field in fields:
-                    self.builder.add_field(name, field.name, field.type)
+                    self.assembly.add_field(name, field.name, field.type)
                 if (
                     scope == SirenScope.COLLECTION
                     and path == resource.collection_path
                     and not self.routes.parameters(path)
                     and operation_method != SirenHttpMethod.GET
                 ):
-                    self.builder.add_root_operation(name)
+                    self.assembly.add_root_operation(name)
 
     def fields(
         self, path_item: dict[str, Any], operation: dict[str, Any]
