@@ -76,10 +76,12 @@ include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.to
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-config", "--strict-markers"]
+cache_dir = ".dump/pytest-cache"
 filterwarnings = ["error"]
 xfail_strict = true
 
 [tool.ruff]
+cache-dir = ".dump/ruff-cache"
 line-length = 120
 extend-exclude = ["**/_version.py"]
 target-version = "py312"

@@ -1,6 +1,9 @@
 .PHONY: docs docs-check modwire package-check quality service-check siren-spec verify
 
 UV ?= uv
+DUMP ?= .dump
+export UV_CACHE_DIR := $(CURDIR)/$(DUMP)/uv-cache
+export PYTHONPYCACHEPREFIX := $(CURDIR)/$(DUMP)/pycache
 PYTHON ?= $(UV) run --locked python
 RUN = PYTHONPATH=src $(PYTHON)
 

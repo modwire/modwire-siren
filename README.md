@@ -15,7 +15,7 @@ python -m pip install modwire-siren
 For local development, install `uv` and use the locked environment:
 
 ```bash
-uv sync --locked --all-groups
+UV_CACHE_DIR=.dump/uv-cache uv sync --locked --all-groups
 make verify
 ```
 

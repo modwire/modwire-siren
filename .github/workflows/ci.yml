@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_CACHE_DIR: ${{ github.workspace }}/.dump/uv-cache
+  PYTHONPYCACHEPREFIX: ${{ github.workspace }}/.dump/pycache
+
 jobs:
   verify:
     runs-on: ubuntu-latest
