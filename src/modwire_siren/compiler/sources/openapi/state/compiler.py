@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from modwire_siren.shared import (
+    BaseState,
     ModwireSirenError,
     SirenActionMethod,
     SirenFieldType,
@@ -16,8 +16,7 @@ from .components import ComponentResolver
 from .routes import RouteCatalog
 
 
-@dataclass(frozen=True)
-class OpenApiOperationCompiler:
+class OpenApiOperationCompiler(BaseState):
     methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
         SirenHttpMethod(value) for value in SirenActionMethod.values()
     )

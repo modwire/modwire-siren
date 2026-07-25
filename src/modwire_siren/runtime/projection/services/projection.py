@@ -28,4 +28,9 @@ class SirenProjectionService:
         candidates = [projector for projector in self.projectors if projector.supports(context.scope)]
         if len(candidates) != 1:
             raise ModwireSirenError(f"Siren scope {context.scope!r} requires exactly one projector")
-        return candidates[0].project(SirenProjectionRequest(api, context, resource, context.value))
+        return candidates[0].project(SirenProjectionRequest(
+            api=api,
+            context=context,
+            resource=resource,
+            value=context.value,
+        ))

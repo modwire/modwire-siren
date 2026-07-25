@@ -1,17 +1,17 @@
-from dataclasses import dataclass, field
 from typing import Any
 
-from modwire_siren.shared import ModwireSirenError, SirenScope
+from pydantic import Field
+
+from modwire_siren.shared import BaseState, ModwireSirenError, SirenScope
 
 from ..values import Resource
 
 
-@dataclass
-class RouteCatalog:
+class RouteCatalog(BaseState):
     paths: dict[str, Any]
-    segment_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    parameter_cache: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = field(default_factory=dict)
+    segment_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+    parameter_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+    ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = Field(default_factory=dict)
     resource_cache: tuple[Resource, ...] | None = None
 
     def resources(self) -> tuple[Resource, ...]:

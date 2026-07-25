@@ -1,19 +1,19 @@
-from dataclasses import dataclass, field
 from typing import Any
 
-from modwire_siren.shared import SirenActionMethod, SirenHttpMethod
+from pydantic import Field
+
+from modwire_siren.shared import BaseState, SirenActionMethod, SirenHttpMethod
 
 from ....compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver
 from .routes import RouteCatalog
 
 
-@dataclass
-class OpenApiCompatibilityInspection:
+class OpenApiCompatibilityInspection(BaseState):
     components: ComponentResolver
     routes: RouteCatalog
-    findings: list[SirenCompatibilityFinding] = field(default_factory=list)
-    operation_ids: set[str] = field(default_factory=set)
+    findings: list[SirenCompatibilityFinding] = Field(default_factory=list)
+    operation_ids: set[str] = Field(default_factory=set)
 
     def inspect(self) -> tuple[SirenCompatibilityFinding, ...]:
         for path, path_item in self.routes.paths.items():

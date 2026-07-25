@@ -38,9 +38,8 @@ class ServiceConventionChecker:
                 failures.append(f"{path}: {node.name} must not declare __init__")
         if "state" in path.parts:
             for node in classes:
-                decorators = tuple(ast.unparse(decorator) for decorator in node.decorator_list)
-                if not any(decorator.startswith("dataclass") for decorator in decorators):
-                    failures.append(f"{path}: {node.name} must be a dataclass")
+                if not any(ast.unparse(base) == "BaseState" for base in node.bases):
+                    failures.append(f"{path}: {node.name} must inherit BaseState")
         if "services" not in path.parts:
             return failures
         for node in classes:

@@ -1,19 +1,18 @@
-from dataclasses import dataclass, field
+from pydantic import Field
 
-from modwire_siren.shared import SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.shared import BaseState, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 
 
-@dataclass
-class SirenAssembly:
+class SirenAssembly(BaseState):
     root_path: str = "/"
     root_title: str = ""
     root_version: str = ""
-    resources: list[ResourceDraft] = field(default_factory=list)
-    operations: list[OperationDraft] = field(default_factory=list)
-    fields: list[FieldDraft] = field(default_factory=list)
-    root_operations: list[str] = field(default_factory=list)
+    resources: list[ResourceDraft] = Field(default_factory=list)
+    operations: list[OperationDraft] = Field(default_factory=list)
+    fields: list[FieldDraft] = Field(default_factory=list)
+    root_operations: list[str] = Field(default_factory=list)
 
     def set_root(self, path: str = "/", title: str = "", version: str = "") -> "SirenAssembly":
         self.root_path = path

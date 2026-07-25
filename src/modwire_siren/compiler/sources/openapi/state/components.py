@@ -1,14 +1,14 @@
 from copy import deepcopy
-from dataclasses import dataclass, field
 from typing import Any
 
-from modwire_siren.shared import ModwireSirenError
+from pydantic import Field
+
+from modwire_siren.shared import BaseState, ModwireSirenError
 
 
-@dataclass(frozen=True)
-class ComponentResolver:
+class ComponentResolver(BaseState):
     components: Any
-    reference_cache: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
+    reference_cache: dict[tuple[str, str], dict[str, Any]] = Field(default_factory=dict)
 
     def parameter(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "parameters")

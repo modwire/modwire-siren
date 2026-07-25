@@ -13,4 +13,4 @@ class SirenEngineFactory:
     projection: SirenProjectionService
 
     def create(self, api: SirenApi) -> SirenEngine:
-        return SirenEngine(api, self.projection)
+        return SirenEngine(api=api, projection=self.projection)

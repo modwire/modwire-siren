@@ -31,8 +31,8 @@ class OpenApiSource(SirenSource):
                 ),
             )
         return OpenApiCompatibilityInspection(
-            ComponentResolver(schema.get("components", {})),
-            RouteCatalog(paths),
+            components=ComponentResolver(components=schema.get("components", {})),
+            routes=RouteCatalog(paths=paths),
         ).inspect()
 
     def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
@@ -45,7 +45,7 @@ class OpenApiSource(SirenSource):
             title=str(info.get("title", "")) if isinstance(info, dict) else "",
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
-        routes = RouteCatalog(paths)
+        routes = RouteCatalog(paths=paths)
         for resource in routes.resources():
             assembly.add_resource(
                 resource.reference,
@@ -55,5 +55,9 @@ class OpenApiSource(SirenSource):
                 resource.entity_path,
                 resource.identifier,
             )
-        OpenApiOperationCompiler(assembly, routes, ComponentResolver(schema.get("components", {}))).compile()
+        OpenApiOperationCompiler(
+            assembly=assembly,
+            routes=routes,
+            components=ComponentResolver(components=schema.get("components", {})),
+        ).compile()
         return self.builder.build(assembly)
