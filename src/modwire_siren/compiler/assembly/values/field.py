@@ -1,10 +1,7 @@
-from dataclasses import dataclass
-
-from modwire_siren.shared import SirenFieldType
+from modwire_siren.shared import BaseValue, SirenFieldType
 
 
-@dataclass(frozen=True)
-class FieldDraft:
+class FieldDraft(BaseValue):
     operation: str
     name: str
     type: SirenFieldType

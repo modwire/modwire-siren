@@ -240,7 +240,12 @@ class OpenApiCompatibilityInspection:
             )
 
     def add(self, location: str, category: str, detail: str, remediation: str) -> None:
-        self.findings.append(SirenCompatibilityFinding(location, category, detail, remediation))
+        self.findings.append(SirenCompatibilityFinding(
+            location=location,
+            category=category,
+            detail=detail,
+            remediation=remediation,
+        ))
 
     def location(self, *tokens: str) -> str:
         return "#" + "".join("/" + self.escape(token) for token in tokens)

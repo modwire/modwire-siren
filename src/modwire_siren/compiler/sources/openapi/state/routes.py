@@ -44,16 +44,21 @@ class RouteCatalog:
             existing = candidates.get(collection_path)
             if existing is None:
                 candidates[collection_path] = Resource(
-                    collection_path, name, name.replace("_", "-"), collection_path, entity_path, "id"
+                    reference=collection_path,
+                    name=name,
+                    resource_class=name.replace("_", "-"),
+                    collection_path=collection_path,
+                    entity_path=entity_path,
+                    identifier="id",
                 )
             elif entity_path is not None:
                 candidates[collection_path] = Resource(
-                    existing.reference,
-                    existing.name,
-                    existing.resource_class,
-                    existing.collection_path,
-                    entity_path,
-                    existing.identifier,
+                    reference=existing.reference,
+                    name=existing.name,
+                    resource_class=existing.resource_class,
+                    collection_path=existing.collection_path,
+                    entity_path=entity_path,
+                    identifier=existing.identifier,
                 )
         return tuple(candidates.values())
 

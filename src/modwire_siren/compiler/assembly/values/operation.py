@@ -1,10 +1,7 @@
-from dataclasses import dataclass
-
-from modwire_siren.shared import SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.shared import BaseValue, SirenHttpMethod, SirenMediaType, SirenScope
 
 
-@dataclass(frozen=True)
-class OperationDraft:
+class OperationDraft(BaseValue):
     resource: str | None
     scope: SirenScope
     name: str

@@ -24,4 +24,4 @@ class SirenApiService:
     def audit(self, schema: dict[str, Any]) -> SirenCompatibilityReport:
         findings = tuple(finding for source in self.sources for finding in source.audit(schema))
         ordered = sorted(findings, key=lambda finding: (finding.location, finding.category))
-        return SirenCompatibilityReport(tuple(ordered))
+        return SirenCompatibilityReport(findings=tuple(ordered))

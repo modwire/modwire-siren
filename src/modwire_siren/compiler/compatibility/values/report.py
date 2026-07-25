@@ -1,10 +1,9 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 from .finding import SirenCompatibilityFinding
 
 
-@dataclass(frozen=True)
-class SirenCompatibilityReport:
+class SirenCompatibilityReport(BaseValue):
     """Expose deterministic OpenAPI-to-Siren compatibility findings."""
 
     findings: tuple[SirenCompatibilityFinding, ...]

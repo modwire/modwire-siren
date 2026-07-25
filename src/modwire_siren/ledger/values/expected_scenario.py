@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 
-@dataclass(frozen=True)
-class SirenExpectedScenario:
+class SirenExpectedScenario(BaseValue):
     feature: str
     name: str

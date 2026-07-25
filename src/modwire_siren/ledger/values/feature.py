@@ -1,9 +1,8 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 from .scenario import SirenBddScenario
 
 
-@dataclass(frozen=True)
-class SirenBddFeature:
+class SirenBddFeature(BaseValue):
     name: str
     scenarios: tuple[SirenBddScenario, ...]

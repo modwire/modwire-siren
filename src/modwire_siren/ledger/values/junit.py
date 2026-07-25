@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 
-@dataclass(frozen=True)
-class SirenJunitEvidence:
+class SirenJunitEvidence(BaseValue):
     identifiers: frozenset[str]
     expected_failures: frozenset[str]

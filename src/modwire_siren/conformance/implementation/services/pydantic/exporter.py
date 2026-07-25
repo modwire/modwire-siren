@@ -16,10 +16,11 @@ class SirenSerializationSchemaExporter:
         schema = model.model_json_schema(by_alias=True, mode="serialization")
         reference = schema.get("$ref")
         if not isinstance(reference, str):
-            return SirenCapability(definition, self.schemas.freeze(schema))
+            return SirenCapability(definition=definition, schema=self.schemas.freeze(schema))
         resolved = schema
         for segment in reference.removeprefix("#/").split("/"):
             resolved = resolved[segment]
         return SirenCapability(
-            definition, self.schemas.freeze({**resolved, "$defs": schema.get("$defs", {})})
+            definition=definition,
+            schema=self.schemas.freeze({**resolved, "$defs": schema.get("$defs", {})}),
         )

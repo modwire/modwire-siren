@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 
-@dataclass(frozen=True)
-class SirenBddScenario:
+class SirenBddScenario(BaseValue):
     identifier: str
     name: str
     implemented: bool

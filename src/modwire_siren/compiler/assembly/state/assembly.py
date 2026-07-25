@@ -30,7 +30,14 @@ class SirenAssembly:
         entity_path: str | None = None,
         identifier: str = "id",
     ) -> "SirenAssembly":
-        self.resources.append(ResourceDraft(reference, name, resource_class, collection_path, entity_path, identifier))
+        self.resources.append(ResourceDraft(
+            reference=reference,
+            name=name,
+            resource_class=resource_class,
+            collection_path=collection_path,
+            entity_path=entity_path,
+            identifier=identifier,
+        ))
         return self
 
     def add_operation(
@@ -42,7 +49,14 @@ class SirenAssembly:
         path: str,
         media_type: SirenMediaType | None = None,
     ) -> "SirenAssembly":
-        self.operations.append(OperationDraft(resource, scope, name, method, path, media_type))
+        self.operations.append(OperationDraft(
+            resource=resource,
+            scope=scope,
+            name=name,
+            method=method,
+            path=path,
+            media_type=media_type,
+        ))
         return self
 
     def add_root_operation(self, name: str) -> "SirenAssembly":
@@ -50,5 +64,5 @@ class SirenAssembly:
         return self
 
     def add_field(self, operation: str, name: str, type: SirenFieldType) -> "SirenAssembly":
-        self.fields.append(FieldDraft(operation, name, type))
+        self.fields.append(FieldDraft(operation=operation, name=name, type=type))
         return self

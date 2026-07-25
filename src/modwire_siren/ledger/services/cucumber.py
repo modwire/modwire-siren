@@ -37,7 +37,10 @@ class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
             raise ModwireSirenError("Cucumber report feature must have a name.")
         if not isinstance(scenarios, list) or not scenarios:
             raise ModwireSirenError(f"Cucumber report feature {name!r} must contain scenarios.")
-        return SirenBddFeature(name, tuple(self.scenario(value, expected_failures) for value in scenarios))
+        return SirenBddFeature(
+            name=name,
+            scenarios=tuple(self.scenario(value, expected_failures) for value in scenarios),
+        )
 
     def scenario(self, value: Any, expected_failures: frozenset[str]) -> SirenBddScenario:
         if not isinstance(value, Mapping):
@@ -55,11 +58,11 @@ class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
         if all(status == "passed" for status in statuses):
             if identifier in expected_failures:
                 raise ModwireSirenError(f"Cucumber report scenario {name!r} unexpectedly passed.")
-            return SirenBddScenario(identifier, name, True)
+            return SirenBddScenario(identifier=identifier, name=name, implemented=True)
         if identifier in expected_failures and statuses[-1] == "skipped" and all(
             status == "passed" for status in statuses[:-1]
         ):
-            return SirenBddScenario(identifier, name, False)
+            return SirenBddScenario(identifier=identifier, name=name, implemented=False)
         detail = ", ".join(statuses)
         raise ModwireSirenError(f"Cucumber report scenario {name!r} has unexpected results: {detail}.")
 
@@ -84,7 +87,10 @@ class SirenCucumberEvidenceReader(SirenBddEvidenceReader):
             expected_failures.add(name)
         if not identifiers:
             raise ModwireSirenError("JUnit report contains no testcases.")
-        return SirenJunitEvidence(frozenset(identifiers), frozenset(expected_failures))
+        return SirenJunitEvidence(
+            identifiers=frozenset(identifiers),
+            expected_failures=frozenset(expected_failures),
+        )
 
     def reconcile(
         self,

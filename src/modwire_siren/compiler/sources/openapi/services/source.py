@@ -24,10 +24,10 @@ class OpenApiSource(SirenSource):
         if not isinstance(paths, dict):
             return (
                 SirenCompatibilityFinding(
-                    "#/paths",
-                    "route",
-                    "OpenAPI schema requires an object-valued paths field",
-                    "Use an object-valued paths field.",
+                    location="#/paths",
+                    category="route",
+                    detail="OpenAPI schema requires an object-valued paths field",
+                    remediation="Use an object-valued paths field.",
                 ),
             )
         return OpenApiCompatibilityInspection(

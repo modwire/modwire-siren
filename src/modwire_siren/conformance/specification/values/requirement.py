@@ -1,16 +1,22 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
 from typing import Any
 
+from pydantic import Field
 
-@dataclass(frozen=True)
-class SirenRequirement:
+from modwire_siren.shared import BaseValue
+
+
+class SirenRequirement(BaseValue):
     definition: str
     member: str
-    schema: Mapping[str, Any]
+    schema_: Mapping[str, Any] = Field(alias="schema", serialization_alias="schema")
     required: bool
     document: Mapping[str, Any]
     enum_value: str | int | float | bool | None = None
+
+    @property
+    def schema(self) -> Mapping[str, Any]:
+        return self.schema_
 
     @property
     def label(self) -> str:

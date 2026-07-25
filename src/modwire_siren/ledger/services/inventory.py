@@ -35,7 +35,7 @@ class SirenGherkinScenarioInventory:
         scenarios = self.scenarios(feature.get("children"))
         if not scenarios:
             raise ModwireSirenError(f"Gherkin feature {name!r} has no scenarios.")
-        return tuple(SirenExpectedScenario(name, scenario) for scenario in scenarios)
+        return tuple(SirenExpectedScenario(feature=name, name=scenario) for scenario in scenarios)
 
     def scenarios(self, children: Any) -> tuple[str, ...]:
         if not isinstance(children, list):

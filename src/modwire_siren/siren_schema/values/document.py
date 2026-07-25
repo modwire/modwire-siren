@@ -1,12 +1,10 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
 from typing import Any
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.shared import BaseValue, ModwireSirenError
 
 
-@dataclass(frozen=True)
-class SirenSchemaDocument:
+class SirenSchemaDocument(BaseValue):
     """Traverse the immutable pinned official Siren schema."""
 
     value: Mapping[str, Any]

@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 
-@dataclass(frozen=True)
-class Resource:
+class Resource(BaseValue):
     reference: str
     name: str
     resource_class: str

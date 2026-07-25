@@ -20,11 +20,20 @@ class SirenSchemaSpecification(SirenSpecification):
             effective = document.effective(definition)
             for member, member_schema in effective.get("properties", {}).items():
                 requirement = SirenRequirement(
-                    name, member, member_schema, member in effective.get("required", ()), document.value
+                    definition=name,
+                    member=member,
+                    schema=member_schema,
+                    required=member in effective.get("required", ()),
+                    document=document.value,
                 )
                 requirements += (requirement,)
                 for value in member_schema.get("enum", []):
-                    requirements += (
-                        SirenRequirement(name, member, member_schema, requirement.required, document, value),
-                    )
+                    requirements += (SirenRequirement(
+                        definition=name,
+                        member=member,
+                        schema=member_schema,
+                        required=requirement.required,
+                        document=document.value,
+                        enum_value=value,
+                    ),)
         return requirements

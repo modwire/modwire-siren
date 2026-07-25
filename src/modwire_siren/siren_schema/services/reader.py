@@ -23,7 +23,7 @@ class SirenSchemaReader:
     @cache
     def official(cls) -> SirenSchemaDocument:
         source = files("modwire_siren.siren_schema.schema").joinpath("siren.schema.json")
-        return SirenSchemaDocument(cls.freeze(json.loads(source.read_text())))
+        return SirenSchemaDocument(value=cls.freeze(json.loads(source.read_text())))
 
     @classmethod
     def freeze(cls, value: Any) -> Any:

@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from modwire_siren.shared import BaseValue
 
 
-@dataclass(frozen=True)
-class SirenCompatibilityFinding:
+class SirenCompatibilityFinding(BaseValue):
     """Describe one OpenAPI construct outside the current official-Siren boundary."""
 
     location: str

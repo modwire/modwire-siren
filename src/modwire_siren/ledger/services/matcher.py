@@ -23,22 +23,22 @@ class SirenDefaultRequirementMatcher(SirenRequirementMatcher):
             self.finding(requirement, capability_by_definition.get(requirement.definition))
             for requirement in requirements
         )
-        return SirenConformanceReport(findings, ())
+        return SirenConformanceReport(findings=findings, features=())
 
     def finding(self, requirement: SirenRequirement, capability: SirenCapability | None) -> SirenFinding:
         if capability is None:
-            return SirenFinding(requirement, False, "no public representation")
+            return SirenFinding(requirement=requirement, implemented=False, evidence="no public representation")
         properties = capability.schema.get("properties", {})
         actual = properties.get(requirement.member) if isinstance(properties, Mapping) else None
         if not isinstance(actual, Mapping):
-            return SirenFinding(requirement, False, "member is absent")
+            return SirenFinding(requirement=requirement, implemented=False, evidence="member is absent")
         required = capability.schema.get("required", ())
         if requirement.required and requirement.member not in required:
-            return SirenFinding(requirement, False, "required member is optional")
+            return SirenFinding(requirement=requirement, implemented=False, evidence="required member is optional")
         implemented = self.matches(requirement.schema, actual, requirement.document, capability.schema)
         if requirement.enum_value is not None:
             implemented = implemented and requirement.enum_value in self.enum(actual, capability.schema)
-        return SirenFinding(requirement, implemented, "serialized public contract")
+        return SirenFinding(requirement=requirement, implemented=implemented, evidence="serialized public contract")
 
     def matches(
         self,
