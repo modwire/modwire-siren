@@ -33,15 +33,20 @@ class OpenApiFieldProjection(BaseState):
     def field(self, name: str, schema: dict[str, Any]) -> Field:
         definition = self.definition(name, schema)
         values = self.values(name, definition)
+        field_type = self.type(name, definition, values)
         title = definition.get("title")
         default = definition.get("default")
         if title is not None and not isinstance(title, str):
             raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
-        if default is not None and (isinstance(default, bool) or not isinstance(default, (str, int, float))):
+        if isinstance(default, bool):
+            if definition.get("type") != "boolean":
+                raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
+            default = None
+        elif default is not None and not isinstance(default, (str, int, float)):
             raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
         if values and default is not None and default not in values:
             raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
-        return Field(name=name, type=self.type(name, definition, values), values=values, title=title, default=default)
+        return Field(name=name, type=field_type, values=values, title=title, default=default)
 
     def definition(self, name: str, schema: dict[str, Any]) -> dict[str, Any]:
         definition = self.components.schema(schema)

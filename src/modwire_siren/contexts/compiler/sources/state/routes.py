@@ -72,11 +72,8 @@ class RouteCatalog(BaseState):
             if self.belongs(path, resource.collection_path):
                 candidates.append((len(self.segments(resource.collection_path)), resource, SirenScope.COLLECTION))
         if not candidates:
-            segments = self.segments(path)
-            if segments and not self.is_parameter(segments[-1]):
-                self.ownership_cache[path] = None
-                return None
-            raise ModwireSirenError(f"OpenAPI route is unsupported: {path!r}")
+            self.ownership_cache[path] = None
+            return None
         longest = max(candidate[0] for candidate in candidates)
         owners = [(resource, scope) for length, resource, scope in candidates if length == longest]
         if len(owners) != 1:

@@ -31,16 +31,6 @@ class OpenApiOperationCompiler(BaseState):
                 continue
             if "$ref" in path_item:
                 raise ModwireSirenError(f"OpenAPI path item reference is unsupported: {path}")
-            segments = self.routes.segments(path)
-            if (
-                path.endswith("/")
-                and segments
-                and all(
-                    not self.routes.is_parameter(segment) and not self.routes.is_plural(segment)
-                    for segment in segments
-                )
-            ):
-                continue
             for method, operation in path_item.items():
                 method_name = method.lower()
                 if method_name == "trace":
@@ -57,8 +47,6 @@ class OpenApiOperationCompiler(BaseState):
                 if not isinstance(name, str) or not name:
                     raise ModwireSirenError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
                 ownership = self.routes.ownership(path)
-                if ownership is None and self.routes.parameters(path):
-                    continue
                 fields, media_type = self.fields(path_item, operation)
                 if ownership is None:
                     self.assembly.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)

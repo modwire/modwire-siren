@@ -300,3 +300,25 @@ class TestFields:
             {"name": "priority", "type": "number"},
             {"name": "published", "type": "checkbox"},
         ]
+
+    def test_public_facade_omits_boolean_defaults_that_siren_cannot_represent(self):
+        document = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        body = document["paths"]["/records/{record_id}"]["patch"]["requestBody"]["content"]["application/json"][
+            "schema"
+        ]
+        body["properties"] = {
+            "dry_run": {"type": "boolean", "title": "Dry Run", "default": True},
+        }
+
+        projected = siren(document).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                resource="record",
+                value={"record_id": "42"},
+                capabilities=frozenset({"replace_record"}),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert projected["actions"][0]["fields"] == [
+            {"name": "dry_run", "type": "checkbox", "title": "Dry Run"},
+        ]
