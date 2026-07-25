@@ -6,12 +6,12 @@ from wireup import injectable
 from modwire_siren.contexts.runtime.graph import SirenApi
 from modwire_siren.contexts.shared import ModwireSirenError
 
-from ...assembly.services import SirenBuilder
-from ...assembly.state import SirenAssembly
 from ...compatibility import SirenCompatibilityFinding
 from ..contracts import SirenSource
 from ..state import ComponentResolver, OpenApiCompatibilityInspection, RouteCatalog
+from ..state.assembly import SirenAssembly
 from ..state.compiler import OpenApiOperationCompiler
+from .builder import SirenBuilder
 
 
 @injectable(as_type=SirenSource)

@@ -10,8 +10,8 @@ from modwire_siren.contexts.shared import (
     SirenScope,
 )
 
-from ...assembly.state import SirenAssembly
 from ..values import Field
+from .assembly import SirenAssembly
 from .components import ComponentResolver
 from .routes import RouteCatalog
 
