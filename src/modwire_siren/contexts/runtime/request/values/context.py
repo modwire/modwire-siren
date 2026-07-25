@@ -4,6 +4,8 @@ from pydantic import Field, JsonValue, model_validator
 
 from modwire_siren.contexts.shared import BaseValue, ModwireSirenError, SirenScope
 
+from .relationship import SirenRelationship
+
 
 class SirenContext(BaseValue):
     """Supply runtime state used to project a Siren document.
@@ -21,6 +23,7 @@ class SirenContext(BaseValue):
     | `value` | Entity or collection properties and entity path parameters. |
     | `items` | Entity mappings for a collection. |
     | `item_capabilities` | Optional permitted operation IDs for each collection item. |
+    | `relationships` | Linked or embedded related resources for this document. |
     | `path_values` | Missing path parameters, such as a parent resource ID. |
     | `query` | Ordered query pairs for self and action links. |
     | `capabilities` | Permitted OpenAPI `operationId` values. |
@@ -32,6 +35,7 @@ class SirenContext(BaseValue):
     value: Mapping[str, JsonValue] = Field(default_factory=dict)
     items: tuple[Mapping[str, JsonValue], ...] = ()
     item_capabilities: tuple[frozenset[str], ...] = ()
+    relationships: tuple[SirenRelationship, ...] = ()
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
     query: tuple[tuple[str, JsonValue], ...] = ()
     capabilities: frozenset[str] = frozenset()

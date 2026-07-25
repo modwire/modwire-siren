@@ -4,8 +4,8 @@ from wireup import injectable
 
 from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
-from ...document import SirenDocument
-from ..contracts import SirenEntityDocumentService, SirenScopeProjector
+from ...document import SirenDocument, SirenEmbeddedRepresentation, SirenLink
+from ..contracts import SirenEntityDocumentService, SirenRelationshipDocumentService, SirenScopeProjector
 from ..state import SirenProjectionRequest
 
 
@@ -13,6 +13,7 @@ from ..state import SirenProjectionRequest
 @dataclass(frozen=True)
 class SirenEntityScopeProjector(SirenScopeProjector):
     entities: SirenEntityDocumentService
+    relationships: SirenRelationshipDocumentService
 
     def supports(self, scope: SirenScope) -> bool:
         return scope == SirenScope.ENTITY
@@ -22,5 +23,13 @@ class SirenEntityScopeProjector(SirenScopeProjector):
             raise ModwireSirenError("Siren entity projection requires a resource")
         document = self.entities.entity(request.api, request.resource, request.value, request.context, request.rel)
         if isinstance(document, SirenDocument):
-            return document
+            relationships = self.relationships.relationships(request.api, request.context)
+            embedded = tuple(value for value in relationships if isinstance(value, SirenEmbeddedRepresentation))
+            links = tuple(value for value in relationships if isinstance(value, SirenLink))
+            return document.model_copy(
+                update={
+                    "entities": embedded or None,
+                    "links": (*(document.links or ()), *links),
+                }
+            )
         raise ModwireSirenError("Siren entity projection produced an embedded representation")

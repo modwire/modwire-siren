@@ -9,7 +9,7 @@ from .contexts.runtime.document import (
     SirenFieldValue,
     SirenLink,
 )
-from .contexts.runtime.request import SirenContext
+from .contexts.runtime.request import SirenContext, SirenRelationship
 from .contexts.shared import ModwireSirenError
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "SirenField",
     "SirenFieldValue",
     "SirenLink",
+    "SirenRelationship",
     "audit",
     "siren",
 ]

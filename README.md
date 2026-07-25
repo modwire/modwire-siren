@@ -153,6 +153,13 @@ Call this during startup before `siren(openapi)` when a consumer needs every cur
 unsupported construct at once. The report exposes typed findings and `render()` for terminal
 or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
 
+### `SirenRelationship`
+
+Describe a runtime relationship to another OpenAPI resource.
+
+A relationship projects as a navigational link by default. Set `embedded` when the related
+resource values should be included as a Siren embedded representation instead.
+
 ### `SirenLink`
 
 Describe a navigational Siren link.
@@ -199,6 +206,7 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `value` | Entity or collection properties and entity path parameters. |
 | `items` | Entity mappings for a collection. |
 | `item_capabilities` | Optional permitted operation IDs for each collection item. |
+| `relationships` | Linked or embedded related resources for this document. |
 | `path_values` | Missing path parameters, such as a parent resource ID. |
 | `query` | Ordered query pairs for self and action links. |
 | `capabilities` | Permitted OpenAPI `operationId` values. |
@@ -236,6 +244,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
+| `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->

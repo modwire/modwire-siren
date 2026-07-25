@@ -1,3 +1,3 @@
-from .values import SirenContext
+from .values import SirenContext, SirenRelationship
 
-__all__ = ["SirenContext"]
+__all__ = ["SirenContext", "SirenRelationship"]
