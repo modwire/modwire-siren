@@ -1,6 +1,6 @@
 from pydantic import Field, model_validator
 
-from modwire_siren.shared import BaseValue, ModwireSirenError, SirenScope
+from modwire_siren.contexts.shared import BaseValue, ModwireSirenError, SirenScope
 
 from .operation import SirenOperation
 from .resource import SirenResource

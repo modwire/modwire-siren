@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 from wireup import injectable
 
-from modwire_siren.shared.siren_schema import SirenSchemaReader
+from modwire_siren.contexts.shared.siren_schema import SirenSchemaReader
 
 from ..values import SirenCapability
 

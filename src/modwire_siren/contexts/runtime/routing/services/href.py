@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 from wireup import injectable
 
-from modwire_siren.shared import ModwireSirenError, SirenUri
+from modwire_siren.contexts.shared import ModwireSirenError, SirenUri
 
 from ...graph import SirenResource
 from ...request import SirenContext

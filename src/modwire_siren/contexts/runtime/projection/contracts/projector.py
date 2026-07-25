@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from modwire_siren.shared import ModwireSirenError, SirenScope
+from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ...document import SirenDocument
 from ..state import SirenProjectionRequest

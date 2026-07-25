@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 from ..values import SirenBddFeature
 

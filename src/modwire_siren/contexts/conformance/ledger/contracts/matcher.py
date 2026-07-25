@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from modwire_siren.contexts.conformance.implementation.values import SirenCapability
 from modwire_siren.contexts.conformance.specification.values import SirenRequirement
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 from ..values import SirenConformanceReport
 

@@ -1,4 +1,4 @@
-from modwire_siren.shared import BaseValue
+from modwire_siren.contexts.shared import BaseValue
 
 from .scenario import SirenBddScenario
 

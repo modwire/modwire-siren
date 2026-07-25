@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 from ..values import SirenConformanceReport
 

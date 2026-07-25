@@ -1,4 +1,4 @@
-from modwire_siren.shared import BaseValue, SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.contexts.shared import BaseValue, SirenHttpMethod, SirenMediaType, SirenScope
 
 from .field import SirenField
 from .route import SirenRoute

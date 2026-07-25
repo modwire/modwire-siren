@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import Field
 
-from modwire_siren.shared import BaseState, SirenActionMethod, SirenHttpMethod
+from modwire_siren.contexts.shared import BaseState, SirenActionMethod, SirenHttpMethod
 
 from ...compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver

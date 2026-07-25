@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any
 
-from modwire_siren.shared import BaseValue, ModwireSirenError
+from modwire_siren.contexts.shared import BaseValue, ModwireSirenError
 
 
 class SirenSchemaDocument(BaseValue):

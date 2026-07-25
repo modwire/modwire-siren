@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import model_validator
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 from .embedded_link import SirenEmbeddedLink
 from .embedded_representation import SirenEmbeddedRepresentation

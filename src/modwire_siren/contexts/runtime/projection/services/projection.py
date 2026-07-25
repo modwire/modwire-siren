@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.shared import ModwireSirenError, SirenScope
+from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ...capabilities import SirenCapabilityValidator
 from ...document import SirenDocument

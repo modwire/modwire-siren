@@ -5,7 +5,7 @@ from typing import Any
 from openapi_spec_validator import validate
 
 from ..contexts.compiler.compatibility import SirenCompatibilityReport
-from ..shared import ModwireSirenError
+from ..contexts.shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.shared import SirenHttpMethod, SirenScope
+from modwire_siren.contexts.shared import SirenHttpMethod, SirenScope
 
 from ...document import SirenDocument, SirenLink
 from ...routing import SirenHrefService

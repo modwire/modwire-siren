@@ -4,7 +4,7 @@ from typing import Any
 from wireup import injectable
 
 from modwire_siren.contexts.runtime.graph import SirenApi
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 from ...assembly.services import SirenBuilder
 from ...assembly.state import SirenAssembly

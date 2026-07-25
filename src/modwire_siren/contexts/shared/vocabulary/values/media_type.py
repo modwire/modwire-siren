@@ -3,7 +3,7 @@ from typing import Any, ClassVar
 
 from pydantic_core import CoreSchema, core_schema
 
-from modwire_siren.shared import ModwireSirenError
+from modwire_siren.contexts.shared import ModwireSirenError
 
 
 class SirenMediaType(str):

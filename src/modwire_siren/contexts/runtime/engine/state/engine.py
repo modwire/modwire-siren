@@ -1,4 +1,4 @@
-from modwire_siren.shared import BaseState, ModwireSirenError
+from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ...document import SirenDocument
 from ...graph import SirenApi

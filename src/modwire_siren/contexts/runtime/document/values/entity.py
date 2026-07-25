@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 from pydantic import Field, JsonValue
 
-from modwire_siren.shared import BaseValue
+from modwire_siren.contexts.shared import BaseValue
 
 from .action import SirenAction
 from .link import SirenLink

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from modwire_siren.shared import SirenRelation
+from modwire_siren.contexts.shared import SirenRelation
 
 from .embedded_link import SirenEmbeddedLink
 from .entity import SirenEntity

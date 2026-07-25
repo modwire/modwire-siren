@@ -22,7 +22,7 @@ class SirenSchemaReader:
     @classmethod
     @cache
     def official(cls) -> SirenSchemaDocument:
-        source = files("modwire_siren.shared.siren_schema.values").joinpath("siren.schema.json")
+        source = files("modwire_siren.contexts.shared.siren_schema.values").joinpath("siren.schema.json")
         return SirenSchemaDocument(value=cls.freeze(json.loads(source.read_text())))
 
     @classmethod

@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from modwire_siren.shared import BaseState, ModwireSirenError
+from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 
 class ComponentResolver(BaseState):

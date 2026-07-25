@@ -8,7 +8,7 @@ from pathlib import Path
 class TestWiring:
     def test_service_check_rejects_an_injectable_missing_from_its_feature_export(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        package = workspace / "src/modwire_siren/shared/siren_schema/services/__init__.py"
+        package = workspace / "src/modwire_siren/contexts/shared/siren_schema/services/__init__.py"
         package.write_text(package.read_text().replace("from .reader import SirenSchemaReader\n", ""))
 
         result = self.command(workspace)

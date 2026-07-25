@@ -11,7 +11,7 @@ from modwire_siren.contexts.runtime.graph import (
     SirenRoot,
     SirenRoute,
 )
-from modwire_siren.shared import ModwireSirenError, SirenScope
+from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ..state import SirenAssembly
 from ..values import FieldDraft, OperationDraft, ResourceDraft

@@ -10,7 +10,7 @@ from .contexts.runtime.document import (
     SirenLink,
 )
 from .contexts.runtime.request import SirenContext
-from .shared import ModwireSirenError
+from .contexts.shared import ModwireSirenError
 
 __all__ = [
     "ModwireSirenError",

@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 
-from modwire_siren.shared import (
+from modwire_siren.contexts.shared import (
     BaseState,
     ModwireSirenError,
     SirenActionMethod,

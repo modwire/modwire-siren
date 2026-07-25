@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from modwire_siren.shared import BaseState, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
+from modwire_siren.contexts.shared import BaseState, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 
 from ..values import FieldDraft, OperationDraft, ResourceDraft
 

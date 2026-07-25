@@ -12,36 +12,18 @@ boundaries:
         excluded_patterns: [src/modwire_siren/contexts/*/__init__.py],
       }
     - {name: &api_tag api, match: src/modwire_siren/api}
-    - {
-        name: &shared_context_tag shared,
-        match: src/modwire_siren/shared,
-        excluded_patterns: [src/modwire_siren/shared/__init__.py],
-      }
-    - {
-        name: &shared_module_tag shared_module,
-        match: src/modwire_siren/shared/*,
-        excluded_patterns: [src/modwire_siren/shared/__init__.py],
-      }
     - {name: &tests_tag tests, match: tests}
     - {name: scripts, match: scripts}
     - {name: &contracts_tag contracts, match: src/modwire_siren/contexts/*/*/contracts}
     - {name: &services_tag services, match: src/modwire_siren/contexts/*/*/services}
     - {name: &state_tag state, match: src/modwire_siren/contexts/*/*/state}
     - {name: &values_tag values, match: src/modwire_siren/contexts/*/*/values}
-    - {name: &shared_contracts_tag shared_contracts, match: src/modwire_siren/shared/*/contracts}
-    - {name: &shared_services_tag shared_services, match: src/modwire_siren/shared/*/services}
-    - {name: &shared_state_tag shared_state, match: src/modwire_siren/shared/*/state}
-    - {name: &shared_values_tag shared_values, match: src/modwire_siren/shared/*/values}
 
   flow:
     analyzers: [backward-flow, no-cycles, no-reentry]
     realms:
       - {name: contexts, module_tag: *context_tag}
       - {name: api, module_tag: *api_tag}
-      - {name: shared, module_tag: *shared_context_tag}
-      - name: shared_modules
-        module_tag: *shared_module_tag
-        layers: [*shared_services_tag, *shared_state_tag, *shared_contracts_tag, *shared_values_tag]
       - {name: tests, module_tag: *tests_tag}
       - name: modules
         module_tag: *module_tag

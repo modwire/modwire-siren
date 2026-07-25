@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from modwire_siren.shared import BaseValue
+from modwire_siren.contexts.shared import BaseValue
 
 
 class SirenRequirement(BaseValue):
