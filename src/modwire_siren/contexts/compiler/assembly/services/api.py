@@ -19,8 +19,12 @@ class SirenApiService:
     sources: Sequence[SirenSource]
     assembler: SirenApiAssembler
 
-    def build(self, schema: dict[str, Any], root_path: str = "/") -> SirenApi:
-        return self.assembler.assemble(tuple(source.load(schema, root_path) for source in self.sources))
+    def build(
+        self, schema: dict[str, Any], source_path: str = "/", public_path: str = "/"
+    ) -> SirenApi:
+        return self.assembler.assemble(
+            tuple(source.load(schema, source_path, public_path) for source in self.sources)
+        )
 
     def audit(self, schema: dict[str, Any]) -> SirenCompatibilityReport:
         findings = tuple(finding for source in self.sources for finding in source.audit(schema))

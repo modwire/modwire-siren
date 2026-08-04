@@ -37,24 +37,25 @@ class OpenApiSource(SirenSource):
             routes=RouteCatalog(paths=paths),
         ).inspect()
 
-    def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
+    def load(self, schema: dict[str, Any], source_path: str, public_path: str) -> SirenApi:
         paths = schema.get("paths")
         if not isinstance(paths, dict):
             raise ModwireSirenError("OpenAPI schema requires an object-valued paths field")
+        routes = RouteCatalog(paths=paths, source_path=source_path, public_path=public_path)
+        routes.validate_paths()
         info = schema.get("info", {})
         assembly = SirenAssembly().set_root(
-            path=root_path,
+            path=public_path,
             title=str(info.get("title", "")) if isinstance(info, dict) else "",
             version=str(info.get("version", "")) if isinstance(info, dict) else "",
         )
-        routes = RouteCatalog(paths=paths)
         for resource in routes.resources():
             assembly.add_resource(
                 resource.reference,
                 resource.name,
                 resource.resource_class,
-                resource.collection_path,
-                resource.entity_path,
+                routes.public(resource.collection_path),
+                routes.public(resource.entity_path) if resource.entity_path else None,
                 resource.identifier,
             )
         components = ComponentResolver(components=schema.get("components", {}))

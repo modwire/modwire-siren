@@ -143,7 +143,9 @@ engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
 `application/vnd.siren+json`. The document contains only official Siren members; action fields
 never include the non-standard `required` member.
 
-Set `root_path` when the Siren entry point is mounted away from `/`.
+Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
+mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
+slash. Every OpenAPI path must belong to `source_path`.
 
 ### `audit`
 

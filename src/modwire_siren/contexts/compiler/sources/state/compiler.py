@@ -49,13 +49,17 @@ class OpenApiOperationCompiler(BaseState):
                 ownership = self.routes.ownership(path)
                 fields, media_type = self.fields(path_item, operation)
                 if ownership is None:
-                    self.assembly.add_operation(None, SirenScope.ROOT, name, operation_method, path, media_type)
+                    self.assembly.add_operation(
+                        None, SirenScope.ROOT, name, operation_method, self.routes.public(path), media_type
+                    )
                     self.assembly.add_root_operation(name)
                     for field in fields:
                         self.assembly.add_field(name, field.name, field.type, field.values, field.title, field.default)
                     continue
                 resource, scope = ownership
-                self.assembly.add_operation(resource.reference, scope, name, operation_method, path, media_type)
+                self.assembly.add_operation(
+                    resource.reference, scope, name, operation_method, self.routes.public(path), media_type
+                )
                 for field in fields:
                     self.assembly.add_field(name, field.name, field.type, field.values, field.title, field.default)
                 if (

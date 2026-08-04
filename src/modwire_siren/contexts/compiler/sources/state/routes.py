@@ -9,10 +9,26 @@ from ..values import Resource
 
 class RouteCatalog(BaseState):
     paths: dict[str, Any]
+    source_path: str = "/"
+    public_path: str = "/"
     segment_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     parameter_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = Field(default_factory=dict)
     resource_cache: tuple[Resource, ...] | None = None
+
+    def validate_paths(self) -> None:
+        for path in self.paths:
+            self.public(path)
+
+    def public(self, path: str) -> str:
+        if path.rstrip("/") == self.source_path.rstrip("/"):
+            return self.public_path
+        if self.source_path != "/" and not path.startswith(f"{self.source_path}/"):
+            raise ModwireSirenError(
+                f"OpenAPI route {path!r} is outside configured source path {self.source_path!r}"
+            )
+        suffix = path if self.source_path == "/" else path[len(self.source_path):]
+        return suffix if self.public_path == "/" else f"{self.public_path}{suffix}"
 
     def resources(self) -> tuple[Resource, ...]:
         if self.resource_cache is None:
