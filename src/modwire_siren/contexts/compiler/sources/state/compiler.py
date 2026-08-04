@@ -48,6 +48,9 @@ class OpenApiOperationCompiler(BaseState):
                 name = operation.get("operationId")
                 if not isinstance(name, str) or not name:
                     raise ModwireSirenError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
+                title = operation.get("summary")
+                if title is not None and not isinstance(title, str):
+                    raise ModwireSirenError(f"OpenAPI operation summary must be a string: {method.upper()} {path}")
                 ownership = self.routes.ownership(path)
                 fields, input = self.input(path_item, operation)
                 media_type = input.media_type if input else None
@@ -59,6 +62,7 @@ class OpenApiOperationCompiler(BaseState):
                         name,
                         operation_method,
                         self.routes.public(path),
+                        title or None,
                         media_type,
                         input,
                         responses,
@@ -74,6 +78,7 @@ class OpenApiOperationCompiler(BaseState):
                     name,
                     operation_method,
                     self.routes.public(path),
+                    title or None,
                     media_type,
                     input,
                     responses,

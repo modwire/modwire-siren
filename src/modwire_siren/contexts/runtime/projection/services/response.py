@@ -105,6 +105,7 @@ class SirenResponseProjectionService:
         request = SirenContext(
             base_url=context.base_url,
             resource=resource.name,
+            title=context.title,
             value=context.result,
             relationships=context.relationships,
             path_values=context.path_values,
@@ -122,6 +123,7 @@ class SirenResponseProjectionService:
             base_url=context.base_url,
             scope=SirenScope.COLLECTION,
             resource=resource.name,
+            title=context.title,
             items=tuple(context.result),
             item_capabilities=context.item_capabilities,
             relationships=context.relationships,
@@ -144,9 +146,11 @@ class SirenResponseProjectionService:
         )
         return SirenDocument(
             class_=("command-result",),
+            title=context.title or operation.title,
             properties=context.result,
             links=(SirenLink(
                 rel=("self",),
+                title=context.title or operation.title,
                 href=self.hrefs.href(operation.route.path, request, resource, context.result),
             ),),
         )
@@ -162,9 +166,11 @@ class SirenResponseProjectionService:
         )
         return SirenDocument(
             class_=("empty",),
+            title=context.title or operation.title,
             properties={"status": context.status},
             links=(SirenLink(
                 rel=("self",),
+                title=context.title or operation.title,
                 href=self.hrefs.href(operation.route.path, request, resource),
             ),),
         )
@@ -185,9 +191,11 @@ class SirenResponseProjectionService:
             properties["errors"] = context.result
         return SirenDocument(
             class_=("error",),
+            title=context.title or operation.title,
             properties=properties,
             links=(SirenLink(
                 rel=("self",),
+                title=context.title or operation.title,
                 href=self.hrefs.href(operation.route.path, request, resource),
             ),),
         )

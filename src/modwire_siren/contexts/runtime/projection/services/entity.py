@@ -27,13 +27,16 @@ class SirenDefaultEntityDocumentService(SirenEntityDocumentService):
         context: SirenContext,
         rel: tuple[SirenRelation, ...],
     ) -> SirenDocument | SirenEmbeddedRepresentation:
+        title = context.title or resource.title
         fields = {
             "class_": (resource.resource_class,),
+            "title": title,
             "properties": value,
             "actions": tuple(self.actions.actions(api, resource, SirenScope.ENTITY, context, value)) or None,
             "links": (
                 SirenLink(
                     rel=("self",),
+                    title=title,
                     href=self.hrefs.href(
                         resource.entity.path if resource.entity else resource.collection.path, context, resource, value
                     ),

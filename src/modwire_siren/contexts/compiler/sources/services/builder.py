@@ -14,7 +14,7 @@ from modwire_siren.contexts.graph import (
     SirenRoot,
     SirenRoute,
 )
-from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
+from modwire_siren.contexts.shared import ModwireSirenError, SirenHttpMethod, SirenScope
 
 from ..state import SirenAssembly
 from ..values import FieldDraft, OperationDraft, ResourceDraft
@@ -42,6 +42,8 @@ class SirenBuilder:
                     reference=resource.reference,
                     name=resource.name,
                     resource_class=resource.resource_class,
+                    title=self.resource_title(resource, operations, SirenScope.ENTITY),
+                    collection_title=self.resource_title(resource, operations, SirenScope.COLLECTION),
                     identifier=resource.identifier,
                     collection=SirenRoute(path=resource.collection_path),
                     entity=SirenRoute(path=resource.entity_path) if resource.entity_path else None,
@@ -57,6 +59,7 @@ class SirenBuilder:
                     scope=operation.scope,
                     method=operation.method,
                     route=SirenRoute(path=operation.path),
+                    title=operation.title,
                     media_type=operation.media_type,
                     fields=tuple(
                         SirenField(
@@ -99,6 +102,40 @@ class SirenBuilder:
                 for operation in operations.values()
             ),
         )
+
+    def resource_title(
+        self, resource: ResourceDraft, operations: Mapping[str, OperationDraft], scope: SirenScope
+    ) -> str | None:
+        candidates: list[tuple[int, int, str]] = []
+        for operation in operations.values():
+            if operation.resource != resource.reference:
+                continue
+            exact_collection = operation.path == resource.collection_path
+            exact_entity = resource.entity_path is not None and operation.path == resource.entity_path
+            if not exact_collection and not exact_entity:
+                continue
+            for response in operation.responses:
+                if not response.status.startswith("2") or response.definition is None:
+                    continue
+                definition = response.definition
+                title: object = None
+                priority = 0
+                if scope == SirenScope.COLLECTION and exact_collection and response.shape == "array":
+                    priority = 0 if operation.method == SirenHttpMethod.GET else 1
+                    title = definition.get("title")
+                    if not title:
+                        items = definition.get("items")
+                        title = items.get("title") if isinstance(items, Mapping) else None
+                elif scope == SirenScope.ENTITY and exact_entity and response.shape == "object":
+                    priority = 0 if operation.method == SirenHttpMethod.GET else 2
+                    title = definition.get("title")
+                elif scope == SirenScope.ENTITY and exact_collection and response.shape == "array":
+                    priority = 1 if operation.method == SirenHttpMethod.GET else 3
+                    items = definition.get("items")
+                    title = items.get("title") if isinstance(items, Mapping) else None
+                if isinstance(title, str) and title:
+                    candidates.append((priority, len(candidates), title))
+        return min(candidates)[2] if candidates else None
 
     def resource_index(self, resources: list[ResourceDraft]) -> dict[str, ResourceDraft]:
         index: dict[str, ResourceDraft] = {}

@@ -15,12 +15,14 @@ class SirenResponseContext(BaseValue):
     an object, or an array. Array responses project as collections and object responses from an
     entity's exact route project as entities. Set `representation` to `"entity"` or `"command"`
     when an object response from a collection, root, or entity-owned subcommand is ambiguous.
+    `title` overrides the compiled resource or operation title for the projected result.
     """
 
     operation_id: str
     status: int
     result: JsonValue = None
     base_url: str
+    title: str | None = None
     media_type: SirenMediaType | None = None
     representation: Literal["entity", "collection", "command"] | None = None
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
