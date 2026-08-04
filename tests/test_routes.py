@@ -252,7 +252,7 @@ class TestRoutes:
             base_url="https://api.example.com", scope="root", capabilities=frozenset({"get_api_root"})
         )).model_dump(by_alias=True, mode="json", exclude_none=True)
         assert document["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/hypermedia"},
+            {"title": "Modwire", "rel": ["self"], "href": "https://api.example.com/hypermedia"},
             {"rel": ["collection"], "href": "https://api.example.com/hypermedia/records"},
         ]
         assert document["actions"] == [

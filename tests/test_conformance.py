@@ -25,12 +25,17 @@ class TestConformance:
         )
         document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets"}]
+        assert document["links"] == [{
+            "title": "Response Get Widget",
+            "rel": ["self"],
+            "href": "https://api.example.com/api/v1/widgets",
+        }]
         assert document["actions"] == [
             {
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
+                "title": "List Widgets",
                 "type": "application/x-www-form-urlencoded",
                 "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
@@ -46,12 +51,17 @@ class TestConformance:
         )
         entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert entity["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets/42"}]
+        assert entity["links"] == [{
+            "title": "Response Get Widget",
+            "rel": ["self"],
+            "href": "https://api.example.com/api/v1/widgets/42",
+        }]
         assert entity["actions"] == [
             {
                 "name": "rename_widget",
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
+                "title": "Rename Widget",
                 "type": "application/json",
                 "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }
@@ -79,12 +89,17 @@ class TestConformance:
         )
         document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets"}]
+        assert document["links"] == [{
+            "title": "Response",
+            "rel": ["self"],
+            "href": "https://api.example.com/api/v1/widgets",
+        }]
         assert document["actions"] == [
             {
                 "name": "list_widgets",
                 "href": "https://api.example.com/api/v1/widgets",
                 "method": "GET",
+                "title": "List Widgets",
                 "type": "application/x-www-form-urlencoded",
                 "fields": [{"name": "page", "type": "number", "title": "Page", "value": 1}],
             }
@@ -100,12 +115,17 @@ class TestConformance:
         )
         entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
-        assert entity["links"] == [{"rel": ["self"], "href": "https://api.example.com/api/v1/widgets/42"}]
+        assert entity["links"] == [{
+            "title": "Response",
+            "rel": ["self"],
+            "href": "https://api.example.com/api/v1/widgets/42",
+        }]
         assert entity["actions"] == [
             {
                 "name": "rename_widget",
                 "href": "https://api.example.com/api/v1/widgets/42",
                 "method": "PATCH",
+                "title": "Rename Widget",
                 "type": "application/json",
                 "fields": [{"name": "title", "type": "text", "title": "Title", "value": ""}],
             }

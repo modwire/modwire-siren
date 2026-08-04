@@ -20,6 +20,7 @@ class SirenContext(BaseValue):
     | `base_url` | Public origin joined with OpenAPI paths. |
     | `scope` | `"root"`, `"collection"`, or `"entity"`. |
     | `resource` | Derived singular resource name; required outside root. |
+    | `title` | Explicit document title overriding compiled OpenAPI metadata. |
     | `value` | Entity or collection properties and entity path parameters. |
     | `items` | Entity mappings for a collection. |
     | `item_capabilities` | Optional permitted operation IDs for each collection item. |
@@ -32,6 +33,7 @@ class SirenContext(BaseValue):
     base_url: str
     scope: SirenScope = SirenScope.ENTITY
     resource: str | None = None
+    title: str | None = None
     value: Mapping[str, JsonValue] = Field(default_factory=dict)
     items: tuple[Mapping[str, JsonValue], ...] = ()
     item_capabilities: tuple[frozenset[str], ...] = ()

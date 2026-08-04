@@ -62,6 +62,6 @@ class TestQueries:
         payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert payload["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
+            {"title": "Modwire", "rel": ["self"], "href": "https://api.example.com/?format=siren"},
             {"rel": ["collection"], "href": "https://api.example.com/records"},
         ]

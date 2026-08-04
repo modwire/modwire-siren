@@ -142,6 +142,44 @@ def siren(
     Call `audit(openapi)` first when a consumer needs a deterministic list of every current
     incompatibility before using this strict fail-fast entry point.
 
+    #### Explicit title metadata
+
+    The root document uses `info.title`, and exposes `info.version` as the official Siren
+    `properties.version` value. An operation's `summary` becomes its action title. Resource titles
+    come only from explicitly connected successful response schemas: an object schema on the exact
+    entity route names an entity, while an array schema on the exact collection route names its
+    collection and its item schema names embedded items and entities. Self and root collection
+    links reuse those compiled titles.
+
+    ```yaml
+    info:
+      title: Example Service
+      version: 4.0.0
+    paths:
+      /articles/{article_id}:
+        get:
+          operationId: get_article
+          summary: Read article
+          responses:
+            "200":
+              description: Article
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Article"
+    components:
+      schemas:
+        Article:
+          type: object
+          title: Article
+    ```
+
+    `SirenContext.title`, `SirenResponseContext.title`, and `SirenRelationship.title` override the
+    relevant compiled default. Missing titles remain absent: the engine does not humanize operation
+    IDs, guess labels from URLs, or apply language-specific inflection. When operations declare
+    different schema titles, the exact GET representation takes precedence, followed by other
+    operations in OpenAPI declaration order.
+
     #### Framework integration is one startup call
 
     Give the framework-generated document directly to `siren()` after routes are registered:

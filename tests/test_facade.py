@@ -115,7 +115,7 @@ class TestFacade:
         )
 
         assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/siren"},
+            {"title": "Modwire", "rel": ["self"], "href": "https://api.example.com/siren"},
             {"rel": ["collection"], "href": "https://api.example.com/siren/records"},
         ]
         assert schema == original

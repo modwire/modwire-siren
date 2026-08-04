@@ -10,6 +10,7 @@ class OperationDraft(BaseValue):
     name: str
     method: SirenHttpMethod
     path: str
+    title: str | None = None
     media_type: SirenMediaType | None
     input: InputDraft | None = None
     responses: tuple[ResponseDraft, ...] = ()
