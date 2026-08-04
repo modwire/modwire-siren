@@ -8,6 +8,7 @@ from modwire_siren.contexts.graph import (
     SirenField,
     SirenOperation,
     SirenResource,
+    SirenResponse,
     SirenRoot,
     SirenRoute,
 )
@@ -64,6 +65,15 @@ class SirenBuilder:
                             default=item.default,
                         )
                         for item in fields.get(operation.name, ())
+                    ),
+                    responses=tuple(
+                        SirenResponse(
+                            status=response.status,
+                            media_type=response.media_type,
+                            shape=response.shape,
+                            definition=response.definition,
+                        )
+                        for response in operation.responses
                     ),
                 )
                 for operation in operations.values()

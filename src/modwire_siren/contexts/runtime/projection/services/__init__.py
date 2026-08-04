@@ -4,6 +4,7 @@ from .entity import SirenDefaultEntityDocumentService
 from .entity_scope import SirenEntityScopeProjector
 from .projection import SirenProjectionService
 from .relationship import SirenDefaultRelationshipDocumentService
+from .response import SirenResponseProjectionService
 from .root import SirenRootScopeProjector
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "SirenDefaultRelationshipDocumentService",
     "SirenEntityScopeProjector",
     "SirenProjectionService",
+    "SirenResponseProjectionService",
     "SirenRootScopeProjector",
 ]

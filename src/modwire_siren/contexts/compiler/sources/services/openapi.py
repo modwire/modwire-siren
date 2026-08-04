@@ -8,7 +8,13 @@ from modwire_siren.contexts.shared import ModwireSirenError
 
 from ...compatibility import SirenCompatibilityFinding
 from ..contracts import SirenSource
-from ..state import ComponentResolver, OpenApiCompatibilityInspection, OpenApiFieldProjection, RouteCatalog
+from ..state import (
+    ComponentResolver,
+    OpenApiCompatibilityInspection,
+    OpenApiFieldProjection,
+    OpenApiResponseProjection,
+    RouteCatalog,
+)
 from ..state.assembly import SirenAssembly
 from ..state.compiler import OpenApiOperationCompiler
 from .builder import SirenBuilder
@@ -31,9 +37,11 @@ class OpenApiSource(SirenSource):
                 ),
             )
         components = ComponentResolver(components=schema.get("components", {}))
+        responses = OpenApiResponseProjection(components=components)
         return OpenApiCompatibilityInspection(
             components=components,
             projection=OpenApiFieldProjection(components=components),
+            responses=responses,
             routes=RouteCatalog(paths=paths),
         ).inspect()
 
@@ -64,5 +72,6 @@ class OpenApiSource(SirenSource):
             routes=routes,
             components=components,
             projection=OpenApiFieldProjection(components=components),
+            responses=OpenApiResponseProjection(components=components),
         ).compile()
         return self.builder.build(assembly)

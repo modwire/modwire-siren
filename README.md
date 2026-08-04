@@ -143,6 +143,31 @@ engine = siren(api.get_openapi_schema())  # Django Ninja / Django Ninja Extra
 `application/vnd.siren+json`. The document contains only official Siren members; action fields
 never include the non-standard `required` member.
 
+#### Operation-aware response projection
+
+When an adapter knows the executed operation and HTTP status, pass a `SirenResponseContext`
+to `engine.project_response(...)`. The engine selects the compiled response status, media
+type, and resolved schema. Arrays become collection documents, objects returned from an
+entity's exact route become entity documents, content-free responses become `empty` documents,
+and statuses from 400 onward become `error` documents whose properties preserve the status and
+structured result.
+
+```python
+from modwire_siren import SirenResponseContext
+
+document = engine.project_response(SirenResponseContext(
+    operation_id="get_record",
+    status=200,
+    result={"record_id": "42", "title": "Architecture"},
+    base_url="https://api.example.com",
+))
+```
+
+An object response from a collection, root, or entity-owned subcommand is semantically
+ambiguous: set its response context `representation` to `"entity"` or `"command"`. No
+identifier property name is inferred; compiled route parameters and explicit path values
+resolve entity links.
+
 Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
 mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
 slash. Every OpenAPI path must belong to `source_path`.
@@ -154,6 +179,15 @@ Inspect a valid OpenAPI document against the current official-Siren support boun
 Call this during startup before `siren(openapi)` when a consumer needs every currently
 unsupported construct at once. The report exposes typed findings and `render()` for terminal
 or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
+
+### `SirenResponseContext`
+
+Supply an executed OpenAPI operation and result for operation-aware projection.
+
+The compiled response status, media type, and schema determine whether the result is empty,
+an object, or an array. Array responses project as collections and object responses from an
+entity's exact route project as entities. Set `representation` to `"entity"` or `"command"`
+when an object response from a collection, root, or entity-owned subcommand is ambiguous.
 
 ### `SirenRelationship`
 
@@ -247,6 +281,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
 | `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
+| `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 <!-- generated:public-api:end -->
