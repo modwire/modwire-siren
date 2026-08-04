@@ -54,7 +54,14 @@ openapi = {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "properties": {"title": {"type": "string"}},
+                                "required": ["metadata"],
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "metadata": {
+                                        "type": "object",
+                                        "properties": {"source": {"type": "string"}},
+                                    },
+                                },
                             }
                         }
                     }
@@ -123,6 +130,30 @@ to the API contract and client transport; official Siren has no standard members
 paths, serialization, or placement. Multiple non-JSON media types, ambiguous compositions,
 unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
 this startup call.
+
+#### Adapter-facing operation inputs
+
+Use `engine.operation_input(operation_id)` when an adapter needs the compiled request contract.
+It returns the selected media type, the fully resolved request-body `definition`, the names in
+`official_fields`, and separate `delegated_inputs` for structured query values, headers,
+cookies, and bodies. Each delegated input retains its location, required state, media type,
+normalized parameter serialization controls, and resolved definition, so an adapter does not
+need to parse OpenAPI again.
+
+```python
+operation_input = engine.operation_input("rename_record")
+
+payload = {"title": "New title"}
+if operation_input is not None:
+    metadata = next(value for value in operation_input.delegated_inputs if value.name == "metadata")
+    if metadata.location == "body" and metadata.required:
+        payload[metadata.name] = {"source": "browser"}
+
+transport.request("PATCH", "/records/42", json=payload)
+```
+
+This metadata is separate from projection. `engine.project(context)` continues to produce an
+extension-free Siren document containing only official fields.
 
 Call `audit(openapi)` first when a consumer needs a deterministic list of every current
 incompatibility before using this strict fail-fast entry point.
@@ -196,6 +227,14 @@ Describe a runtime relationship to another OpenAPI resource.
 A relationship projects as a navigational link by default. Set `embedded` when the related
 resource values should be included as a Siren embedded representation instead.
 
+### `SirenOperationInput`
+
+Expose normalized input metadata for one compiled OpenAPI operation.
+
+`official_fields` names the values emitted as standard Siren action fields.
+`delegated_inputs` retains structured query values, headers, cookies, and body values for an
+adapter or transport. `definition` is the normalized request-body schema when one is declared.
+
 ### `SirenLink`
 
 Describe a navigational Siren link.
@@ -224,6 +263,13 @@ Project an engine request into this immutable public value, then serialize it wi
 `model_dump(by_alias=True, mode="json", exclude_none=True)` for an
 `application/vnd.siren+json` response. Navigation belongs in `links`; embedded sub-entities
 belong in `entities`.
+
+### `SirenDelegatedInput`
+
+Describe a normalized OpenAPI input delegated to an adapter or transport.
+
+Parameter serialization defaults are materialized in `style`, `explode`, and
+`allow_reserved`; body inputs instead carry their selected `media_type`.
 
 ### `SirenContext`
 
@@ -274,12 +320,14 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
+| `SirenDelegatedInput` | Describe a normalized OpenAPI input delegated to an adapter or transport. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
 | `SirenEmbeddedRepresentation` | Represent a Siren sub-entity embedded in full. | — |
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
+| `SirenOperationInput` | Expose normalized input metadata for one compiled OpenAPI operation. | — |
 | `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
 | `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |

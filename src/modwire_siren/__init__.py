@@ -9,6 +9,7 @@ from .contexts.runtime.document import (
     SirenFieldValue,
     SirenLink,
 )
+from .contexts.runtime.operation_input import SirenDelegatedInput, SirenOperationInput
 from .contexts.runtime.request import SirenContext, SirenRelationship, SirenResponseContext
 from .contexts.shared import ModwireSirenError
 
@@ -18,12 +19,14 @@ __all__ = [
     "SirenCompatibilityFinding",
     "SirenCompatibilityReport",
     "SirenContext",
+    "SirenDelegatedInput",
     "SirenDocument",
     "SirenEmbeddedLink",
     "SirenEmbeddedRepresentation",
     "SirenField",
     "SirenFieldValue",
     "SirenLink",
+    "SirenOperationInput",
     "SirenRelationship",
     "SirenResponseContext",
     "audit",

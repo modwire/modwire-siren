@@ -38,7 +38,14 @@ def siren(
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "properties": {"title": {"type": "string"}},
+                                    "required": ["metadata"],
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "metadata": {
+                                            "type": "object",
+                                            "properties": {"source": {"type": "string"}},
+                                        },
+                                    },
                                 }
                             }
                         }
@@ -107,6 +114,30 @@ def siren(
     paths, serialization, or placement. Multiple non-JSON media types, ambiguous compositions,
     unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
     this startup call.
+
+    #### Adapter-facing operation inputs
+
+    Use `engine.operation_input(operation_id)` when an adapter needs the compiled request contract.
+    It returns the selected media type, the fully resolved request-body `definition`, the names in
+    `official_fields`, and separate `delegated_inputs` for structured query values, headers,
+    cookies, and bodies. Each delegated input retains its location, required state, media type,
+    normalized parameter serialization controls, and resolved definition, so an adapter does not
+    need to parse OpenAPI again.
+
+    ```python
+    operation_input = engine.operation_input("rename_record")
+
+    payload = {"title": "New title"}
+    if operation_input is not None:
+        metadata = next(value for value in operation_input.delegated_inputs if value.name == "metadata")
+        if metadata.location == "body" and metadata.required:
+            payload[metadata.name] = {"source": "browser"}
+
+    transport.request("PATCH", "/records/42", json=payload)
+    ```
+
+    This metadata is separate from projection. `engine.project(context)` continues to produce an
+    extension-free Siren document containing only official fields.
 
     Call `audit(openapi)` first when a consumer needs a deterministic list of every current
     incompatibility before using this strict fail-fast entry point.
