@@ -2,7 +2,7 @@ from pydantic import Field
 
 from modwire_siren.contexts.shared import BaseState, SirenFieldType, SirenHttpMethod, SirenMediaType, SirenScope
 
-from ..values import FieldDraft, OperationDraft, ResourceDraft, ResponseDraft
+from ..values import FieldDraft, InputDraft, OperationDraft, ResourceDraft, ResponseDraft
 
 
 class SirenAssembly(BaseState):
@@ -47,6 +47,7 @@ class SirenAssembly(BaseState):
         method: SirenHttpMethod,
         path: str,
         media_type: SirenMediaType | None = None,
+        input: InputDraft | None = None,
         responses: tuple[ResponseDraft, ...] = (),
     ) -> "SirenAssembly":
         self.operations.append(OperationDraft(
@@ -56,6 +57,7 @@ class SirenAssembly(BaseState):
             method=method,
             path=path,
             media_type=media_type,
+            input=input,
             responses=responses,
         ))
         return self

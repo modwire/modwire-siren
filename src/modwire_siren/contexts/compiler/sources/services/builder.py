@@ -5,7 +5,9 @@ from wireup import injectable
 
 from modwire_siren.contexts.graph import (
     SirenApi,
+    SirenDelegatedInput,
     SirenField,
+    SirenInput,
     SirenOperation,
     SirenResource,
     SirenResponse,
@@ -66,6 +68,24 @@ class SirenBuilder:
                         )
                         for item in fields.get(operation.name, ())
                     ),
+                    input=SirenInput(
+                        media_type=operation.input.media_type,
+                        definition=operation.input.definition,
+                        official_fields=operation.input.official_fields,
+                        delegated_inputs=tuple(
+                            SirenDelegatedInput(
+                                name=item.name,
+                                location=item.location,
+                                required=item.required,
+                                media_type=item.media_type,
+                                style=item.style,
+                                explode=item.explode,
+                                allow_reserved=item.allow_reserved,
+                                definition=item.definition,
+                            )
+                            for item in operation.input.delegated_inputs
+                        ),
+                    ) if operation.input else None,
                     responses=tuple(
                         SirenResponse(
                             status=response.status,

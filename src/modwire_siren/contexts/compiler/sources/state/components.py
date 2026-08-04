@@ -22,6 +22,20 @@ class ComponentResolver(BaseState):
     def schema(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "schemas")
 
+    def schema_tree(self, definition: Any, trail: tuple[str, ...] = ()) -> Any:
+        if isinstance(definition, list):
+            return [self.schema_tree(value, trail) for value in definition]
+        if not isinstance(definition, dict):
+            return deepcopy(definition)
+        reference = definition.get("$ref")
+        if reference is not None and not isinstance(reference, str):
+            raise ModwireSirenError("OpenAPI component reference must be a string")
+        if isinstance(reference, str) and reference in trail:
+            return deepcopy(definition)
+        resolved = self.schema(definition) if reference is not None else deepcopy(definition)
+        nested_trail = (*trail, reference) if isinstance(reference, str) else trail
+        return {name: self.schema_tree(value, nested_trail) for name, value in resolved.items()}
+
     def resolve(self, definition: Any, kind: str, trail: tuple[str, ...] = ()) -> dict[str, Any]:
         if not isinstance(definition, dict):
             return {}
