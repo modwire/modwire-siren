@@ -9,7 +9,9 @@ from ..contexts.shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 
-def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
+def siren(
+    openapi: Mapping[str, Any], *, source_path: str = "/", public_path: str = "/"
+) -> SirenEngine:
     """Compile a complete OpenAPI 3.1 document into a reusable Siren engine.
 
     Call this once during application startup, then call `engine.project(context)` for each
@@ -125,21 +127,27 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     `application/vnd.siren+json`. The document contains only official Siren members; action fields
     never include the non-standard `required` member.
 
-    Set `root_path` when the Siren entry point is mounted away from `/`.
+    Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
+    mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
+    slash. Every OpenAPI path must belong to `source_path`.
     """
 
     try:
         if not isinstance(openapi, Mapping):
             raise ModwireSirenError("OpenAPI document must be a mapping")
-        if not isinstance(root_path, str) or not root_path.startswith("/"):
-            raise ModwireSirenError("Siren root path must start with '/'")
+        if not isinstance(source_path, str) or not source_path.startswith("/"):
+            raise ModwireSirenError("Siren source path must start with '/'")
+        if not isinstance(public_path, str) or not public_path.startswith("/"):
+            raise ModwireSirenError("Siren public path must start with '/'")
+        source_path = source_path.rstrip("/") or "/"
+        public_path = public_path.rstrip("/") or "/"
         document = json.loads(json.dumps(openapi))
         validate(document)
     except Exception as error:
         raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error
     try:
         application = SirenApplicationContainer().application()
-        api = application.api_service().build(document, root_path)
+        api = application.api_service().build(document, source_path, public_path)
         return application.engine_factory().create(api)
     except Exception as error:
         raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error

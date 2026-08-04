@@ -9,7 +9,7 @@ from ...compatibility import SirenCompatibilityFinding
 
 class SirenSource(ABC):
     @abstractmethod
-    def load(self, schema: dict[str, Any], root_path: str) -> SirenApi:
+    def load(self, schema: dict[str, Any], source_path: str, public_path: str) -> SirenApi:
         raise ModwireSirenError
 
     @abstractmethod
