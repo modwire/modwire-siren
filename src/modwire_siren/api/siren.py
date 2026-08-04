@@ -127,6 +127,31 @@ def siren(
     `application/vnd.siren+json`. The document contains only official Siren members; action fields
     never include the non-standard `required` member.
 
+    #### Operation-aware response projection
+
+    When an adapter knows the executed operation and HTTP status, pass a `SirenResponseContext`
+    to `engine.project_response(...)`. The engine selects the compiled response status, media
+    type, and resolved schema. Arrays become collection documents, objects returned from an
+    entity's exact route become entity documents, content-free responses become `empty` documents,
+    and statuses from 400 onward become `error` documents whose properties preserve the status and
+    structured result.
+
+    ```python
+    from modwire_siren import SirenResponseContext
+
+    document = engine.project_response(SirenResponseContext(
+        operation_id="get_record",
+        status=200,
+        result={"record_id": "42", "title": "Architecture"},
+        base_url="https://api.example.com",
+    ))
+    ```
+
+    An object response from a collection, root, or entity-owned subcommand is semantically
+    ambiguous: set its response context `representation` to `"entity"` or `"command"`. No
+    identifier property name is inferred; compiled route parameters and explicit path values
+    resolve entity links.
+
     Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
     mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
     slash. Every OpenAPI path must belong to `source_path`.

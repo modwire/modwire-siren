@@ -13,6 +13,7 @@ from ..values import Field
 from .assembly import SirenAssembly
 from .components import ComponentResolver
 from .field_projection import OpenApiFieldProjection
+from .response_projection import OpenApiResponseProjection
 from .routes import RouteCatalog
 
 
@@ -24,6 +25,7 @@ class OpenApiOperationCompiler(BaseState):
     routes: RouteCatalog
     components: ComponentResolver
     projection: OpenApiFieldProjection
+    responses: OpenApiResponseProjection
 
     def compile(self) -> None:
         for path, path_item in self.routes.paths.items():
@@ -48,9 +50,10 @@ class OpenApiOperationCompiler(BaseState):
                     raise ModwireSirenError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
                 ownership = self.routes.ownership(path)
                 fields, media_type = self.fields(path_item, operation)
+                responses = self.responses.responses(operation)
                 if ownership is None:
                     self.assembly.add_operation(
-                        None, SirenScope.ROOT, name, operation_method, self.routes.public(path), media_type
+                        None, SirenScope.ROOT, name, operation_method, self.routes.public(path), media_type, responses
                     )
                     self.assembly.add_root_operation(name)
                     for field in fields:
@@ -58,7 +61,13 @@ class OpenApiOperationCompiler(BaseState):
                     continue
                 resource, scope = ownership
                 self.assembly.add_operation(
-                    resource.reference, scope, name, operation_method, self.routes.public(path), media_type
+                    resource.reference,
+                    scope,
+                    name,
+                    operation_method,
+                    self.routes.public(path),
+                    media_type,
+                    responses,
                 )
                 for field in fields:
                     self.assembly.add_field(name, field.name, field.type, field.values, field.title, field.default)

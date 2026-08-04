@@ -57,3 +57,20 @@ class TestCompatibility:
 
         with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
             siren(incompatible)
+
+    def test_public_facade_audits_response_shapes_with_the_strict_compiler_policy(self):
+        incompatible = deepcopy(PARAMETER_MEDIA_SCHEMA)
+        incompatible["paths"]["/records"]["get"]["responses"]["200"]["content"] = {
+            "application/json": {"schema": {"type": "string"}}
+        }
+
+        report = audit(incompatible)
+
+        assert [(finding.category, finding.location) for finding in report.findings] == [
+            ("response-schema", "#/paths/~1records/get/responses")
+        ]
+        assert report.findings[0].detail == (
+            "OpenAPI response schema must be an object or array: 200 application/json"
+        )
+        with pytest.raises(ModwireSirenError, match="Invalid or unsupported OpenAPI contract"):
+            siren(incompatible)

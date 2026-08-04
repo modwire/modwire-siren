@@ -1,3 +1,3 @@
-from .model import SirenApi, SirenField, SirenOperation, SirenResource, SirenRoot, SirenRoute
+from .model import SirenApi, SirenField, SirenOperation, SirenResource, SirenResponse, SirenRoot, SirenRoute
 
-__all__ = ["SirenApi", "SirenField", "SirenOperation", "SirenResource", "SirenRoot", "SirenRoute"]
+__all__ = ["SirenApi", "SirenField", "SirenOperation", "SirenResource", "SirenResponse", "SirenRoot", "SirenRoute"]

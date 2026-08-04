@@ -16,6 +16,9 @@ class ComponentResolver(BaseState):
     def request_body(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "requestBodies")
 
+    def response(self, definition: Any) -> dict[str, Any]:
+        return self.resolve(definition, "responses")
+
     def schema(self, definition: Any) -> dict[str, Any]:
         return self.resolve(definition, "schemas")
 

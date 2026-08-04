@@ -4,7 +4,7 @@ from wireup import injectable
 
 from modwire_siren.contexts.graph import SirenApi
 
-from ...projection import SirenProjectionService
+from ...projection import SirenProjectionService, SirenResponseProjectionService
 from ..state import SirenEngine
 
 
@@ -12,6 +12,7 @@ from ..state import SirenEngine
 @dataclass(frozen=True)
 class SirenEngineFactory:
     projection: SirenProjectionService
+    response_projection: SirenResponseProjectionService
 
     def create(self, api: SirenApi) -> SirenEngine:
-        return SirenEngine(api=api, projection=self.projection)
+        return SirenEngine(api=api, projection=self.projection, response_projection=self.response_projection)
