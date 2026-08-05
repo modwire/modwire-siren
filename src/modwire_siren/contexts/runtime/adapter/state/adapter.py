@@ -12,8 +12,9 @@ class SirenAdapter(BaseState):
     """Project already-executed framework results through a startup-compiled Siren engine.
 
     Use `match()` when a framework exposes only its HTTP method and path. Use `respond()` after the
-    application operation has executed exactly once. The adapter preserves response headers other
-    than content framing and returns an HTTP-ready payload with the official Siren media type.
+    application operation has executed exactly once. The adapter preserves semantic response headers
+    while removing validators and content metadata tied to the source bytes, then returns an HTTP-ready
+    payload with the official Siren media type.
     """
 
     engine: SirenEngine
@@ -72,7 +73,21 @@ class SirenAdapter(BaseState):
             headers = {
                 name: value
                 for name, value in request.headers.items()
-                if name.lower() not in {"content-type", "content-length"}
+                if name.lower() not in {
+                    "accept-ranges",
+                    "content-digest",
+                    "content-encoding",
+                    "content-length",
+                    "content-md5",
+                    "content-range",
+                    "content-type",
+                    "digest",
+                    "etag",
+                    "last-modified",
+                    "repr-digest",
+                    "trailer",
+                    "transfer-encoding",
+                }
             }
             return SirenAdapterResponse(
                 status=request.status,
