@@ -1,5 +1,7 @@
 from urllib.parse import unquote
 
+from pydantic import model_validator
+
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ...document import SirenDocument, SirenLink
@@ -15,17 +17,44 @@ class SirenAdapter(BaseState):
     application operation has executed exactly once. The adapter preserves semantic response headers
     while removing validators and content metadata tied to the source bytes, then returns an HTTP-ready
     payload with the official Siren media type.
+
+    Route resolution compares exact segment counts and ranks matching templates position by position,
+    with literal segments ahead of parameters. Source and public templates use the same ranking. Adapter
+    construction rejects same-method templates that become identical after parameter names are removed.
     """
 
     engine: SirenEngine
     routes: tuple[SirenAdapterRoute, ...]
 
+    @model_validator(mode="after")
+    def validate_routes(self) -> "SirenAdapter":
+        templates = {}
+        for route in self.routes:
+            for template in dict.fromkeys((route.source_path, route.public_path)):
+                parts = template.strip("/").split("/") if template != "/" else []
+                canonical_parts = tuple(
+                    "{}" if part.startswith("{") and part.endswith("}") else part
+                    for part in parts
+                )
+                canonical = "/" + "/".join(canonical_parts)
+                key = (route.method, canonical)
+                existing = templates.get(key)
+                if existing is not None:
+                    raise ModwireSirenError(
+                        f"Ambiguous Siren adapter templates for {route.method} {canonical}: "
+                        f"{existing[0]!r} ({existing[1]}) and {route.operation_id!r} ({template})"
+                    )
+                templates[key] = (route.operation_id, template)
+        return self
+
     def match(self, method: str, path: str) -> SirenAdapterMatch | None:
         normalized = "/" + path.strip("/") if path.strip("/") else "/"
+        selected = None
+        selected_specificity = None
         for route in self.routes:
             if route.method != method.upper():
                 continue
-            for template in (route.source_path, route.public_path):
+            for template in dict.fromkeys((route.source_path, route.public_path)):
                 template_parts = template.strip("/").split("/") if template != "/" else []
                 path_parts = normalized.strip("/").split("/") if normalized != "/" else []
                 if len(template_parts) != len(path_parts):
@@ -34,13 +63,22 @@ class SirenAdapter(BaseState):
                 matches = True
                 for expected, actual in zip(template_parts, path_parts, strict=True):
                     if expected.startswith("{") and expected.endswith("}"):
-                        values[expected[1:-1]] = unquote(actual)
+                        values[expected[1:-1]] = actual
                     elif expected != actual:
                         matches = False
                         break
                 if matches:
-                    return SirenAdapterMatch(operation_id=route.operation_id, path_values=values)
-        return None
+                    specificity = tuple(
+                        int(not (part.startswith("{") and part.endswith("}")))
+                        for part in template_parts
+                    )
+                    if selected_specificity is None or specificity > selected_specificity:
+                        selected = SirenAdapterMatch(
+                            operation_id=route.operation_id,
+                            path_values={name: unquote(value) for name, value in values.items()},
+                        )
+                        selected_specificity = specificity
+        return selected
 
     def respond(self, request: SirenAdapterRequest) -> SirenAdapterResponse:
         try:
