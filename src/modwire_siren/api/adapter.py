@@ -54,12 +54,21 @@ def siren_adapter(
     pretending that it can execute without redispatch. Install real framework routes when an independent
     mount is required.
 
-    The bridge imports Django only when rendering a negotiated Siren response. It transforms matched
-    `application/json`, `+json`, and content-free responses. Unmatched routes, non-JSON content, streams,
-    files, redirects, 304 responses, and already-Siren responses pass through unchanged. Non-Siren
-    requests always receive the original response object. Unmatched errors also pass through because
-    the bridge does not guess API ownership from a URL prefix. Its required `SirenCapabilityPolicy` is
-    application code:
+    The bridge keeps Django optional by importing it only while handling a matched response. It transforms
+    matched `application/json`, `+json`, and content-free responses. Accept ranges use quality and specificity;
+    an exact range overrides a wildcard for that representation, equal explicit preferences use client
+    order, and missing or wildcard-only Accept values retain JSON. Media types are case-insensitive and
+    `q=0` forbids Siren.
+    Unmatched routes, non-JSON content, streams, files, redirects, 304 responses, and already-Siren
+    responses pass through without projection. Non-Siren requests receive the original response object, with
+    `Vary: Accept` merged when that matched response was eligible for representation negotiation.
+
+    A transformed response merges `Accept` into `Vary`, retains cookies plus semantic and security
+    headers, and removes source-byte validators, digests, encodings, ranges, and framing. Put Django's
+    `ConditionalGetMiddleware` before `SirenDjangoMiddleware` so response processing validates the final
+    Siren bytes; a 304 produced downstream is passed through because it has no representation to project.
+    Unmatched errors also pass through because the bridge does not guess API ownership from a URL prefix.
+    Its required `SirenCapabilityPolicy` is application code:
 
     ```python
     from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware

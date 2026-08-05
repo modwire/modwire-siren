@@ -6,7 +6,7 @@ from pydantic import model_validator
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ..contracts import SirenCapabilityPolicy
-from ..values import SirenAdapterRequest
+from ..values import SirenAccept, SirenAdapterRequest
 from .adapter import SirenAdapter
 
 
@@ -15,9 +15,17 @@ class SirenDjangoMiddleware(BaseState):
 
     Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
     It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
-    content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren
-    responses pass through unchanged, as do all requests that do not select Siren.
+    content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
+    pass through without projection, as do all requests that do not select Siren. Negotiation honors
+    quality, specificity, wildcards, and case-insensitive media types; missing or wildcard-only Accept
+    values retain JSON because neither explicitly prefers Siren. Negotiable JSON, Siren, and 304
+    responses vary on Accept even when the original response object is returned.
     Unmatched errors also pass through: the bridge does not infer API ownership from URL prefixes.
+
+    Transformed responses retain cookies and semantic or security headers, and discard validators,
+    digests, encodings, ranges, and framing tied to the source JSON bytes. Place Django's
+    ConditionalGetMiddleware before this middleware so it evaluates the final Siren representation on
+    the response path; a downstream 304 remains untouched because its representation body is unavailable.
 
     Django middleware supports negotiation on the source routes that Django actually dispatches.
     Configure identical source and public paths; an independent public mount requires real framework
@@ -40,19 +48,27 @@ class SirenDjangoMiddleware(BaseState):
     def __call__(self, request: object) -> object:
         match = self.adapter.match(request.method, request.path)
         response = self.get_response(request)
-        accept = request.headers.get("Accept", "")
-        accepted = tuple(part.split(";", 1)[0].strip().lower() for part in accept.split(","))
-        if "application/vnd.siren+json" not in accepted:
+        if match is None:
             return response
-        if match is None or 300 <= response.status_code < 400:
+        from django.utils.cache import patch_vary_headers
+
+        if response.status_code == 304:
+            patch_vary_headers(response, ("Accept",))
+            return response
+        if 300 <= response.status_code < 400:
             return response
         if getattr(response, "streaming", False):
             return response
         content_type = response.get("Content-Type", "").split(";", 1)[0].strip().lower()
         if content_type == "application/vnd.siren+json":
+            patch_vary_headers(response, ("Accept",))
             return response
         content = bytes(response.content)
         if content and content_type != "application/json" and not content_type.endswith("+json"):
+            return response
+        patch_vary_headers(response, ("Accept",))
+        accept = request.headers.get("Accept", "")
+        if not SirenAccept(value=accept).selects_siren():
             return response
         result = json.loads(content) if content else None
         selected = self.policy.select(match.operation_id, response.status_code, request, result)

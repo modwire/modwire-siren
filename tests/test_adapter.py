@@ -249,7 +249,7 @@ class TestAdapter:
         assert collection.payload["class"] == ["collection", "article"]
         assert entity.payload["class"] == ["article"]
         assert entity.media_type == "application/vnd.siren+json"
-        assert entity.headers == {"ETag": "one"}
+        assert entity.headers == {}
         assert command.payload["class"] == ["command-result"]
         assert empty.payload["class"] == ["empty"]
         assert validation.payload["class"] == ["error"]
@@ -475,9 +475,11 @@ class TestAdapter:
             ))
 
         assert ordinary is original
+        assert ordinary["Vary"] == "Accept"
         assert siren.status_code == 200
         assert siren["Content-Type"] == "application/vnd.siren+json"
-        assert siren["ETag"] == "one"
+        assert "ETag" not in siren
+        assert siren["Vary"] == "Accept"
         assert json.loads(siren.content)["class"] == ["article"]
         assert json.loads(validation.content)["properties"] == {
             "errors": [{"location": "article_key", "message": "Invalid"}],
@@ -495,6 +497,110 @@ class TestAdapter:
             ("get_article", 422),
             ("delete_article", 204),
         ]
+
+    @pytest.mark.parametrize(
+        ("accept", "selected"),
+        (
+            ("application/vnd.siren+json;q=0, application/json", False),
+            ("application/vnd.siren+json;q=0.8, application/json;q=0.9", False),
+            ("application/*", False),
+            ("*/*", False),
+            ("", False),
+            ("APPLICATION/VND.SIREN+JSON", True),
+            ("application/*;q=0.8, application/vnd.siren+json;q=0.9", True),
+            ("application/json;q=0.5, application/*;q=0.9", True),
+            ("application/vnd.siren+json;q=0.8, application/json;q=0.8", True),
+            ("application/json;q=0.8, application/vnd.siren+json;q=0.8", False),
+            ("application/vnd.siren+json;q=0, */*;q=1", False),
+        ),
+    )
+    def test_django_bridge_negotiates_quality_specificity_and_wildcards(self, accept, selected):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
+        original = JsonResponse({"article_key": "one", "title": "One"})
+        calls = []
+
+        def handler(request):
+            calls.append(request.path)
+            return original
+
+        middleware = SirenDjangoMiddleware(
+            get_response=handler,
+            adapter=adapter,
+            policy=CapabilityPolicy(),
+        )
+        request = RequestFactory().get("/api/articles/one", HTTP_ACCEPT=accept)
+        with override_settings(ALLOWED_HOSTS=["testserver"]):
+            response = middleware(request)
+
+        assert (response["Content-Type"] == "application/vnd.siren+json") is selected
+        assert (response is not original) is selected
+        assert calls == ["/api/articles/one"]
+
+    def test_django_bridge_replaces_representation_headers_and_preserves_semantics(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
+        original = JsonResponse(
+            {"article_key": "one", "title": "One"},
+            headers={
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "private",
+                "Content-Digest": "sha-256=:source:",
+                "Content-Encoding": "gzip",
+                "Content-Length": "42",
+                "Content-Range": "bytes 0-41/42",
+                "Content-Security-Policy": "default-src 'none'",
+                "Digest": "sha-256=source",
+                "ETag": '"json"',
+                "Last-Modified": "Wed, 05 Aug 2026 00:00:00 GMT",
+                "Location": "/api/articles/one",
+                "RateLimit-Limit": "100",
+                "Vary": "Origin, Cookie",
+                "WWW-Authenticate": 'Bearer realm="api"',
+                "X-Request-ID": "request-one",
+            },
+        )
+        original.set_cookie("session", "one", httponly=True, samesite="Strict")
+
+        def handler(request):
+            return original
+
+        middleware = SirenDjangoMiddleware(
+            get_response=handler,
+            adapter=adapter,
+            policy=CapabilityPolicy(),
+        )
+        with override_settings(ALLOWED_HOSTS=["testserver"]):
+            response = middleware(RequestFactory().get(
+                "/api/articles/one",
+                HTTP_ACCEPT="application/vnd.siren+json",
+                HTTP_IF_NONE_MATCH='"json"',
+            ))
+
+        for name in (
+            "Accept-Ranges",
+            "Content-Digest",
+            "Content-Encoding",
+            "Content-Range",
+            "Digest",
+            "ETag",
+            "Last-Modified",
+        ):
+            assert name not in response
+        assert response["Content-Type"] == "application/vnd.siren+json"
+        assert "Content-Length" not in response
+        assert response["Vary"] == "Origin, Cookie, Accept"
+        assert response["Cache-Control"] == "private"
+        assert response["Content-Security-Policy"] == "default-src 'none'"
+        assert response["Location"] == "/api/articles/one"
+        assert response["RateLimit-Limit"] == "100"
+        assert response["WWW-Authenticate"] == 'Bearer realm="api"'
+        assert response["X-Request-ID"] == "request-one"
+        assert response.cookies["session"].value == "one"
+        assert response.cookies["session"]["httponly"] is True
+        assert response.cookies["session"]["samesite"] == "Strict"
 
     def test_django_bridge_passes_ineligible_responses_through_without_decoding(self):
         if not settings.configured:
@@ -541,6 +647,8 @@ class TestAdapter:
                 ))
 
                 assert returned is response
+                if response.status_code == 304:
+                    assert returned["Vary"] == "Accept"
                 response.close()
 
         assert calls == [path for path, _ in cases]

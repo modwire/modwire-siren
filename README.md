@@ -72,12 +72,21 @@ before middleware can transform its result, so an independent public mount is re
 pretending that it can execute without redispatch. Install real framework routes when an independent
 mount is required.
 
-The bridge imports Django only when rendering a negotiated Siren response. It transforms matched
-`application/json`, `+json`, and content-free responses. Unmatched routes, non-JSON content, streams,
-files, redirects, 304 responses, and already-Siren responses pass through unchanged. Non-Siren
-requests always receive the original response object. Unmatched errors also pass through because
-the bridge does not guess API ownership from a URL prefix. Its required `SirenCapabilityPolicy` is
-application code:
+The bridge keeps Django optional by importing it only while handling a matched response. It transforms
+matched `application/json`, `+json`, and content-free responses. Accept ranges use quality and specificity;
+an exact range overrides a wildcard for that representation, equal explicit preferences use client
+order, and missing or wildcard-only Accept values retain JSON. Media types are case-insensitive and
+`q=0` forbids Siren.
+Unmatched routes, non-JSON content, streams, files, redirects, 304 responses, and already-Siren
+responses pass through without projection. Non-Siren requests receive the original response object, with
+`Vary: Accept` merged when that matched response was eligible for representation negotiation.
+
+A transformed response merges `Accept` into `Vary`, retains cookies plus semantic and security
+headers, and removes source-byte validators, digests, encodings, ranges, and framing. Put Django's
+`ConditionalGetMiddleware` before `SirenDjangoMiddleware` so response processing validates the final
+Siren bytes; a 304 produced downstream is passed through because it has no representation to project.
+Unmatched errors also pass through because the bridge does not guess API ownership from a URL prefix.
+Its required `SirenCapabilityPolicy` is application code:
 
 ```python
 from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
@@ -386,9 +395,17 @@ Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
 Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
 It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
-content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren
-responses pass through unchanged, as do all requests that do not select Siren.
+content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
+pass through without projection, as do all requests that do not select Siren. Negotiation honors
+quality, specificity, wildcards, and case-insensitive media types; missing or wildcard-only Accept
+values retain JSON because neither explicitly prefers Siren. Negotiable JSON, Siren, and 304
+responses vary on Accept even when the original response object is returned.
 Unmatched errors also pass through: the bridge does not infer API ownership from URL prefixes.
+
+Transformed responses retain cookies and semantic or security headers, and discard validators,
+digests, encodings, ranges, and framing tied to the source JSON bytes. Place Django's
+ConditionalGetMiddleware before this middleware so it evaluates the final Siren representation on
+the response path; a downstream 304 remains untouched because its representation body is unavailable.
 
 Django middleware supports negotiation on the source routes that Django actually dispatches.
 Configure identical source and public paths; an independent public mount requires real framework
@@ -496,8 +513,9 @@ Attributes:
 Project already-executed framework results through a startup-compiled Siren engine.
 
 Use `match()` when a framework exposes only its HTTP method and path. Use `respond()` after the
-application operation has executed exactly once. The adapter preserves response headers other
-than content framing and returns an HTTP-ready payload with the official Siren media type.
+application operation has executed exactly once. The adapter preserves semantic response headers
+while removing validators and content metadata tied to the source bytes, then returns an HTTP-ready
+payload with the official Siren media type.
 
 ### `SirenAction`
 
