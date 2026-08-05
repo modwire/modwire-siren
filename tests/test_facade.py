@@ -9,10 +9,17 @@ import modwire_siren
 from modwire_siren import (
     ModwireSirenError,
     SirenAction,
+    SirenAdapter,
+    SirenAdapterMatch,
+    SirenAdapterPolicy,
+    SirenAdapterRequest,
+    SirenAdapterResponse,
+    SirenCapabilityPolicy,
     SirenCompatibilityFinding,
     SirenCompatibilityReport,
     SirenContext,
     SirenDelegatedInput,
+    SirenDjangoMiddleware,
     SirenDocument,
     SirenEmbeddedLink,
     SirenEmbeddedRepresentation,
@@ -24,6 +31,7 @@ from modwire_siren import (
     SirenResponseContext,
     audit,
     siren,
+    siren_adapter,
 )
 
 
@@ -46,10 +54,17 @@ class TestFacade:
         assert modwire_siren.__all__ == [
             "ModwireSirenError",
             "SirenAction",
+            "SirenAdapter",
+            "SirenAdapterMatch",
+            "SirenAdapterPolicy",
+            "SirenAdapterRequest",
+            "SirenAdapterResponse",
+            "SirenCapabilityPolicy",
             "SirenCompatibilityFinding",
             "SirenCompatibilityReport",
             "SirenContext",
             "SirenDelegatedInput",
+            "SirenDjangoMiddleware",
             "SirenDocument",
             "SirenEmbeddedLink",
             "SirenEmbeddedRepresentation",
@@ -61,13 +76,21 @@ class TestFacade:
             "SirenResponseContext",
             "audit",
             "siren",
+            "siren_adapter",
         ]
         assert (
             ModwireSirenError,
             SirenAction,
+            SirenAdapter,
+            SirenAdapterMatch,
+            SirenAdapterPolicy,
+            SirenAdapterRequest,
+            SirenAdapterResponse,
+            SirenCapabilityPolicy,
             SirenCompatibilityFinding,
             SirenCompatibilityReport,
             SirenDelegatedInput,
+            SirenDjangoMiddleware,
             SirenDocument,
             SirenEmbeddedLink,
             SirenEmbeddedRepresentation,
@@ -81,9 +104,16 @@ class TestFacade:
         ) == (
             modwire_siren.ModwireSirenError,
             modwire_siren.SirenAction,
+            modwire_siren.SirenAdapter,
+            modwire_siren.SirenAdapterMatch,
+            modwire_siren.SirenAdapterPolicy,
+            modwire_siren.SirenAdapterRequest,
+            modwire_siren.SirenAdapterResponse,
+            modwire_siren.SirenCapabilityPolicy,
             modwire_siren.SirenCompatibilityFinding,
             modwire_siren.SirenCompatibilityReport,
             modwire_siren.SirenDelegatedInput,
+            modwire_siren.SirenDjangoMiddleware,
             modwire_siren.SirenDocument,
             modwire_siren.SirenEmbeddedLink,
             modwire_siren.SirenEmbeddedRepresentation,
@@ -103,7 +133,7 @@ class TestFacade:
         assert parameters["public_path"].kind is Parameter.KEYWORD_ONLY
         assert parameters["public_path"].default == "/"
         assert tuple(signature(audit).parameters) == ("openapi",)
-
+        assert tuple(signature(siren_adapter).parameters) == ("openapi", "source_path", "public_path")
 
     def test_public_facade_remounts_source_paths_without_mutating_the_openapi_document(self):
         schema = deepcopy(SCHEMA)

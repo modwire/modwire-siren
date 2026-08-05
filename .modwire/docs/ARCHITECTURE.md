@@ -6,6 +6,10 @@ conformance. Conformance owns its specification, implementation, and ledger modu
 context whose foundation, vocabulary, and Siren-schema modules supply common state, values, and the pinned schema
 with its provenance. Root `__init__.py` files export only.
 
+Runtime's adapter feature owns the optional HTTP boundary: it resolves compiled operation routes, accepts only
+already-executed results, and produces framework-neutral Siren responses. Framework bridges receive an explicit
+application capability policy and remain dependency-optional; they never redispatch operations or infer policy.
+
 Contexts are feature packages: roots expose only public types and composition entry points; a capability's
 contracts, values, and services stay beneath that capability. `.modwire/architecture.yaml` is the authority for
 allowed dependencies; `make modwire` enforces it for source, tests, and scripts.
