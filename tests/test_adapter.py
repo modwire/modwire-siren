@@ -3,12 +3,14 @@ import subprocess
 import sys
 from typing import ClassVar
 
+import pytest
 from django.conf import settings
 from django.http import JsonResponse
 from django.test import RequestFactory, override_settings
 from framework_fixtures.capability_policy import CapabilityPolicy
 
 from modwire_siren import (
+    ModwireSirenError,
     SirenAdapterPolicy,
     SirenAdapterRequest,
     SirenDjangoMiddleware,
@@ -35,7 +37,15 @@ class TestAdapter:
                                     }
                                 }
                             },
-                        }
+                        },
+                        "default": {
+                            "description": "List failure",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/Problem"}
+                                }
+                            },
+                        },
                     },
                 }
             },
@@ -50,6 +60,7 @@ class TestAdapter:
                 ],
                 "get": {
                     "operationId": "get_article",
+                    "summary": "Read article",
                     "responses": {
                         "200": {
                             "description": "Article",
@@ -59,27 +70,21 @@ class TestAdapter:
                                 }
                             },
                         },
-                        "404": {
-                            "description": "Missing",
-                            "content": {
-                                "application/json": {
-                                    "schema": {"$ref": "#/components/schemas/Problem"}
-                                }
-                            },
-                        },
-                        "422": {
-                            "description": "Invalid",
-                            "content": {
-                                "application/json": {
-                                    "schema": {"type": "array", "items": {"type": "object"}}
-                                }
-                            },
-                        },
                     },
                 },
                 "delete": {
                     "operationId": "delete_article",
-                    "responses": {"204": {"description": "Deleted"}},
+                    "responses": {
+                        "204": {"description": "Deleted"},
+                        "404": {
+                            "description": "Missing",
+                            "content": {
+                                "application/problem+json": {
+                                    "schema": {"$ref": "#/components/schemas/Problem"}
+                                }
+                            },
+                        },
+                    },
                 },
             },
             "/api/articles/{article_key}/publish": {
@@ -101,7 +106,15 @@ class TestAdapter:
                                     "schema": {"type": "object", "properties": {"published": {"type": "boolean"}}}
                                 }
                             },
-                        }
+                        },
+                        "4XX": {
+                            "description": "Publish failure",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/Problem"}
+                                }
+                            },
+                        },
                     },
                 },
             },
@@ -197,14 +210,112 @@ class TestAdapter:
         }
         assert not_found.payload == {
             "class": ["error"],
+            "title": "Read article",
             "properties": {"detail": "Not found", "status": 404},
-            "links": [{"rel": ["self"], "href": "https://example.test/siren/articles/missing"}],
+            "links": [
+                {
+                    "title": "Read article",
+                    "rel": ["self"],
+                    "href": "https://example.test/siren/articles/missing",
+                }
+            ],
         }
         assert unmatched.payload == {
             "class": ["error"],
             "properties": {"detail": "Not found", "status": 404},
             "links": [{"rel": ["self"], "href": "https://example.test/api/unknown"}],
         }
+
+    def test_undeclared_errors_preserve_every_body_shape_and_operation_context(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        mapping = adapter.respond(SirenAdapterRequest(
+            method="GET",
+            path="/api/articles/missing",
+            status=404,
+            result={"detail": "Missing"},
+            base_url="https://example.test",
+            request_url="https://example.test/api/articles/missing?trace=yes",
+        ))
+        scalar = adapter.respond(SirenAdapterRequest(
+            operation_id="get_article",
+            status=401,
+            result="Denied",
+            base_url="https://example.test",
+            path_values={"article_key": "private"},
+        ))
+        empty = adapter.respond(SirenAdapterRequest(
+            operation_id="get_article",
+            status=500,
+            base_url="https://example.test",
+            path_values={"article_key": "broken"},
+            policy=SirenAdapterPolicy(title="Unavailable"),
+        ))
+
+        assert mapping.payload == {
+            "class": ["error"],
+            "title": "Read article",
+            "properties": {"detail": "Missing", "status": 404},
+            "links": [
+                {
+                    "title": "Read article",
+                    "rel": ["self"],
+                    "href": "https://example.test/api/articles/missing?trace=yes",
+                }
+            ],
+        }
+        assert scalar.payload["properties"] == {"status": 401, "result": "Denied"}
+        assert scalar.payload["links"][0]["href"] == "https://example.test/siren/articles/private"
+        assert empty.payload["title"] == "Unavailable"
+        assert empty.payload["properties"] == {"status": 500}
+
+    @pytest.mark.parametrize(
+        ("operation_id", "status", "media_type"),
+        [
+            ("delete_article", 404, "application/problem+json"),
+            ("publish_article", 409, "application/json"),
+            ("list_articles", 503, "application/json"),
+        ],
+    )
+    def test_declared_exact_ranged_and_default_errors_remain_strict(
+        self, operation_id, status, media_type
+    ):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        with pytest.raises(ModwireSirenError, match="Siren adapter response failed"):
+            adapter.respond(SirenAdapterRequest(
+                operation_id=operation_id,
+                status=status,
+                result="Declared object responses reject scalars",
+                base_url="https://example.test",
+                media_type=media_type,
+                path_values={"article_key": "one"},
+            ))
+
+    def test_declared_status_with_an_incompatible_media_type_uses_generic_error(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        response = adapter.respond(SirenAdapterRequest(
+            operation_id="delete_article",
+            status=404,
+            result="Missing",
+            base_url="https://example.test",
+            media_type="application/json",
+            path_values={"article_key": "missing"},
+        ))
+
+        assert response.payload["properties"] == {"status": 404, "result": "Missing"}
+
+    def test_successful_undeclared_responses_remain_strict(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        with pytest.raises(ModwireSirenError, match="Siren adapter response failed"):
+            adapter.respond(SirenAdapterRequest(
+                operation_id="get_article",
+                status=201,
+                result={"article_key": "one"},
+                base_url="https://example.test",
+            ))
 
     def test_django_bridge_executes_once_and_preserves_unselected_json(self):
         if not settings.configured:
@@ -215,6 +326,10 @@ class TestAdapter:
 
         def handler(request):
             calls.append(request.path)
+            if request.path.endswith("invalid"):
+                return JsonResponse(
+                    [{"location": "article_key", "message": "Invalid"}], status=422, safe=False
+                )
             return original
 
         policy = CapabilityPolicy()
@@ -226,14 +341,22 @@ class TestAdapter:
                 "/api/articles/one?view=full&view=compact",
                 HTTP_ACCEPT="application/vnd.siren+json",
             ))
+            validation = middleware(factory.get(
+                "/api/articles/invalid",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
 
         assert ordinary is original
         assert siren.status_code == 200
         assert siren["Content-Type"] == "application/vnd.siren+json"
         assert siren["ETag"] == "one"
         assert json.loads(siren.content)["class"] == ["article"]
-        assert calls == ["/api/articles/one", "/api/articles/one"]
-        assert policy.calls == [("get_article", 200)]
+        assert json.loads(validation.content)["properties"] == {
+            "errors": [{"location": "article_key", "message": "Invalid"}],
+            "status": 422,
+        }
+        assert calls == ["/api/articles/one", "/api/articles/one", "/api/articles/invalid"]
+        assert policy.calls == [("get_article", 200), ("get_article", 422)]
 
     def test_root_import_keeps_django_optional(self):
         script = (

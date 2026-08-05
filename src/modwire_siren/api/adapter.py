@@ -37,6 +37,11 @@ def siren_adapter(
     `method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
     explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
 
+    Declared exact, ranged, and default error responses use their compiled schema and media type.
+    When a framework returns an undeclared status from 400 through 599, the adapter instead preserves
+    its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
+    an incompatible runtime media type also uses this fallback; successful responses remain strict.
+
     For Django Ninja and Ninja Extra, wrap the normal Django response callable with
     `SirenDjangoMiddleware`. The bridge imports Django only when rendering a negotiated Siren response,
     preserves non-content headers and cookies, and returns the original response object when Siren is

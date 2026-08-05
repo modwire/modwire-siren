@@ -57,6 +57,24 @@ class SirenResponseProjectionService:
         return matches[0]
 
     def response(self, operation: SirenOperation, context: SirenResponseContext) -> SirenResponse:
+        candidates = list(self.candidates(operation, context))
+        if context.media_type is None and len(candidates) > 1:
+            json_candidates = [response for response in candidates if response.media_type == "application/json"]
+            candidates = json_candidates if len(json_candidates) == 1 else candidates
+        if len(candidates) != 1:
+            raise ModwireSirenError(
+                f"Siren response requires exactly one status and media type match: "
+                f"{operation.name} {context.status}"
+            )
+        return candidates[0]
+
+    def has_response(self, api: SirenApi, context: SirenResponseContext) -> bool:
+        operation = self.operation(api, context.operation_id)
+        return bool(self.candidates(operation, context))
+
+    def candidates(
+        self, operation: SirenOperation, context: SirenResponseContext
+    ) -> tuple[SirenResponse, ...]:
         exact = [response for response in operation.responses if response.status == str(context.status)]
         ranged = [
             response
@@ -69,15 +87,14 @@ class SirenResponseProjectionService:
         candidates = exact or ranged or defaults
         if context.media_type is not None:
             candidates = [response for response in candidates if response.media_type == context.media_type]
-        elif len(candidates) > 1:
-            json_candidates = [response for response in candidates if response.media_type == "application/json"]
-            candidates = json_candidates if len(json_candidates) == 1 else candidates
-        if len(candidates) != 1:
-            raise ModwireSirenError(
-                f"Siren response requires exactly one status and media type match: "
-                f"{operation.name} {context.status}"
-            )
-        return candidates[0]
+        return tuple(candidates)
+
+    def project_error(
+        self, api: SirenApi, context: SirenResponseContext, request_url: str | None = None
+    ) -> SirenDocument:
+        operation = self.operation(api, context.operation_id)
+        resource = self.resource(api, operation)
+        return self.error(operation, resource, context, request_url)
 
     def resource(self, api: SirenApi, operation: SirenOperation) -> SirenResource | None:
         if operation.resource is None:
@@ -176,7 +193,11 @@ class SirenResponseProjectionService:
         )
 
     def error(
-        self, operation: SirenOperation, resource: SirenResource | None, context: SirenResponseContext
+        self,
+        operation: SirenOperation,
+        resource: SirenResource | None,
+        context: SirenResponseContext,
+        request_url: str | None = None,
     ) -> SirenDocument:
         request = SirenContext(
             base_url=context.base_url,
@@ -189,6 +210,8 @@ class SirenResponseProjectionService:
             properties = dict(context.result) | properties
         elif isinstance(context.result, list):
             properties["errors"] = context.result
+        elif context.result is not None:
+            properties["result"] = context.result
         return SirenDocument(
             class_=("error",),
             title=context.title or operation.title,
@@ -196,6 +219,6 @@ class SirenResponseProjectionService:
             links=(SirenLink(
                 rel=("self",),
                 title=context.title or operation.title,
-                href=self.hrefs.href(operation.route.path, request, resource),
+                href=request_url or self.hrefs.href(operation.route.path, request, resource),
             ),),
         )
