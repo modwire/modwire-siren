@@ -26,6 +26,55 @@ Version 2 is a breaking rewrite. See [MIGRATION.md](MIGRATION.md) when upgrading
 
 This section is generated from the docstrings of the supported root imports. Run `make docs` after changing a public API example or its guidance.
 
+### `siren_adapter`
+
+Compile a framework-neutral boundary for operation-aware Siren HTTP responses.
+
+Call this once after framework routes are registered. The adapter compiles OpenAPI once and
+retains a route catalogue mapping both the framework's source mount and the public Siren mount
+to operation IDs. Consumers neither inspect the engine graph nor parse OpenAPI.
+
+```python
+from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
+
+adapter = siren_adapter(api.get_openapi_schema(), source_path="/api", public_path="/siren")
+response = adapter.respond(SirenAdapterRequest(
+    operation_id="get_article",
+    status=200,
+    result={"article_id": "42", "title": "Adapter boundaries"},
+    base_url="https://api.example.com",
+    path_values={"article_id": "42"},
+    policy=SirenAdapterPolicy(capabilities=frozenset({"get_article", "update_article"})),
+))
+
+assert response.media_type == "application/vnd.siren+json"
+```
+
+The result must come from an operation the application has already executed; `respond()` never
+dispatches application code. Pass `operation_id` directly when the framework exposes it, or pass
+`method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
+explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
+
+For Django Ninja and Ninja Extra, wrap the normal Django response callable with
+`SirenDjangoMiddleware`. The bridge imports Django only when rendering a negotiated Siren response,
+preserves non-content headers and cookies, and returns the original response object when Siren is
+not selected. Its required `SirenCapabilityPolicy` is application code:
+
+```python
+from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
+
+class Capabilities:
+    def select(self, operation_id, status, request, result):
+        permitted = frozenset({operation_id}) if operation_id is not None else frozenset()
+        return SirenAdapterPolicy(capabilities=permitted)
+
+middleware = SirenDjangoMiddleware(
+    get_response=django_handler,
+    adapter=adapter,
+    policy=Capabilities(),
+)
+```
+
 ### `siren`
 
 Compile a complete OpenAPI 3.1 document into a reusable Siren engine.
@@ -304,6 +353,14 @@ Project an engine request into this immutable public value, then serialize it wi
 `application/vnd.siren+json` response. Navigation belongs in `links`; embedded sub-entities
 belong in `entities`.
 
+### `SirenDjangoMiddleware`
+
+Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
+
+Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
+It calls the wrapped operation exactly once. Requests that do not accept the official Siren
+media type receive the original Django response unchanged.
+
 ### `SirenDelegatedInput`
 
 Describe a normalized OpenAPI input delegated to an adapter or transport.
@@ -342,6 +399,73 @@ Expose deterministic OpenAPI-to-Siren compatibility findings.
 
 Describe one OpenAPI construct outside the current official-Siren boundary.
 
+### `SirenCapabilityPolicy`
+
+Select explicit application capabilities and projection semantics for one response.
+
+### `SirenAdapterResponse`
+
+Represent an HTTP-ready official Siren response without framework dependencies.
+
+### `SirenAdapterRequest`
+
+Describe one already-executed HTTP operation for Siren projection.
+
+Pass the framework's executed `operation_id` when it is available. Otherwise provide `method`
+and `path` so the adapter can resolve the operation from its startup-compiled route catalogue.
+`result` is the already-produced application value: the adapter never redispatches the operation.
+
+### `SirenAdapterPolicy`
+
+Declare application-owned projection semantics and permitted capabilities.
+
+Adapters never infer permissions or representation semantics from OpenAPI or result identifiers.
+Supply this value directly to a framework-neutral request, or return it from a framework bridge's
+capability policy.
+
+### `SirenAdapterMatch`
+
+!!! abstract "Usage Documentation"
+    [Models](../concepts/models.md)
+
+A base class for creating Pydantic models.
+
+Attributes:
+    __class_vars__: The names of the class variables defined on the model.
+    __private_attributes__: Metadata about the private attributes of the model.
+    __signature__: The synthesized `__init__` [`Signature`][inspect.Signature] of the model.
+
+    __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+    __pydantic_core_schema__: The core schema of the model.
+    __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+    __pydantic_decorators__: Metadata containing the decorators defined on the model.
+        This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+    __pydantic_generic_metadata__: A dictionary containing metadata about generic Pydantic models.
+        The `origin` and `args` items map to the [`__origin__`][genericalias.__origin__]
+        and [`__args__`][genericalias.__args__] attributes of [generic aliases][types-genericalias],
+        and the `parameter` item maps to the `__parameter__` attribute of generic classes.
+    __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+    __pydantic_post_init__: The name of the post-init method for the model, if defined.
+    __pydantic_root_model__: Whether the model is a [`RootModel`][pydantic.root_model.RootModel].
+    __pydantic_serializer__: The `pydantic-core` `SchemaSerializer` used to dump instances of the model.
+    __pydantic_validator__: The `pydantic-core` `SchemaValidator` used to validate instances of the model.
+
+    __pydantic_fields__: A dictionary of field names and their corresponding [`FieldInfo`][pydantic.fields.FieldInfo] objects.
+    __pydantic_computed_fields__: A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects.
+
+    __pydantic_extra__: A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra]
+        is set to `'allow'`.
+    __pydantic_fields_set__: The names of fields explicitly set during instantiation.
+    __pydantic_private__: Values of private attributes set on the model instance.
+
+### `SirenAdapter`
+
+Project already-executed framework results through a startup-compiled Siren engine.
+
+Use `match()` when a framework exposes only its HTTP method and path. Use `respond()` after the
+application operation has executed exactly once. The adapter preserves response headers other
+than content framing and returns an HTTP-ready payload with the official Siren media type.
+
 ### `SirenAction`
 
 Describe an available Siren action.
@@ -358,10 +482,17 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | --- | --- | --- |
 | `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
+| `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> modwire_siren.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`respond(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`error(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.document.values.document.SirenDocument'>` |
+| `SirenAdapterMatch` | !!! abstract "Usage Documentation" | — |
+| `SirenAdapterPolicy` | Declare application-owned projection semantics and permitted capabilities. | — |
+| `SirenAdapterRequest` | Describe one already-executed HTTP operation for Siren projection. | — |
+| `SirenAdapterResponse` | Represent an HTTP-ready official Siren response without framework dependencies. | — |
+| `SirenCapabilityPolicy` | Select explicit application capabilities and projection semantics for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
 | `SirenDelegatedInput` | Describe a normalized OpenAPI input delegated to an adapter or transport. | — |
+| `SirenDjangoMiddleware` | Render negotiated Django Ninja/Ninja Extra JSON responses as Siren. | — |
 | `SirenDocument` | Represent an official Siren entity document. | — |
 | `SirenEmbeddedLink` | Represent a Siren sub-entity linked by URI. | — |
 | `SirenEmbeddedRepresentation` | Represent a Siren sub-entity embedded in full. | — |
@@ -373,4 +504,5 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
+| `siren_adapter` | Compile a framework-neutral boundary for operation-aware Siren HTTP responses. | — |
 <!-- generated:public-api:end -->

@@ -1,5 +1,14 @@
-from .api import audit, siren
+from .api import audit, siren, siren_adapter
 from .contexts.compiler.compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
+from .contexts.runtime.adapter import (
+    SirenAdapter,
+    SirenAdapterMatch,
+    SirenAdapterPolicy,
+    SirenAdapterRequest,
+    SirenAdapterResponse,
+    SirenCapabilityPolicy,
+    SirenDjangoMiddleware,
+)
 from .contexts.runtime.document import (
     SirenAction,
     SirenDocument,
@@ -16,10 +25,17 @@ from .contexts.shared import ModwireSirenError
 __all__ = [
     "ModwireSirenError",
     "SirenAction",
+    "SirenAdapter",
+    "SirenAdapterMatch",
+    "SirenAdapterPolicy",
+    "SirenAdapterRequest",
+    "SirenAdapterResponse",
+    "SirenCapabilityPolicy",
     "SirenCompatibilityFinding",
     "SirenCompatibilityReport",
     "SirenContext",
     "SirenDelegatedInput",
+    "SirenDjangoMiddleware",
     "SirenDocument",
     "SirenEmbeddedLink",
     "SirenEmbeddedRepresentation",
@@ -31,4 +47,5 @@ __all__ = [
     "SirenResponseContext",
     "audit",
     "siren",
+    "siren_adapter",
 ]
