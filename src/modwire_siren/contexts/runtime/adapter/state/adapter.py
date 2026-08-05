@@ -6,7 +6,9 @@ from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ...document import SirenDocument, SirenLink
 from ...engine import SirenEngine
+from ...operation_input import SirenOperationInput
 from ...request import SirenResponseContext
+from ..contracts import SirenAdapterProfile
 from ..values import SirenAdapterMatch, SirenAdapterRequest, SirenAdapterResponse, SirenAdapterRoute
 
 
@@ -21,13 +23,21 @@ class SirenAdapter(BaseState):
     Route resolution compares exact segment counts and ranks matching templates position by position,
     with literal segments ahead of parameters. Source and public templates use the same ranking. Adapter
     construction rejects same-method templates that become identical after parameter names are removed.
+    Explicit profiles form a validated ordered pipeline over fresh serialized payloads and deep-copied
+    public operation-input values; the cached engine graph remains immutable across requests.
     """
 
     engine: SirenEngine
     routes: tuple[SirenAdapterRoute, ...]
+    profiles: tuple[SirenAdapterProfile, ...] = ()
 
     @model_validator(mode="after")
     def validate_routes(self) -> "SirenAdapter":
+        profile_types = tuple(type(profile) for profile in self.profiles)
+        if len(set(profile_types)) != len(profile_types):
+            raise ModwireSirenError("Siren adapter profile types must be unique")
+        if any(not isinstance(profile, SirenAdapterProfile) for profile in self.profiles):
+            raise ModwireSirenError("Siren adapter profiles must implement SirenAdapterProfile")
         templates = {}
         for route in self.routes:
             for template in dict.fromkeys((route.source_path, route.public_path)):
@@ -127,9 +137,34 @@ class SirenAdapter(BaseState):
                     "transfer-encoding",
                 }
             }
+            payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
+            if self.profiles and operation_id is not None:
+                operation_inputs: dict[str, SirenOperationInput | None] = {}
+                for route in self.routes:
+                    if route.operation_id not in operation_inputs:
+                        value = self.engine.operation_input(route.operation_id)
+                        operation_inputs[route.operation_id] = (
+                            value.model_copy(deep=True) if value is not None else None
+                        )
+                operation_input = operation_inputs.get(operation_id)
+                for profile in self.profiles:
+                    payload = dict(profile.apply(
+                        operation_id=operation_id,
+                        operation_input=(
+                            operation_input.model_copy(deep=True)
+                            if operation_input is not None
+                            else None
+                        ),
+                        operation_inputs={
+                            name: value.model_copy(deep=True) if value is not None else None
+                            for name, value in operation_inputs.items()
+                        },
+                        document=payload,
+                        context=context,
+                    ))
             return SirenAdapterResponse(
                 status=request.status,
-                payload=document.model_dump(by_alias=True, mode="json", exclude_none=True),
+                payload=payload,
                 headers=headers,
             )
         except Exception as error:

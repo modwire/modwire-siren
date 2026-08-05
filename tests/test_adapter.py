@@ -1,6 +1,8 @@
 import json
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from io import BytesIO
 from typing import ClassVar
 
@@ -24,8 +26,12 @@ from modwire_siren import (
     SirenAdapter,
     SirenAdapterPolicy,
     SirenAdapterRequest,
+    SirenDelegatedInput,
     SirenDjangoMiddleware,
     SirenMiddleware,
+    SirenOperationInput,
+    SirenResponseContext,
+    SirenStructuredFormProfile,
     siren_adapter,
 )
 
@@ -390,6 +396,237 @@ class TestAdapter:
                     },
                 ),
             )
+
+    def test_structured_form_profile_exposes_delegated_inputs_without_changing_default_siren(self):
+        document = deepcopy(self.schema)
+        document["components"]["schemas"].update({
+            "Filter": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {"state": {"type": "string"}},
+            },
+            "Metadata": {
+                "type": "object",
+                "required": ["source"],
+                "properties": {"source": {"type": "string"}},
+            },
+            "ArticlePatch": {
+                "type": "object",
+                "required": ["metadata", "items", "payload"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "metadata": {"$ref": "#/components/schemas/Metadata"},
+                    "items": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/Metadata"},
+                    },
+                    "payload": {"type": "object", "additionalProperties": True},
+                },
+            },
+        })
+        document["components"]["requestBodies"] = {
+            "ArticlePatch": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/ArticlePatch"}
+                    }
+                },
+            }
+        }
+        document["paths"]["/api/articles/{article_key}"]["patch"] = {
+            "operationId": "update_article",
+            "parameters": [
+                {"name": "page", "in": "query", "schema": {"type": "integer"}},
+                {
+                    "name": "filter",
+                    "in": "query",
+                    "required": True,
+                    "style": "deepObject",
+                    "explode": True,
+                    "allowReserved": True,
+                    "schema": {"$ref": "#/components/schemas/Filter"},
+                },
+                {
+                    "name": "trace",
+                    "in": "header",
+                    "required": True,
+                    "schema": {"type": "string"},
+                },
+                {"name": "session", "in": "cookie", "schema": {"type": "string"}},
+            ],
+            "requestBody": {"$ref": "#/components/requestBodies/ArticlePatch"},
+            "responses": {
+                "200": {
+                    "description": "Updated",
+                    "content": {
+                        "application/json": {
+                            "schema": {"$ref": "#/components/schemas/Article"}
+                        }
+                    },
+                }
+            },
+        }
+        request = SirenAdapterRequest(
+            operation_id="get_article",
+            status=200,
+            result={"article_key": "one", "title": "One"},
+            base_url="https://example.test",
+            path_values={"article_key": "one"},
+            policy=SirenAdapterPolicy(capabilities=frozenset({"update_article"})),
+        )
+        default = siren_adapter(document, source_path="/api", public_path="/siren")
+        profiled = siren_adapter(
+            document,
+            source_path="/api",
+            public_path="/siren",
+            profiles=(SirenStructuredFormProfile(),),
+        )
+
+        default_action = default.respond(request).payload["actions"][0]
+        profiled_payload = profiled.respond(request).payload
+        action = profiled_payload["actions"][0]
+        extension_name = SirenStructuredFormProfile.extension
+
+        assert extension_name not in default_action
+        assert {field["name"] for field in action["fields"]} == {"page", "title"}
+        extension = action[extension_name]
+        assert extension["version"] == "1"
+        controls = {control["name"]: control for control in extension["controls"]}
+        assert set(controls) == {"filter", "trace", "session", "metadata", "items", "payload"}
+        assert controls["filter"] == {
+            "name": "filter",
+            "location": "query",
+            "required": True,
+            "control": SirenStructuredFormProfile.object_control,
+            "schema": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {"state": {"type": "string"}},
+            },
+            "serialization": {
+                "style": "deepObject",
+                "explode": True,
+                "allowReserved": True,
+            },
+        }
+        assert controls["trace"]["location"] == "header"
+        assert controls["session"]["location"] == "cookie"
+        assert controls["metadata"]["control"] == SirenStructuredFormProfile.object_control
+        assert controls["metadata"]["required"] is True
+        assert controls["metadata"]["mediaType"] == "application/json"
+        assert controls["items"]["control"] == SirenStructuredFormProfile.array_control
+        assert controls["items"]["schema"]["items"]["type"] == "object"
+        assert controls["payload"]["control"] == SirenStructuredFormProfile.json_control
+        assert "$ref" not in json.dumps(extension)
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            payloads = tuple(executor.map(lambda _: profiled.respond(request).payload, range(8)))
+
+        assert all(payload == profiled_payload for payload in payloads)
+
+    def test_structured_form_profile_recurses_and_custom_profiles_cannot_mutate_engine_inputs(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+        operation_input = adapter.engine.operation_input("get_article")
+        delegated = SirenOperationInput(
+            delegated_inputs=(
+                SirenDelegatedInput(
+                    name="payload",
+                    location="body",
+                    required=True,
+                    media_type="application/json",
+                    definition={"type": "object"},
+                ),
+            )
+        )
+        action = {
+            "name": "update_article",
+            "href": "https://example.test/articles/one",
+            "method": "PATCH",
+        }
+        nested_document = {
+            "class": ["api", "entry-point"],
+            "actions": [action],
+            "entities": [
+                {
+                    "class": ["collection"],
+                    "rel": ["collection"],
+                    "actions": [action],
+                    "entities": [
+                        {
+                            "class": ["article"],
+                            "rel": ["item"],
+                            "actions": [action],
+                        }
+                    ],
+                }
+            ],
+        }
+        context = SirenResponseContext(
+            operation_id="get_article",
+            status=200,
+            result={"article_key": "one"},
+            base_url="https://example.test",
+        )
+        profile = SirenStructuredFormProfile()
+        enriched = profile.apply(
+            operation_id="get_article",
+            operation_input=operation_input,
+            operation_inputs={"update_article": delegated},
+            document=nested_document,
+            context=context,
+        )
+
+        assert profile.extension in enriched["actions"][0]
+        assert profile.extension in enriched["entities"][0]["actions"][0]
+        assert profile.extension in enriched["entities"][0]["entities"][0]["actions"][0]
+        assert profile.extension not in action
+
+        class MutatingProfile:
+            def apply(
+                self,
+                operation_id,
+                operation_input,
+                operation_inputs,
+                document,
+                context,
+            ):
+                for value in operation_inputs.values():
+                    if value is not None and value.definition is not None:
+                        value.definition["mutated"] = True
+                return dict(document) | {"custom-profile": True}
+
+        schema = deepcopy(self.schema)
+        schema["paths"]["/api/articles/{article_key}"]["patch"] = {
+            "operationId": "update_article",
+            "requestBody": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {"metadata": {"type": "object"}},
+                        }
+                    }
+                }
+            },
+            "responses": {"204": {"description": "Updated"}},
+        }
+        custom = siren_adapter(
+            schema,
+            source_path="/api",
+            public_path="/siren",
+            profiles=(MutatingProfile(),),
+        )
+        response = custom.respond(SirenAdapterRequest(
+            operation_id="get_article",
+            status=200,
+            result={"article_key": "one", "title": "One"},
+            base_url="https://example.test",
+            path_values={"article_key": "one"},
+        ))
+
+        assert response.payload["custom-profile"] is True
+        assert "mutated" not in custom.engine.operation_input("update_article").definition
 
     def test_adapter_projects_api_entry_points_and_keeps_explicit_root_commands(self):
         adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
@@ -849,6 +1086,7 @@ class TestAdapter:
             "SOURCE_PATH": "/api",
             "PUBLIC_PATH": "/api",
             "POLICY": "framework_fixtures.django_siren_policy.django_siren_policy",
+            "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
         }
         factory = RequestFactory()
 

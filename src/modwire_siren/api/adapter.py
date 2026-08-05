@@ -1,14 +1,18 @@
 from collections.abc import Mapping
 from typing import Any
 
-from ..contexts.runtime.adapter import SirenAdapter
+from ..contexts.runtime.adapter import SirenAdapter, SirenAdapterProfile
 from ..contexts.runtime.adapter.values import SirenAdapterRoute
 from ..contexts.shared import ModwireSirenError
 from .siren import siren
 
 
 def siren_adapter(
-    openapi: Mapping[str, Any], *, source_path: str = "/", public_path: str = "/"
+    openapi: Mapping[str, Any],
+    *,
+    source_path: str = "/",
+    public_path: str = "/",
+    profiles: tuple[SirenAdapterProfile, ...] = (),
 ) -> SirenAdapter:
     """Compile a framework-neutral boundary for operation-aware Siren HTTP responses.
 
@@ -20,6 +24,20 @@ def siren_adapter(
     at each position a literal outranks a parameter, for both source and public mounts. Parameter values
     are percent-decoded only after structural matching, so an encoded value cannot become a literal route.
     Same-method templates with indistinguishable parameter shapes fail adapter construction explicitly.
+
+    Default payloads remain extension-free official Siren. Pass explicit adapter profiles to enrich a
+    fresh serialized document from public normalized operation metadata. `SirenStructuredFormProfile`
+    adds a versioned URI-namespaced control extension for delegated structured inputs without changing
+    official scalar fields:
+
+    ```python
+    from modwire_siren import SirenStructuredFormProfile, siren_adapter
+
+    adapter = siren_adapter(
+        api.get_openapi_schema(),
+        profiles=(SirenStructuredFormProfile(),),
+    )
+    ```
 
     ```python
     from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
@@ -117,6 +135,6 @@ def siren_adapter(
                 method=operation.method,
                 operation_id=operation.name,
             ))
-        return SirenAdapter(engine=engine, routes=tuple(routes))
+        return SirenAdapter(engine=engine, routes=tuple(routes), profiles=profiles)
     except Exception as error:
         raise ModwireSirenError(f"Invalid or unsupported Siren adapter contract: {error}") from error

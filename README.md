@@ -39,6 +39,20 @@ at each position a literal outranks a parameter, for both source and public moun
 are percent-decoded only after structural matching, so an encoded value cannot become a literal route.
 Same-method templates with indistinguishable parameter shapes fail adapter construction explicitly.
 
+Default payloads remain extension-free official Siren. Pass explicit adapter profiles to enrich a
+fresh serialized document from public normalized operation metadata. `SirenStructuredFormProfile`
+adds a versioned URI-namespaced control extension for delegated structured inputs without changing
+official scalar fields:
+
+```python
+from modwire_siren import SirenStructuredFormProfile, siren_adapter
+
+adapter = siren_adapter(
+    api.get_openapi_schema(),
+    profiles=(SirenStructuredFormProfile(),),
+)
+```
+
 ```python
 from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
 
@@ -338,6 +352,20 @@ Call this during startup before `siren(openapi)` when a consumer needs every cur
 unsupported construct at once. The report exposes typed findings and `render()` for terminal
 or CI output; `siren(openapi)` remains the strict fail-fast compilation entry point.
 
+### `SirenStructuredFormProfile`
+
+Emit the versioned Modwire structured-form extension for delegated inputs.
+
+This opt-in profile adds the non-standard action member
+`https://modwire.dev/siren/structured-form/v1`. Its value has `version: "1"` and ordered
+`controls`. Each control exposes `name`, `location`, `required`, a resolved OpenAPI `schema`, and
+one versioned control URI. Body controls include `mediaType`; query, header, and cookie controls
+instead include materialized `style`, `explode`, and `allowReserved` serialization.
+
+Object and structured-array controls use the `/object/v1` and `/array/v1` control URIs. Open JSON
+objects use `/json/v1`. Only delegated inputs are emitted, so ordinary official Siren fields are
+never duplicated. The profile walks actions recursively through embedded representations.
+
 ### `SirenResponseContext`
 
 Supply an executed OpenAPI operation and result for operation-aware projection.
@@ -371,7 +399,8 @@ Install Siren through Django's standard middleware loader.
 
 Add the root import directly to Django settings. The OpenAPI target may be a mapping, a callable
 returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. The policy target
-may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`.
+may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`. Optional
+`PROFILES` dotted paths are instantiated once with the adapter.
 
 ```python
 # example_project/api.py
@@ -404,6 +433,7 @@ MODWIRE_SIREN = {
     "SOURCE_PATH": "/api",
     "PUBLIC_PATH": "/api",
     "POLICY": "example_project.api.siren_policy",
+    "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
 }
 
 # urls.py
@@ -523,6 +553,15 @@ Pass the framework's executed `operation_id` when it is available. Otherwise pro
 and `path` so the adapter can resolve the operation from its startup-compiled route catalogue.
 `result` is the already-produced application value: the adapter never redispatches the operation.
 
+### `SirenAdapterProfile`
+
+Extend a fresh adapter document using public normalized operation metadata.
+
+The adapter supplies the matched operation and input, a catalogue for every action operation, the
+projected response context, and a newly serialized document. Input values are deep copies, so a
+custom profile cannot mutate the cached engine graph. Return a JSON mapping for the next profile in
+the ordered pipeline; extension members are the profile's explicit non-standard contract.
+
 ### `SirenAdapterPolicy`
 
 Declare application-owned projection semantics and permitted capabilities.
@@ -578,6 +617,8 @@ payload with the official Siren media type.
 Route resolution compares exact segment counts and ranks matching templates position by position,
 with literal segments ahead of parameters. Source and public templates use the same ranking. Adapter
 construction rejects same-method templates that become identical after parameter names are removed.
+Explicit profiles form a validated ordered pipeline over fresh serialized payloads and deep-copied
+public operation-input values; the cached engine graph remains immutable across requests.
 
 ### `SirenAction`
 
@@ -598,6 +639,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> modwire_siren.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`respond(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`error(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.document.values.document.SirenDocument'>` |
 | `SirenAdapterMatch` | !!! abstract "Usage Documentation" | — |
 | `SirenAdapterPolicy` | Declare application-owned projection semantics and permitted capabilities. | — |
+| `SirenAdapterProfile` | Extend a fresh adapter document using public normalized operation metadata. | `apply(operation_id: <class 'str'>, operation_input: modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'modwire_siren.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]` |
 | `SirenAdapterRequest` | Describe one already-executed HTTP operation for Siren projection. | — |
 | `SirenAdapterResponse` | Represent an HTTP-ready official Siren response without framework dependencies. | — |
 | `SirenCapabilityPolicy` | Select explicit application capabilities and projection semantics for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
@@ -616,6 +658,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenOperationInput` | Expose normalized input metadata for one compiled OpenAPI operation. | — |
 | `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
 | `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |
+| `SirenStructuredFormProfile` | Emit the versioned Modwire structured-form extension for delegated inputs. | `apply(operation_id: <class 'str'>, operation_input: modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'modwire_siren.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]`<br>`enrich(entity: collections.abc.Mapping[str, JsonValue], operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None]) -> collections.abc.Mapping[str, JsonValue]`<br>`control(delegated: <class 'modwire_siren.contexts.runtime.operation_input.values.delegated.SirenDelegatedInput'>) -> collections.abc.Mapping[str, JsonValue]` |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 | `siren_adapter` | Compile a framework-neutral boundary for operation-aware Siren HTTP responses. | — |

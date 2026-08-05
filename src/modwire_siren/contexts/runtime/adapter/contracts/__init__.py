@@ -1,3 +1,4 @@
 from .policy import SirenCapabilityPolicy
+from .profile import SirenAdapterProfile
 
-__all__ = ["SirenCapabilityPolicy"]
+__all__ = ["SirenAdapterProfile", "SirenCapabilityPolicy"]

@@ -4,10 +4,12 @@ from .contexts.runtime.adapter import (
     SirenAdapter,
     SirenAdapterMatch,
     SirenAdapterPolicy,
+    SirenAdapterProfile,
     SirenAdapterRequest,
     SirenAdapterResponse,
     SirenCapabilityPolicy,
     SirenDjangoMiddleware,
+    SirenStructuredFormProfile,
 )
 from .contexts.runtime.document import (
     SirenAction,
@@ -28,6 +30,7 @@ __all__ = [
     "SirenAdapter",
     "SirenAdapterMatch",
     "SirenAdapterPolicy",
+    "SirenAdapterProfile",
     "SirenAdapterRequest",
     "SirenAdapterResponse",
     "SirenCapabilityPolicy",
@@ -46,6 +49,7 @@ __all__ = [
     "SirenOperationInput",
     "SirenRelationship",
     "SirenResponseContext",
+    "SirenStructuredFormProfile",
     "audit",
     "siren",
     "siren_adapter",
