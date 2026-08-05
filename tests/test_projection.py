@@ -142,10 +142,17 @@ class TestProjection:
         assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["entities"] == [
             {
                 "class": ["record"],
+                "title": "Architecture",
                 "rel": ["item"],
                 "properties": {"id": "42", "title": "Architecture"},
                 "actions": [{"name": "get_record", "href": "https://api.example.com/records/42", "method": "GET"}],
-                "links": [{"rel": ["self"], "href": "https://api.example.com/records/42"}],
+                "links": [
+                    {
+                        "title": "Architecture",
+                        "rel": ["self"],
+                        "href": "https://api.example.com/records/42",
+                    }
+                ],
             }
         ]
 

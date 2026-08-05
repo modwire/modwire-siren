@@ -171,9 +171,16 @@ class TestResponses:
             "entities": [
                 {
                     "class": ["article"],
+                    "title": "First",
                     "rel": ["item"],
                     "properties": {"article_key": "first", "title": "First"},
-                    "links": [{"rel": ["self"], "href": "https://api.example.com/articles/first"}],
+                    "links": [
+                        {
+                            "title": "First",
+                            "rel": ["self"],
+                            "href": "https://api.example.com/articles/first",
+                        }
+                    ],
                 }
             ],
             "links": [{"rel": ["self"], "href": "https://api.example.com/articles"}],
