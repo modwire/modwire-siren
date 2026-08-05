@@ -216,10 +216,10 @@ properties of an `application/json` object body become fields:
 | formatted `string` | matching Siren field type |
 | `integer` or `number` | `number` |
 | `boolean` | `checkbox` |
-| flat primitive array or repeated query parameter | `text` |
+| non-enum array or repeated query parameter | delegated `/array/v1`; no synthetic field |
 | scalar `enum` | `radio` with selectable values |
 | flat array with an item `enum` | `checkbox` with selectable values |
-| object, map, or nested array | delegated; no synthetic field |
+| object or map | delegated; no synthetic field |
 | header or cookie parameter | delegated; no synthetic field |
 | one non-JSON request media type | delegated action with that media type |
 
@@ -227,9 +227,10 @@ properties of an `application/json` object body become fields:
 `datetime-local`, and `time`, respectively.
 
 Required and nullable controls compile as ordinary standard Siren fields: validation remains
-server-enforced because official Siren has no `required` or `nullable` members. A flat array
-has one named `text` field; the OpenAPI serialization contract remains authoritative for
-submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+server-enforced because official Siren has no `required` or `nullable` members. Arrays without
+item enum values retain their complete schema in the structured-form extension; the OpenAPI
+serialization contract remains authoritative for submission. `allOf` scalar fragments and a
+`oneOf` or `anyOf` containing one scalar plus
 `null` are accepted when they normalize unambiguously.
 
 Structured values, header and cookie parameters, and one non-JSON request body are delegated
@@ -373,9 +374,9 @@ This opt-in profile adds the non-standard action member
 one versioned control URI. Body controls include `mediaType`; query, header, and cookie controls
 instead include materialized `style`, `explode`, and `allowReserved` serialization.
 
-Object and structured-array controls use the `/object/v1` and `/array/v1` control URIs. Open JSON
-objects use `/json/v1`. Only delegated inputs are emitted, so ordinary official Siren fields are
-never duplicated. The profile walks actions recursively through embedded representations.
+Object and array controls use the `/object/v1` and `/array/v1` control URIs. Open JSON objects
+use `/json/v1`. Only delegated inputs are emitted, so ordinary official Siren fields are never
+duplicated. The profile walks actions recursively through embedded representations.
 
 ### `SirenResponseContext`
 
@@ -511,8 +512,9 @@ source route before Django dispatch and restores the public request path before 
 
 Describe a normalized OpenAPI input delegated to an adapter or transport.
 
-Parameter serialization defaults are materialized in `style`, `explode`, and
-`allow_reserved`; body inputs instead carry their selected `media_type`.
+`kind` is the compiler-normalized structured control shape. Parameter serialization defaults
+are materialized in `style`, `explode`, and `allow_reserved`; body inputs instead carry their
+selected `media_type`.
 
 ### `SirenContext`
 

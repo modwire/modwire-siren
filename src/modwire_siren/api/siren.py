@@ -93,10 +93,10 @@ def siren(
     | formatted `string` | matching Siren field type |
     | `integer` or `number` | `number` |
     | `boolean` | `checkbox` |
-    | flat primitive array or repeated query parameter | `text` |
+    | non-enum array or repeated query parameter | delegated `/array/v1`; no synthetic field |
     | scalar `enum` | `radio` with selectable values |
     | flat array with an item `enum` | `checkbox` with selectable values |
-    | object, map, or nested array | delegated; no synthetic field |
+    | object or map | delegated; no synthetic field |
     | header or cookie parameter | delegated; no synthetic field |
     | one non-JSON request media type | delegated action with that media type |
 
@@ -104,9 +104,10 @@ def siren(
     `datetime-local`, and `time`, respectively.
 
     Required and nullable controls compile as ordinary standard Siren fields: validation remains
-    server-enforced because official Siren has no `required` or `nullable` members. A flat array
-    has one named `text` field; the OpenAPI serialization contract remains authoritative for
-    submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+    server-enforced because official Siren has no `required` or `nullable` members. Arrays without
+    item enum values retain their complete schema in the structured-form extension; the OpenAPI
+    serialization contract remains authoritative for submission. `allOf` scalar fragments and a
+    `oneOf` or `anyOf` containing one scalar plus
     `null` are accepted when they normalize unambiguously.
 
     Structured values, header and cookie parameters, and one non-JSON request body are delegated

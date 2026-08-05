@@ -20,9 +20,9 @@ class SirenStructuredFormProfile:
     one versioned control URI. Body controls include `mediaType`; query, header, and cookie controls
     instead include materialized `style`, `explode`, and `allowReserved` serialization.
 
-    Object and structured-array controls use the `/object/v1` and `/array/v1` control URIs. Open JSON
-    objects use `/json/v1`. Only delegated inputs are emitted, so ordinary official Siren fields are
-    never duplicated. The profile walks actions recursively through embedded representations.
+    Object and array controls use the `/object/v1` and `/array/v1` control URIs. Open JSON objects
+    use `/json/v1`. Only delegated inputs are emitted, so ordinary official Siren fields are never
+    duplicated. The profile walks actions recursively through embedded representations.
     """
 
     extension = "https://modwire.dev/siren/structured-form/v1"
@@ -71,14 +71,11 @@ class SirenStructuredFormProfile:
 
     def control(self, delegated: SirenDelegatedInput) -> Mapping[str, JsonValue]:
         definition = deepcopy(dict(delegated.definition or {}))
-        definition_type = definition.get("type")
-        control_type = self.json_control
-        if definition_type == "object" and not (
-            definition.get("additionalProperties") is True and "properties" not in definition
-        ):
-            control_type = self.object_control
-        elif definition_type == "array":
-            control_type = self.array_control
+        control_type = {
+            "array": self.array_control,
+            "object": self.object_control,
+            "json": self.json_control,
+        }[delegated.kind]
         control = {
             "name": delegated.name,
             "location": delegated.location,

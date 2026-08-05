@@ -9,6 +9,7 @@ from modwire_siren.contexts.shared import BaseValue, SirenMediaType
 class DelegatedInputDraft(BaseValue):
     name: str
     location: Literal["query", "header", "cookie", "body"]
+    kind: Literal["array", "object", "json"]
     required: bool = False
     media_type: SirenMediaType | None = None
     style: str | None = None

@@ -510,7 +510,7 @@ class TestAdapter:
             },
             "ArticlePatch": {
                 "type": "object",
-                "required": ["metadata", "items", "payload"],
+                "required": ["metadata", "items", "payload", "record_ids"],
                 "properties": {
                     "title": {"type": "string"},
                     "metadata": {"$ref": "#/components/schemas/Metadata"},
@@ -519,6 +519,13 @@ class TestAdapter:
                         "items": {"$ref": "#/components/schemas/Metadata"},
                     },
                     "payload": {"type": "object", "additionalProperties": True},
+                    "record_ids": {
+                        "type": "array",
+                        "title": "Record IDs",
+                        "minItems": 1,
+                        "uniqueItems": True,
+                        "items": {"type": "string", "format": "uuid"},
+                    },
                 },
             },
         })
@@ -591,7 +598,15 @@ class TestAdapter:
         extension = action[extension_name]
         assert extension["version"] == "1"
         controls = {control["name"]: control for control in extension["controls"]}
-        assert set(controls) == {"filter", "trace", "session", "metadata", "items", "payload"}
+        assert set(controls) == {
+            "filter",
+            "trace",
+            "session",
+            "metadata",
+            "items",
+            "payload",
+            "record_ids",
+        }
         assert controls["filter"] == {
             "name": "filter",
             "location": "query",
@@ -615,6 +630,20 @@ class TestAdapter:
         assert controls["metadata"]["mediaType"] == "application/json"
         assert controls["items"]["control"] == SirenStructuredFormProfile.array_control
         assert controls["items"]["schema"]["items"]["type"] == "object"
+        assert controls["record_ids"] == {
+            "name": "record_ids",
+            "location": "body",
+            "required": True,
+            "control": SirenStructuredFormProfile.array_control,
+            "schema": {
+                "type": "array",
+                "title": "Record IDs",
+                "minItems": 1,
+                "uniqueItems": True,
+                "items": {"type": "string", "format": "uuid"},
+            },
+            "mediaType": "application/json",
+        }
         assert controls["payload"]["control"] == SirenStructuredFormProfile.json_control
         assert "$ref" not in json.dumps(extension)
 
@@ -631,6 +660,7 @@ class TestAdapter:
                 SirenDelegatedInput(
                     name="payload",
                     location="body",
+                    kind="object",
                     required=True,
                     media_type="application/json",
                     definition={"type": "object"},

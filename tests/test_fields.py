@@ -136,6 +136,32 @@ class TestFields:
         document["paths"]["/records"]["get"]["parameters"] = [
             {"name": "request_id", "in": "query", "required": True, "schema": {"type": "string", "format": "uuid"}},
             {"name": "tags", "in": "query", "schema": {"type": "array", "items": {"type": "string"}}},
+            {
+                "name": "aliases",
+                "in": "query",
+                "schema": {"type": ["array", "null"], "items": {"type": "string"}},
+            },
+            {
+                "name": "labels",
+                "in": "query",
+                "schema": {
+                    "oneOf": [
+                        {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                        {"type": "null"},
+                    ]
+                },
+            },
+            {
+                "name": "codes",
+                "in": "query",
+                "schema": {
+                    "allOf": [
+                        {"type": "array"},
+                        {"items": {"type": "integer"}},
+                        {"uniqueItems": True},
+                    ]
+                },
+            },
             {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["draft", "published"]}},
             {
                 "name": "scopes",
@@ -188,7 +214,6 @@ class TestFields:
 
         assert collection["actions"][0]["fields"] == [
             {"name": "request_id", "type": "text"},
-            {"name": "tags", "type": "text"},
             {
                 "name": "status",
                 "type": "radio",
@@ -202,6 +227,45 @@ class TestFields:
             {"name": "nickname", "type": "text"},
             {"name": "external_id", "type": "text"},
             {"name": "reference", "type": "text"},
+        ]
+        operation_input = engine.operation_input("list_records")
+        assert operation_input is not None
+        assert operation_input.official_fields == (
+            "request_id",
+            "status",
+            "scopes",
+            "nickname",
+            "external_id",
+            "reference",
+        )
+        assert [value.name for value in operation_input.delegated_inputs] == [
+            "tags",
+            "aliases",
+            "labels",
+            "codes",
+        ]
+        assert [value.kind for value in operation_input.delegated_inputs] == [
+            "array",
+            "array",
+            "array",
+            "array",
+        ]
+        assert [value.definition for value in operation_input.delegated_inputs] == [
+            {"type": "array", "items": {"type": "string"}},
+            {"type": ["array", "null"], "items": {"type": "string"}},
+            {
+                "oneOf": [
+                    {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                    {"type": "null"},
+                ]
+            },
+            {
+                "allOf": [
+                    {"type": "array"},
+                    {"items": {"type": "integer"}},
+                    {"uniqueItems": True},
+                ]
+            },
         ]
         assert entity["actions"][0]["fields"] == [
             {"name": "title", "type": "text"},

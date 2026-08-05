@@ -247,7 +247,7 @@ class OpenApiCompatibilityInspection(BaseState):
         try:
             self.projection.field(name, schema)
         except (ModwireSirenError, ValueError):
-            if self.projection.delegated(schema):
+            if self.projection.delegated_kind(name, schema) is not None:
                 return
             self.add(
                 location,

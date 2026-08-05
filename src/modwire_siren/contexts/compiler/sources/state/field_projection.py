@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError, SirenFieldType
 
@@ -9,26 +9,34 @@ from .components import ComponentResolver
 class OpenApiFieldProjection(BaseState):
     components: ComponentResolver
 
-    def delegated(self, schema: dict[str, Any]) -> bool:
-        definition = self.components.schema(schema)
+    def delegated_kind(
+        self, name: str, schema: dict[str, Any]
+    ) -> Literal["array", "object", "json"] | None:
+        try:
+            definition = self.definition(name, schema)
+        except ModwireSirenError:
+            definition = self.components.schema(schema)
+            for keyword in ("anyOf", "oneOf"):
+                variants = definition.get(keyword)
+                if variants is not None:
+                    if not isinstance(variants, list) or not variants:
+                        return None
+                    kinds = tuple(
+                        self.delegated_kind(name, variant) if isinstance(variant, dict) else None
+                        for variant in variants
+                    )
+                    if any(kind is None for kind in kinds):
+                        return None
+                    return kinds[0] if len(set(kinds)) == 1 else "json"
+            return None
         schema_type = definition.get("type")
         if schema_type == "object":
-            return True
+            if definition.get("additionalProperties") is True and "properties" not in definition:
+                return "json"
+            return "object"
         if schema_type == "array":
-            items = definition.get("items")
-            if not isinstance(items, dict):
-                return False
-            item_type = self.components.schema(items).get("type")
-            return item_type in {"array", "object"} or self.delegated(items)
-        if isinstance(schema_type, list) and set(schema_type).issubset({"object", "null"}):
-            return "object" in schema_type
-        for keyword in ("allOf", "anyOf", "oneOf"):
-            variants = definition.get(keyword)
-            if variants is not None:
-                return isinstance(variants, list) and bool(variants) and all(
-                    isinstance(variant, dict) and self.delegated(variant) for variant in variants
-                )
-        return False
+            return None if self.values(name, definition) else "array"
+        return None
 
     def field(self, name: str, schema: dict[str, Any]) -> Field:
         definition = self.definition(name, schema)
@@ -124,7 +132,9 @@ class OpenApiFieldProjection(BaseState):
             if item_definition.get("type") == "array":
                 raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
             self.type(name, item_definition, ())
-            return SirenFieldType.validate("checkbox") if values else SirenFieldType.default()
+            if values:
+                return SirenFieldType.validate("checkbox")
+            raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
         if values:
             return SirenFieldType.validate("radio")
         if schema_type == "string":
