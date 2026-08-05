@@ -60,13 +60,27 @@ When a framework returns an undeclared status from 400 through 599, the adapter 
 its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
 an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
-For Django Ninja and Ninja Extra, wrap the normal Django response callable with
-`SirenDjangoMiddleware`. The bridge imports Django only when rendering a negotiated Siren response,
-preserves non-content headers and cookies, and returns the original response object when Siren is
-not selected. Its required `SirenCapabilityPolicy` is application code:
+For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
+normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
+before middleware can transform its result, so an independent public mount is rejected rather than
+pretending that it can execute without redispatch. Install real framework routes when an independent
+mount is required.
+
+The bridge imports Django only when rendering a negotiated Siren response. It transforms matched
+`application/json`, `+json`, and content-free responses. Unmatched routes, non-JSON content, streams,
+files, redirects, 304 responses, and already-Siren responses pass through unchanged. Non-Siren
+requests always receive the original response object. Unmatched errors also pass through because
+the bridge does not guess API ownership from a URL prefix. Its required `SirenCapabilityPolicy` is
+application code:
 
 ```python
 from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
+
+django_adapter = siren_adapter(
+    api.get_openapi_schema(),
+    source_path="/api",
+    public_path="/api",
+)
 
 class Capabilities:
     def select(self, operation_id, status, request, result):
@@ -75,7 +89,7 @@ class Capabilities:
 
 middleware = SirenDjangoMiddleware(
     get_response=django_handler,
-    adapter=adapter,
+    adapter=django_adapter,
     policy=Capabilities(),
 )
 ```
@@ -363,8 +377,14 @@ belong in `entities`.
 Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
 Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
-It calls the wrapped operation exactly once. Requests that do not accept the official Siren
-media type receive the original Django response unchanged.
+It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
+content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren
+responses pass through unchanged, as do all requests that do not select Siren.
+Unmatched errors also pass through: the bridge does not infer API ownership from URL prefixes.
+
+Django middleware supports negotiation on the source routes that Django actually dispatches.
+Configure identical source and public paths; an independent public mount requires real framework
+routes and is rejected here because matching after execution cannot make it operational safely.
 
 ### `SirenDelegatedInput`
 
