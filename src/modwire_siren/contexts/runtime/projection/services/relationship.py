@@ -35,6 +35,7 @@ class SirenDefaultRelationshipDocumentService(SirenRelationshipDocumentService):
                 "title": relationship.title,
                 "value": relationship.value,
                 "items": (),
+                "item_titles": (),
                 "item_capabilities": (),
                 "relationships": (),
                 "path_values": relationship.path_values,

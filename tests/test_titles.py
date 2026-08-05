@@ -230,6 +230,91 @@ class TestTitles:
         assert entity["actions"][0]["title"] == "Read article"
         assert entity["links"][0]["title"] == "Article"
 
+    def test_framework_response_wrapper_defers_to_the_array_item_schema_title(self):
+        document = deepcopy(self.schema)
+        response_schema = document["paths"]["/articles"]["get"]["responses"]["200"]["content"][
+            "application/json"
+        ]["schema"]
+        response_schema["title"] = "Response"
+
+        projected = siren(document).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="article",
+                items=({"article_id": "42"},),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert projected["title"] == "Article"
+        assert projected["links"][0]["title"] == "Article"
+
+    def test_runtime_item_titles_remain_aligned_with_nested_collection_capabilities(self):
+        document = deepcopy(self.schema)
+        document["paths"] = {
+            "/authors/{author_id}/articles": document["paths"]["/articles"],
+            "/authors/{author_id}/articles/{article_id}": document["paths"][
+                "/articles/{article_id}"
+            ],
+        }
+        document["paths"]["/authors/{author_id}/articles"]["parameters"] = [
+            {
+                "name": "author_id",
+                "in": "path",
+                "required": True,
+                "schema": {"type": "string"},
+            }
+        ]
+        document["paths"]["/authors/{author_id}/articles/{article_id}"]["parameters"] = [
+            {
+                "name": "author_id",
+                "in": "path",
+                "required": True,
+                "schema": {"type": "string"},
+            },
+            {
+                "name": "article_id",
+                "in": "path",
+                "required": True,
+                "schema": {"type": "string"},
+            },
+        ]
+
+        projected = siren(document).project(
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="article",
+                path_values={"author_id": "7"},
+                items=({"article_id": "42"}, {"article_id": "43"}),
+                item_titles=("First article", "Second article"),
+                item_capabilities=(
+                    frozenset({"get_article"}),
+                    frozenset(),
+                ),
+            )
+        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert [item["title"] for item in projected["entities"]] == [
+            "First article",
+            "Second article",
+        ]
+        assert [item["links"][0]["title"] for item in projected["entities"]] == [
+            "First article",
+            "Second article",
+        ]
+        assert [item.get("actions", []) for item in projected["entities"]] == [
+            [
+                {
+                    "name": "get_article",
+                    "href": "https://api.example.com/authors/7/articles/42",
+                    "method": "GET",
+                    "title": "Read article",
+                }
+            ],
+            [],
+        ]
+
     def test_runtime_titles_override_compiled_defaults_without_leaking_into_collection_items(self):
         engine = siren(self.schema)
         root = engine.project(

@@ -111,6 +111,7 @@ class SirenAdapter(BaseState):
                     path_values=path_values,
                     query=request.query,
                     capabilities=request.policy.capabilities,
+                    item_titles=request.policy.item_titles,
                     item_capabilities=request.policy.item_capabilities,
                     relationships=request.policy.relationships,
                 )

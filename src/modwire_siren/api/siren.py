@@ -148,8 +148,9 @@ def siren(
     `properties.version` value. An operation's `summary` becomes its action title. Resource titles
     come only from explicitly connected successful response schemas: an object schema on the exact
     entity route names an entity, while an array schema on the exact collection route names its
-    collection and its item schema names embedded items and entities. Self and root collection
-    links reuse those compiled titles.
+    collection and its item schema names embedded items and entities. A meaningful array title wins
+    its item title; framework-generated `Response` wrapper titles are ignored. Self and root
+    collection links reuse those compiled titles.
 
     ```yaml
     info:
@@ -175,10 +176,13 @@ def siren(
     ```
 
     `SirenContext.title`, `SirenResponseContext.title`, and `SirenRelationship.title` override the
-    relevant compiled default. Missing titles remain absent: the engine does not humanize operation
-    IDs, guess labels from URLs, or apply language-specific inflection. When operations declare
-    different schema titles, the exact GET representation takes precedence, followed by other
-    operations in OpenAPI declaration order.
+    relevant compiled default. For collections, `item_titles` supplies one runtime title per item;
+    each embedded item and its self link receive the aligned title. Missing titles remain absent:
+    the engine does not humanize operation IDs, guess labels from URLs, or apply language-specific
+    inflection. Collection title precedence is an explicit runtime title, a meaningful array-schema
+    title, its item-schema title, then the resource title. When operations declare different schema
+    titles, the exact GET representation takes precedence, followed by other operations in OpenAPI
+    declaration order.
 
     #### Framework integration is one startup call
 

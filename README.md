@@ -73,6 +73,9 @@ The result must come from an operation the application has already executed; `re
 dispatches application code. Pass `operation_id` directly when the framework exposes it, or pass
 `method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
 explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
+For collection results, `item_titles` supplies one application-owned title per item. Titles and
+item-specific capability sets are independently validated against result order; an empty result
+needs neither.
 
 Declared exact, ranged, and default error responses use their compiled schema and media type.
 When a framework returns an undeclared status from 400 through 599, the adapter instead preserves
@@ -266,8 +269,9 @@ The root document uses `info.title`, and exposes `info.version` as the official 
 `properties.version` value. An operation's `summary` becomes its action title. Resource titles
 come only from explicitly connected successful response schemas: an object schema on the exact
 entity route names an entity, while an array schema on the exact collection route names its
-collection and its item schema names embedded items and entities. Self and root collection
-links reuse those compiled titles.
+collection and its item schema names embedded items and entities. A meaningful array title wins
+its item title; framework-generated `Response` wrapper titles are ignored. Self and root
+collection links reuse those compiled titles.
 
 ```yaml
 info:
@@ -293,10 +297,13 @@ components:
 ```
 
 `SirenContext.title`, `SirenResponseContext.title`, and `SirenRelationship.title` override the
-relevant compiled default. Missing titles remain absent: the engine does not humanize operation
-IDs, guess labels from URLs, or apply language-specific inflection. When operations declare
-different schema titles, the exact GET representation takes precedence, followed by other
-operations in OpenAPI declaration order.
+relevant compiled default. For collections, `item_titles` supplies one runtime title per item;
+each embedded item and its self link receive the aligned title. Missing titles remain absent:
+the engine does not humanize operation IDs, guess labels from URLs, or apply language-specific
+inflection. Collection title precedence is an explicit runtime title, a meaningful array-schema
+title, its item-schema title, then the resource title. When operations declare different schema
+titles, the exact GET representation takes precedence, followed by other operations in OpenAPI
+declaration order.
 
 #### Framework integration is one startup call
 
@@ -375,7 +382,8 @@ an object, or an array. Array responses project as collections and object respon
 entity's exact route project as entities. Set `representation` to `"root"` for an API entry
 point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
 projection preserves executed mapping properties while compiled OpenAPI version metadata wins
-a `version` collision. `title` overrides the compiled resource or operation title.
+a `version` collision. `title` overrides the compiled resource or operation title. For an array
+response, `item_titles` supplies one explicit title per result item.
 
 ### `SirenRelationship`
 
@@ -523,6 +531,7 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `title` | Explicit document title overriding compiled OpenAPI metadata. |
 | `value` | Entity or root properties and entity path parameters. |
 | `items` | Entity mappings for a collection. |
+| `item_titles` | Optional explicit titles aligned with collection items. |
 | `item_capabilities` | Optional permitted operation IDs for each collection item. |
 | `relationships` | Linked or embedded related resources for this document. |
 | `path_values` | Missing path parameters, such as a parent resource ID or a root command target. |
@@ -568,7 +577,8 @@ Declare application-owned projection semantics and permitted capabilities.
 
 Adapters never infer permissions or representation semantics from OpenAPI or result identifiers.
 Supply this value directly to a framework-neutral request, or return it from a framework bridge's
-capability policy.
+capability policy. For a collection response, `item_titles` supplies one explicit title per
+result item in the same order as `item_capabilities`.
 
 ### `SirenAdapterMatch`
 

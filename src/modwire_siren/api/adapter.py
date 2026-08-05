@@ -59,6 +59,9 @@ def siren_adapter(
     dispatches application code. Pass `operation_id` directly when the framework exposes it, or pass
     `method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
     explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
+    For collection results, `item_titles` supplies one application-owned title per item. Titles and
+    item-specific capability sets are independently validated against result order; an empty result
+    needs neither.
 
     Declared exact, ranged, and default error responses use their compiled schema and media type.
     When a framework returns an undeclared status from 400 through 599, the adapter instead preserves

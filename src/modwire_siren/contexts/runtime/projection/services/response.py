@@ -162,6 +162,7 @@ class SirenResponseProjectionService:
             resource=resource.name,
             title=context.title,
             items=tuple(context.result),
+            item_titles=context.item_titles,
             item_capabilities=context.item_capabilities,
             relationships=context.relationships,
             path_values=context.path_values,
