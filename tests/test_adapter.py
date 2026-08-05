@@ -1328,6 +1328,48 @@ class TestAdapter:
 
         assert django_openapi_provider.calls == 2
 
+    def test_standard_django_loader_follows_the_projected_root_action_across_trailing_slash_mounts(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        configuration = {
+            "OPENAPI": (
+                "framework_fixtures.django_openapi_provider.django_openapi_provider"
+            ),
+            "SOURCE_PATH": "/api",
+            "PUBLIC_PATH": "/siren",
+        }
+        factory = RequestFactory()
+
+        with override_settings(
+            ALLOWED_HOSTS=["testserver"],
+            MIDDLEWARE=["modwire_siren.SirenMiddleware"],
+            MODWIRE_SIREN=configuration,
+            ROOT_URLCONF="framework_fixtures.django_urls",
+        ):
+            handler = BaseHandler()
+            handler.load_middleware()
+            entry = handler.get_response(factory.get(
+                "/siren/",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
+            action = json.loads(entry.content)["actions"][0]
+            followed = handler.get_response(factory.get(
+                action["href"],
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
+
+        assert action == {
+            "name": "get_api_root",
+            "href": "http://testserver/siren",
+            "method": "GET",
+        }
+        assert followed.status_code == 200
+        assert followed["Content-Type"] == "application/vnd.siren+json"
+        assert json.loads(followed.content)["properties"] == {
+            "status": "ready",
+            "version": "4.0.0",
+        }
+
     def test_standard_django_loader_rejects_incomplete_configuration_at_startup(self):
         with (
             override_settings(MODWIRE_SIREN={}),

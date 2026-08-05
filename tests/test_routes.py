@@ -86,6 +86,129 @@ class TestRoutes:
         assert [action["name"] for action in document["actions"]] == ["list_record_reports"]
 
 
+    def test_public_facade_uses_response_shape_to_distinguish_plural_entity_operations_from_collections(self):
+        schema = {
+            "openapi": "3.1.1",
+            "info": {"title": "Examples", "version": "1"},
+            "paths": {
+                "/examples": {
+                    "get": {
+                        "operationId": "list_examples",
+                        "responses": {
+                            "200": {
+                                "description": "Examples",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {"type": "object"},
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    }
+                },
+                "/examples/{example_id}": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "get_example",
+                        "responses": {
+                            "200": {
+                                "description": "Example",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    },
+                },
+                "/examples/{example_id}/metrics": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "read_example_metrics",
+                        "responses": {
+                            "200": {
+                                "description": "Metrics",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    },
+                },
+                "/examples/{example_id}/events": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "list_example_events",
+                        "responses": {
+                            "200": {
+                                "description": "Events",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {"type": "object"},
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    },
+                },
+            },
+        }
+        engine = siren(schema)
+
+        entity = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            resource="example",
+            value={"id": "one"},
+            path_values={"example_id": "one"},
+            capabilities=frozenset({"read_example_metrics"}),
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+        collection = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            scope="collection",
+            resource="event",
+            path_values={"example_id": "one"},
+            capabilities=frozenset({"list_example_events"}),
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert entity["actions"] == [
+            {
+                "name": "read_example_metrics",
+                "href": "https://api.example.com/examples/one/metrics",
+                "method": "GET",
+            }
+        ]
+        assert collection["links"] == [
+            {"rel": ["self"], "href": "https://api.example.com/examples/one/events"}
+        ]
+        assert [action["name"] for action in collection["actions"]] == ["list_example_events"]
+
+
     def test_public_facade_projects_standalone_commands_as_concrete_root_actions(self):
         schema = deepcopy(SCHEMA)
         schema["paths"].update(

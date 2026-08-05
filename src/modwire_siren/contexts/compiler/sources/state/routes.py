@@ -15,6 +15,7 @@ class RouteCatalog(BaseState):
     parameter_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = Field(default_factory=dict)
     resource_cache: tuple[Resource, ...] | None = None
+    single_object_paths: frozenset[str] = frozenset()
 
     def validate_paths(self) -> None:
         for path in self.paths:
@@ -42,7 +43,7 @@ class RouteCatalog(BaseState):
             segments = self.segments(path)
             collection_path: str | None = None
             entity_path: str | None = None
-            if self.is_collection(segments):
+            if self.is_collection(segments) and not self.is_nested_object_operation(path):
                 collection_path = path
             elif self.is_entity(segments):
                 collection_path = "/" + "/".join(segments[:-1])
@@ -77,6 +78,14 @@ class RouteCatalog(BaseState):
                     identifier=existing.identifier,
                 )
         return tuple(candidates.values())
+
+    def is_nested_object_operation(self, path: str) -> bool:
+        if path not in self.single_object_paths:
+            return False
+        parent_segments = self.segments(path)[:-1]
+        return self.is_entity(parent_segments) and any(
+            self.segments(candidate) == parent_segments for candidate in self.paths
+        )
 
     def ownership(self, path: str) -> tuple[Resource, SirenScope] | None:
         if path in self.ownership_cache:
