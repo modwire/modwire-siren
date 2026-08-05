@@ -7,12 +7,14 @@ from modwire_siren.contexts.shared import BaseState, ModwireSirenError, SirenAct
 from ...compatibility import SirenCompatibilityFinding
 from .components import ComponentResolver
 from .field_projection import OpenApiFieldProjection
+from .response_projection import OpenApiResponseProjection
 from .routes import RouteCatalog
 
 
 class OpenApiCompatibilityInspection(BaseState):
     components: ComponentResolver
     projection: OpenApiFieldProjection
+    responses: OpenApiResponseProjection
     routes: RouteCatalog
     findings: list[SirenCompatibilityFinding] = Field(default_factory=list)
     operation_ids: set[str] = Field(default_factory=set)
@@ -100,6 +102,18 @@ class OpenApiCompatibilityInspection(BaseState):
         self.parameters(path_item.get("parameters", ()), self.location("paths", path, "parameters"))
         self.parameters(operation.get("parameters", ()), self.location("paths", path, method_name, "parameters"))
         self.request_body(operation, location)
+        self.response_descriptors(operation, location)
+
+    def response_descriptors(self, operation: dict[str, Any], location: str) -> None:
+        try:
+            self.responses.responses(operation)
+        except (ModwireSirenError, ValueError) as error:
+            self.add(
+                self.location_from(location, "responses"),
+                "response-schema",
+                str(error),
+                "Use object, array-of-object, or content-free responses with resolvable local schema references.",
+            )
 
     def parameters(self, parameters: Any, location: str) -> None:
         if not isinstance(parameters, (list, tuple)):
@@ -233,7 +247,7 @@ class OpenApiCompatibilityInspection(BaseState):
         try:
             self.projection.field(name, schema)
         except (ModwireSirenError, ValueError):
-            if self.projection.delegated(schema):
+            if self.projection.delegated_kind(name, schema) is not None:
                 return
             self.add(
                 location,

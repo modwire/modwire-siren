@@ -32,8 +32,10 @@ class SirenDefaultRelationshipDocumentService(SirenRelationshipDocumentService):
             update={
                 "scope": SirenScope.ENTITY,
                 "resource": relationship.resource,
+                "title": relationship.title,
                 "value": relationship.value,
                 "items": (),
+                "item_titles": (),
                 "item_capabilities": (),
                 "relationships": (),
                 "path_values": relationship.path_values,
@@ -45,7 +47,11 @@ class SirenDefaultRelationshipDocumentService(SirenRelationshipDocumentService):
         self.capabilities.validate(resource, related_context)
         path = resource.entity.path if resource.entity else resource.collection.path
         if not relationship.embedded:
-            return SirenLink(rel=relationship.rel, href=self.hrefs.href(path, related_context, resource))
+            return SirenLink(
+                rel=relationship.rel,
+                href=self.hrefs.href(path, related_context, resource),
+                title=relationship.title or resource.title,
+            )
         if resource.entity is None:
             raise ModwireSirenError(f"Siren embedded relationship requires an entity resource: {resource.name}")
         document = self.entities.entity(api, resource, relationship.value, related_context, relationship.rel)

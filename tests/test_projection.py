@@ -7,6 +7,7 @@ from modwire_siren import (
     SirenDocument,
     SirenEmbeddedRepresentation,
     SirenRelationship,
+    SirenResponseContext,
     siren,
 )
 
@@ -141,10 +142,17 @@ class TestProjection:
         assert document.model_dump(by_alias=True, mode="json", exclude_none=True)["entities"] == [
             {
                 "class": ["record"],
+                "title": "Architecture",
                 "rel": ["item"],
                 "properties": {"id": "42", "title": "Architecture"},
                 "actions": [{"name": "get_record", "href": "https://api.example.com/records/42", "method": "GET"}],
-                "links": [{"rel": ["self"], "href": "https://api.example.com/records/42"}],
+                "links": [
+                    {
+                        "title": "Architecture",
+                        "rel": ["self"],
+                        "href": "https://api.example.com/records/42",
+                    }
+                ],
             }
         ]
 
@@ -179,6 +187,36 @@ class TestProjection:
                 resource="record",
                 items=({"id": "42"},),
                 item_capabilities=(frozenset({"get_record"}), frozenset({"rename_record"})),
+            )
+
+    def test_public_facade_validates_item_title_alignment_and_allows_empty_collections(self):
+        with pytest.raises(ModwireSirenError, match="Siren item titles must align with collection items"):
+            SirenContext(
+                base_url="https://api.example.com",
+                scope="collection",
+                resource="record",
+                items=({"id": "42"},),
+                item_titles=("First", "Second"),
+            )
+
+        context = SirenResponseContext(
+            operation_id="list_records",
+            status=200,
+            result=[],
+            base_url="https://api.example.com",
+            item_titles=(),
+        )
+
+        assert context.item_titles == ()
+
+    def test_response_context_rejects_misaligned_item_titles(self):
+        with pytest.raises(ModwireSirenError, match="Siren item titles must align with response items"):
+            SirenResponseContext(
+                operation_id="list_records",
+                status=200,
+                result=[{"id": "42"}],
+                base_url="https://api.example.com",
+                item_titles=("First", "Second"),
             )
 
     def test_public_facade_projects_an_entity_with_concrete_links_and_allowed_actions(self):
@@ -271,7 +309,7 @@ class TestProjection:
         assert isinstance(document, SirenDocument)
         payload = document.model_dump(by_alias=True, mode="json", exclude_none=True)
         assert payload["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/?format=siren"},
+            {"title": "Root actions", "rel": ["self"], "href": "https://api.example.com/?format=siren"},
             {"rel": ["collection"], "href": "https://api.example.com/records"},
         ]
         assert payload["actions"] == [

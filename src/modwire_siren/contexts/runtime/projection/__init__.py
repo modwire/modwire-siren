@@ -1,4 +1,4 @@
-from .services import SirenProjectionService
+from .services import SirenProjectionService, SirenResponseProjectionService
 from .state import SirenProjectionRequest
 
-__all__ = ["SirenProjectionRequest", "SirenProjectionService"]
+__all__ = ["SirenProjectionRequest", "SirenProjectionService", "SirenResponseProjectionService"]

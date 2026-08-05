@@ -9,7 +9,9 @@ from ..contexts.shared import ModwireSirenError
 from ..wiring import SirenApplicationContainer
 
 
-def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
+def siren(
+    openapi: Mapping[str, Any], *, source_path: str = "/", public_path: str = "/"
+) -> SirenEngine:
     """Compile a complete OpenAPI 3.1 document into a reusable Siren engine.
 
     Call this once during application startup, then call `engine.project(context)` for each
@@ -36,7 +38,14 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "properties": {"title": {"type": "string"}},
+                                    "required": ["metadata"],
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "metadata": {
+                                            "type": "object",
+                                            "properties": {"source": {"type": "string"}},
+                                        },
+                                    },
                                 }
                             }
                         }
@@ -84,10 +93,11 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     | formatted `string` | matching Siren field type |
     | `integer` or `number` | `number` |
     | `boolean` | `checkbox` |
-    | flat primitive array or repeated query parameter | `text` |
+    | non-enum array or repeated query parameter | delegated `/array/v1`; no synthetic field |
     | scalar `enum` | `radio` with selectable values |
     | flat array with an item `enum` | `checkbox` with selectable values |
-    | object, map, or nested array | delegated; no synthetic field |
+    | object with concrete properties or a typed map | delegated `/object/v1`; no synthetic field |
+    | schema-less open object | delegated `/json/v1`; no synthetic field |
     | header or cookie parameter | delegated; no synthetic field |
     | one non-JSON request media type | delegated action with that media type |
 
@@ -95,10 +105,15 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     `datetime-local`, and `time`, respectively.
 
     Required and nullable controls compile as ordinary standard Siren fields: validation remains
-    server-enforced because official Siren has no `required` or `nullable` members. A flat array
-    has one named `text` field; the OpenAPI serialization contract remains authoritative for
-    submission. `allOf` scalar fragments and a `oneOf` or `anyOf` containing one scalar plus
+    server-enforced because official Siren has no `required` or `nullable` members. Arrays without
+    item enum values retain their complete schema in the structured-form extension; the OpenAPI
+    serialization contract remains authoritative for submission. `allOf` scalar fragments and a
+    `oneOf` or `anyOf` containing one scalar plus
     `null` are accepted when they normalize unambiguously.
+
+    An object without concrete properties is open when `additionalProperties` is omitted, `true`,
+    or `{}` and retains its complete schema in a `/json/v1` control. Named object properties take
+    precedence and use `/object/v1`; typed maps also remain object controls.
 
     Structured values, header and cookie parameters, and one non-JSON request body are delegated
     to the API contract and client transport; official Siren has no standard members for their
@@ -106,8 +121,76 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     unsupported string formats, and `HEAD`, `OPTIONS`, or `TRACE` operations are rejected during
     this startup call.
 
+    #### Adapter-facing operation inputs
+
+    Use `engine.operation_input(operation_id)` when an adapter needs the compiled request contract.
+    It returns the selected media type, the fully resolved request-body `definition`, the names in
+    `official_fields`, and separate `delegated_inputs` for structured query values, headers,
+    cookies, and bodies. Each delegated input retains its location, required state, media type,
+    normalized parameter serialization controls, and resolved definition, so an adapter does not
+    need to parse OpenAPI again.
+
+    ```python
+    operation_input = engine.operation_input("rename_record")
+
+    payload = {"title": "New title"}
+    if operation_input is not None:
+        metadata = next(value for value in operation_input.delegated_inputs if value.name == "metadata")
+        if metadata.location == "body" and metadata.required:
+            payload[metadata.name] = {"source": "browser"}
+
+    transport.request("PATCH", "/records/42", json=payload)
+    ```
+
+    This metadata is separate from projection. `engine.project(context)` continues to produce an
+    extension-free Siren document containing only official fields.
+
     Call `audit(openapi)` first when a consumer needs a deterministic list of every current
     incompatibility before using this strict fail-fast entry point.
+
+    #### Explicit title metadata
+
+    The root document uses `info.title`, and exposes `info.version` as the official Siren
+    `properties.version` value. An operation's `summary` becomes its action title. Resource titles
+    come only from explicitly connected successful response schemas: an object schema on the exact
+    entity route names an entity, while an array schema on the exact collection route names its
+    collection and its item schema names embedded items and entities. A meaningful array title names
+    the collection; framework-generated `Response` wrapper titles and item DTO titles do not replace
+    the resource title for collection navigation. Self and root collection links reuse those compiled
+    titles.
+
+    ```yaml
+    info:
+      title: Example Service
+      version: 4.0.0
+    paths:
+      /articles/{article_id}:
+        get:
+          operationId: get_article
+          summary: Read article
+          responses:
+            "200":
+              description: Article
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Article"
+    components:
+      schemas:
+        Article:
+          type: object
+          title: Article
+    ```
+
+    `SirenContext.title`, `SirenResponseContext.title`, and `SirenRelationship.title` override the
+    relevant compiled default. For collections, `item_titles` supplies one runtime title per item.
+    Without explicit item titles, a non-empty string `title` property, then a non-empty string `name`
+    property, supplies the item and self-link title before the compiled resource title. Missing titles
+    remain absent: the engine does not humanize operation IDs, guess labels from URLs, strip DTO
+    suffixes, or apply language-specific inflection. Collection title precedence is an explicit runtime
+    title, a meaningful array-schema title, then the resource title. When operations declare different
+    schema titles, the exact GET representation takes precedence, followed by other operations in
+    OpenAPI declaration order.
 
     #### Framework integration is one startup call
 
@@ -125,21 +208,53 @@ def siren(openapi: Mapping[str, Any], *, root_path: str = "/") -> SirenEngine:
     `application/vnd.siren+json`. The document contains only official Siren members; action fields
     never include the non-standard `required` member.
 
-    Set `root_path` when the Siren entry point is mounted away from `/`.
+    #### Operation-aware response projection
+
+    When an adapter knows the executed operation and HTTP status, pass a `SirenResponseContext`
+    to `engine.project_response(...)`. The engine selects the compiled response status, media
+    type, and resolved schema. Arrays become collection documents, objects returned from an
+    entity's exact route become entity documents, content-free responses become `empty` documents,
+    and statuses from 400 onward become `error` documents whose properties preserve the status and
+    structured result.
+
+    ```python
+    from modwire_siren import SirenResponseContext
+
+    document = engine.project_response(SirenResponseContext(
+        operation_id="get_record",
+        status=200,
+        result={"record_id": "42", "title": "Architecture"},
+        base_url="https://api.example.com",
+    ))
+    ```
+
+    An object response on the exact API root becomes the entry point, an object on an exact resource
+    collection or entity route becomes an entity, and an object on a subcommand route becomes a
+    command result. Set response-context `representation` to override an exceptional operation. No
+    identifier property name is inferred; compiled route parameters and explicit path values resolve
+    entity links.
+
+    Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
+    mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
+    slash. Every OpenAPI path must belong to `source_path`.
     """
 
     try:
         if not isinstance(openapi, Mapping):
             raise ModwireSirenError("OpenAPI document must be a mapping")
-        if not isinstance(root_path, str) or not root_path.startswith("/"):
-            raise ModwireSirenError("Siren root path must start with '/'")
+        if not isinstance(source_path, str) or not source_path.startswith("/"):
+            raise ModwireSirenError("Siren source path must start with '/'")
+        if not isinstance(public_path, str) or not public_path.startswith("/"):
+            raise ModwireSirenError("Siren public path must start with '/'")
+        source_path = source_path.rstrip("/") or "/"
+        public_path = public_path.rstrip("/") or "/"
         document = json.loads(json.dumps(openapi))
         validate(document)
     except Exception as error:
         raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error
     try:
         application = SirenApplicationContainer().application()
-        api = application.api_service().build(document, root_path)
+        api = application.api_service().build(document, source_path, public_path)
         return application.engine_factory().create(api)
     except Exception as error:
         raise ModwireSirenError("Invalid or unsupported OpenAPI contract") from error

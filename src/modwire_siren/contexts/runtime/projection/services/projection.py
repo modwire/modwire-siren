@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from wireup import injectable
 
-from modwire_siren.contexts.graph import SirenApi
+from modwire_siren.contexts.graph import SirenApi, SirenResource
 from modwire_siren.contexts.shared import ModwireSirenError, SirenScope
 
 from ...capabilities import SirenCapabilityValidator
@@ -23,6 +23,11 @@ class SirenProjectionService:
 
     def project(self, api: SirenApi, context: SirenContext) -> SirenDocument:
         resource = None if context.scope == SirenScope.ROOT else self.resources.resolve(api, context)
+        return self.project_resource(api, context, resource)
+
+    def project_resource(
+        self, api: SirenApi, context: SirenContext, resource: SirenResource | None
+    ) -> SirenDocument:
         if resource is not None:
             self.capabilities.validate(resource, context)
         candidates = [projector for projector in self.projectors if projector.supports(context.scope)]

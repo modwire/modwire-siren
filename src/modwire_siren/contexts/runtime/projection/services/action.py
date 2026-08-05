@@ -46,6 +46,7 @@ class SirenDefaultActionDocumentService(SirenActionDocumentService):
             name=operation.name,
             href=self.hrefs.href(operation.route.path, context, resource, value, include_query),
             method=operation.method,
+            title=operation.title,
             type=operation.media_type,
             fields=tuple(
                 SirenField(

@@ -9,10 +9,27 @@ from ..values import Resource
 
 class RouteCatalog(BaseState):
     paths: dict[str, Any]
+    source_path: str = "/"
+    public_path: str = "/"
     segment_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     parameter_cache: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     ownership_cache: dict[str, tuple[Resource, SirenScope] | None] = Field(default_factory=dict)
     resource_cache: tuple[Resource, ...] | None = None
+    single_object_paths: frozenset[str] = frozenset()
+
+    def validate_paths(self) -> None:
+        for path in self.paths:
+            self.public(path)
+
+    def public(self, path: str) -> str:
+        if path.rstrip("/") == self.source_path.rstrip("/"):
+            return self.public_path
+        if self.source_path != "/" and not path.startswith(f"{self.source_path}/"):
+            raise ModwireSirenError(
+                f"OpenAPI route {path!r} is outside configured source path {self.source_path!r}"
+            )
+        suffix = path if self.source_path == "/" else path[len(self.source_path):]
+        return suffix if self.public_path == "/" else f"{self.public_path}{suffix}"
 
     def resources(self) -> tuple[Resource, ...]:
         if self.resource_cache is None:
@@ -26,7 +43,7 @@ class RouteCatalog(BaseState):
             segments = self.segments(path)
             collection_path: str | None = None
             entity_path: str | None = None
-            if self.is_collection(segments):
+            if self.is_collection(segments) and not self.is_nested_object_operation(path):
                 collection_path = path
             elif self.is_entity(segments):
                 collection_path = "/" + "/".join(segments[:-1])
@@ -61,6 +78,14 @@ class RouteCatalog(BaseState):
                     identifier=existing.identifier,
                 )
         return tuple(candidates.values())
+
+    def is_nested_object_operation(self, path: str) -> bool:
+        if path not in self.single_object_paths:
+            return False
+        parent_segments = self.segments(path)[:-1]
+        return self.is_entity(parent_segments) and any(
+            self.segments(candidate) == parent_segments for candidate in self.paths
+        )
 
     def ownership(self, path: str) -> tuple[Resource, SirenScope] | None:
         if path in self.ownership_cache:

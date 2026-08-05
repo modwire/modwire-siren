@@ -8,7 +8,7 @@ from modwire_siren import ModwireSirenError, SirenContext, siren
 
 class TestRoutes:
     def test_public_facade_derives_prefixed_collection_nested_and_entity_route_ownership(self):
-        engine = siren(ROUTE_POLICY_SCHEMA)
+        engine = siren(ROUTE_POLICY_SCHEMA, source_path="/api", public_path="/hypermedia")
         collection = engine.project(
             SirenContext(
                 base_url="https://api.example.com",
@@ -31,17 +31,42 @@ class TestRoutes:
         entity = entity.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert collection["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/api/v2/teams/north%2Feast/records"}
+            {"rel": ["self"], "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records"}
         ]
-        assert [action["name"] for action in collection["actions"]] == ["list_team_records", "search_team_records"]
+        assert collection["actions"] == [
+            {
+                "name": "list_team_records",
+                "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records",
+                "method": "GET",
+            },
+            {
+                "name": "search_team_records",
+                "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records/search",
+                "method": "GET",
+            },
+        ]
         assert entity["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/api/v2/teams/north%2Feast/records/r%2F42"}
+            {
+                "rel": ["self"],
+                "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records/r%2F42",
+            }
         ]
-        assert [action["name"] for action in entity["actions"]] == ["get_team_record", "archive_team_record"]
+        assert entity["actions"] == [
+            {
+                "name": "get_team_record",
+                "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records/r%2F42",
+                "method": "GET",
+            },
+            {
+                "name": "archive_team_record",
+                "href": "https://api.example.com/hypermedia/v2/teams/north%2Feast/records/r%2F42/archive",
+                "method": "POST",
+            },
+        ]
 
 
     def test_public_facade_uses_plural_static_subpaths_as_nested_resource_ownership(self):
-        document = siren(ROUTE_POLICY_SCHEMA).project(
+        document = siren(ROUTE_POLICY_SCHEMA, source_path="/api", public_path="/hypermedia").project(
             SirenContext(
                 base_url="https://api.example.com",
                 scope="collection",
@@ -53,9 +78,135 @@ class TestRoutes:
         document = document.model_dump(by_alias=True, mode="json", exclude_none=True)
 
         assert document["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/api/v2/teams/team/records/record/reports"}
+            {
+                "rel": ["self"],
+                "href": "https://api.example.com/hypermedia/v2/teams/team/records/record/reports",
+            }
         ]
         assert [action["name"] for action in document["actions"]] == ["list_record_reports"]
+
+
+    def test_public_facade_uses_response_shape_to_distinguish_plural_entity_operations_from_collections(self):
+        schema = {
+            "openapi": "3.1.1",
+            "info": {"title": "Examples", "version": "1"},
+            "paths": {
+                "/examples": {
+                    "get": {
+                        "operationId": "list_examples",
+                        "responses": {
+                            "200": {
+                                "description": "Examples",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {"type": "object"},
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    }
+                },
+                "/examples/{example_id}": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "get_example",
+                        "responses": {
+                            "200": {
+                                "description": "Example",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    },
+                },
+                "/examples/{example_id}/metrics": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "read_example_metrics",
+                        "responses": {
+                            "200": {
+                                "description": "Metrics",
+                                "content": {
+                                    "application/json": {"schema": {"type": "object"}}
+                                },
+                            }
+                        },
+                    },
+                },
+                "/examples/{example_id}/events": {
+                    "parameters": [
+                        {
+                            "name": "example_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "get": {
+                        "operationId": "list_example_events",
+                        "responses": {
+                            "200": {
+                                "description": "Events",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {"type": "object"},
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    },
+                },
+            },
+        }
+        engine = siren(schema)
+
+        entity = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            resource="example",
+            value={"id": "one"},
+            path_values={"example_id": "one"},
+            capabilities=frozenset({"read_example_metrics"}),
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+        collection = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            scope="collection",
+            resource="event",
+            path_values={"example_id": "one"},
+            capabilities=frozenset({"list_example_events"}),
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert entity["actions"] == [
+            {
+                "name": "read_example_metrics",
+                "href": "https://api.example.com/examples/one/metrics",
+                "method": "GET",
+            }
+        ]
+        assert collection["links"] == [
+            {"rel": ["self"], "href": "https://api.example.com/examples/one/events"}
+        ]
+        assert [action["name"] for action in collection["actions"]] == ["list_example_events"]
 
 
     def test_public_facade_projects_standalone_commands_as_concrete_root_actions(self):
@@ -101,7 +252,7 @@ class TestRoutes:
             }
         )
 
-        document = siren(schema).project(
+        document = siren(schema, public_path="/hypermedia").project(
             SirenContext(
                 base_url="https://api.example.com",
                 scope="root",
@@ -119,22 +270,22 @@ class TestRoutes:
         assert document["actions"] == [
             {
                 "name": "converge_scaffoldings",
-                "href": "https://api.example.com/scaffoldings/converge",
+                "href": "https://api.example.com/hypermedia/scaffoldings/converge",
                 "method": "POST",
             },
             {
                 "name": "get_scaffolding_schema",
-                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/schema",
+                "href": "https://api.example.com/hypermedia/scaffoldings/scaffolding%2F42/schema",
                 "method": "GET",
             },
             {
                 "name": "bundle_scaffolding",
-                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/bundle",
+                "href": "https://api.example.com/hypermedia/scaffoldings/scaffolding%2F42/bundle",
                 "method": "POST",
             },
             {
                 "name": "preview_scaffolding",
-                "href": "https://api.example.com/scaffoldings/scaffolding%2F42/preview",
+                "href": "https://api.example.com/hypermedia/scaffoldings/scaffolding%2F42/preview",
                 "method": "GET",
             },
         ]
@@ -214,20 +365,21 @@ class TestRoutes:
 
     def test_public_facade_projects_trailing_slash_mounted_root_route(self):
         schema = deepcopy(SCHEMA)
-        schema["paths"]["/api/"] = {
+        schema["paths"] = {f"/service{path}": item for path, item in schema["paths"].items()}
+        schema["paths"]["/service/"] = {
             "get": {"operationId": "get_api_root", "responses": {"200": {"description": "OK"}}}
         }
-        engine = siren(schema, root_path="/api/")
+        engine = siren(schema, source_path="/service/", public_path="/hypermedia/")
 
         document = engine.project(SirenContext(
             base_url="https://api.example.com", scope="root", capabilities=frozenset({"get_api_root"})
         )).model_dump(by_alias=True, mode="json", exclude_none=True)
         assert document["links"] == [
-            {"rel": ["self"], "href": "https://api.example.com/api/"},
-            {"rel": ["collection"], "href": "https://api.example.com/records"},
+            {"title": "Modwire", "rel": ["self"], "href": "https://api.example.com/hypermedia"},
+            {"rel": ["collection"], "href": "https://api.example.com/hypermedia/records"},
         ]
         assert document["actions"] == [
-            {"name": "get_api_root", "href": "https://api.example.com/api/", "method": "GET"}
+            {"name": "get_api_root", "href": "https://api.example.com/hypermedia", "method": "GET"}
         ]
 
 

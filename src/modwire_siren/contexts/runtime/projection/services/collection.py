@@ -36,6 +36,15 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
                 request.resource,
                 item,
                 request.context.model_copy(update={
+                    "title": (
+                        request.context.item_titles[index]
+                        if request.context.item_titles
+                        else item["title"]
+                        if isinstance(item.get("title"), str) and item["title"].strip()
+                        else item["name"]
+                        if isinstance(item.get("name"), str) and item["name"].strip()
+                        else None
+                    ),
                     "capabilities": request.context.item_capabilities[index]
                     if request.context.item_capabilities else request.context.capabilities,
                 }),
@@ -45,8 +54,10 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
         )
         embedded = tuple(value for value in relationships if isinstance(value, SirenEmbeddedRepresentation))
         links = tuple(value for value in relationships if isinstance(value, SirenLink))
+        title = request.context.title or request.resource.collection_title or request.resource.title
         return SirenDocument(
             class_=(SirenScope.COLLECTION, request.resource.resource_class),
+            title=title,
             properties=request.context.value,
             entities=(*item_entities, *embedded) or None,
             actions=tuple(self.actions.actions(
@@ -55,6 +66,7 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
             links=(
                 SirenLink(
                     rel=("self",),
+                    title=title,
                     href=self.hrefs.href(request.resource.collection.path, request.context, request.resource),
                 ),
                 *links,
