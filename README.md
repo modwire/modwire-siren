@@ -219,7 +219,8 @@ properties of an `application/json` object body become fields:
 | non-enum array or repeated query parameter | delegated `/array/v1`; no synthetic field |
 | scalar `enum` | `radio` with selectable values |
 | flat array with an item `enum` | `checkbox` with selectable values |
-| object or map | delegated; no synthetic field |
+| object with concrete properties or a typed map | delegated `/object/v1`; no synthetic field |
+| schema-less open object | delegated `/json/v1`; no synthetic field |
 | header or cookie parameter | delegated; no synthetic field |
 | one non-JSON request media type | delegated action with that media type |
 
@@ -232,6 +233,10 @@ item enum values retain their complete schema in the structured-form extension; 
 serialization contract remains authoritative for submission. `allOf` scalar fragments and a
 `oneOf` or `anyOf` containing one scalar plus
 `null` are accepted when they normalize unambiguously.
+
+An object without concrete properties is open when `additionalProperties` is omitted, `true`,
+or `{}` and retains its complete schema in a `/json/v1` control. Named object properties take
+precedence and use `/object/v1`; typed maps also remain object controls.
 
 Structured values, header and cookie parameters, and one non-JSON request body are delegated
 to the API contract and client transport; official Siren has no standard members for their

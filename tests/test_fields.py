@@ -63,6 +63,8 @@ class TestFields:
         [
             {"type": "null"},
             {"oneOf": [{"type": "string"}, {"type": "integer"}]},
+            {"type": "object", "properties": []},
+            {"type": "object", "additionalProperties": "yes"},
         ],
     )
     def test_public_facade_rejects_unmappable_field_schemas(self, schema):
