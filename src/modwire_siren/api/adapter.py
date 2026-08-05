@@ -16,6 +16,11 @@ def siren_adapter(
     retains a route catalogue mapping both the framework's source mount and the public Siren mount
     to operation IDs. Consumers neither inspect the engine graph nor parse OpenAPI.
 
+    Matching is independent of OpenAPI declaration order. Candidates require the same segment count;
+    at each position a literal outranks a parameter, for both source and public mounts. Parameter values
+    are percent-decoded only after structural matching, so an encoded value cannot become a literal route.
+    Same-method templates with indistinguishable parameter shapes fail adapter construction explicitly.
+
     ```python
     from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
 
@@ -114,4 +119,4 @@ def siren_adapter(
             ))
         return SirenAdapter(engine=engine, routes=tuple(routes))
     except Exception as error:
-        raise ModwireSirenError("Invalid or unsupported Siren adapter contract") from error
+        raise ModwireSirenError(f"Invalid or unsupported Siren adapter contract: {error}") from error

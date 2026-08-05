@@ -34,6 +34,11 @@ Call this once after framework routes are registered. The adapter compiles OpenA
 retains a route catalogue mapping both the framework's source mount and the public Siren mount
 to operation IDs. Consumers neither inspect the engine graph nor parse OpenAPI.
 
+Matching is independent of OpenAPI declaration order. Candidates require the same segment count;
+at each position a literal outranks a parameter, for both source and public mounts. Parameter values
+are percent-decoded only after structural matching, so an encoded value cannot become a literal route.
+Same-method templates with indistinguishable parameter shapes fail adapter construction explicitly.
+
 ```python
 from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
 
@@ -569,6 +574,10 @@ Use `match()` when a framework exposes only its HTTP method and path. Use `respo
 application operation has executed exactly once. The adapter preserves semantic response headers
 while removing validators and content metadata tied to the source bytes, then returns an HTTP-ready
 payload with the official Siren media type.
+
+Route resolution compares exact segment counts and ranks matching templates position by position,
+with literal segments ahead of parameters. Source and public templates use the same ranking. Adapter
+construction rejects same-method templates that become identical after parameter names are removed.
 
 ### `SirenAction`
 

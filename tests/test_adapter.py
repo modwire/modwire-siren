@@ -21,6 +21,7 @@ from framework_fixtures.root_capability_policy import RootCapabilityPolicy
 
 from modwire_siren import (
     ModwireSirenError,
+    SirenAdapter,
     SirenAdapterPolicy,
     SirenAdapterRequest,
     SirenDjangoMiddleware,
@@ -277,6 +278,118 @@ class TestAdapter:
             "properties": {"detail": "Not found", "status": 404},
             "links": [{"rel": ["self"], "href": "https://example.test/api/unknown"}],
         }
+
+    def test_adapter_route_resolution_is_specific_deterministic_and_mount_independent(self):
+        parameter_paths = {
+            "/api/items/{item_id}": {
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "get": {
+                    "operationId": "get_item",
+                    "responses": {"204": {"description": "Item"}},
+                },
+            },
+            "/api/items/{item_id}/commands/{command_name}": {
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "command_name",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    },
+                ],
+                "post": {
+                    "operationId": "run_item_command",
+                    "responses": {"204": {"description": "Command"}},
+                },
+            },
+        }
+        literal_paths = {
+            "/api/items/search": {
+                "get": {
+                    "operationId": "search_items",
+                    "responses": {"204": {"description": "Search"}},
+                }
+            },
+            "/api/items/{item_id}/commands/retry": {
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "post": {
+                    "operationId": "retry_item",
+                    "responses": {"204": {"description": "Retry"}},
+                },
+            },
+        }
+
+        for paths in (
+            parameter_paths | literal_paths,
+            literal_paths | parameter_paths,
+        ):
+            adapter = siren_adapter(
+                {
+                    "openapi": "3.1.1",
+                    "info": {"title": "Routes", "version": "4.0.0"},
+                    "paths": paths,
+                },
+                source_path="/api",
+                public_path="/siren",
+            )
+
+            assert adapter.match("get", "/api/items/search/").operation_id == "search_items"
+            assert adapter.match("GET", "/siren/items/search").operation_id == "search_items"
+            encoded = adapter.match("GET", "/api/items/%73earch")
+            assert encoded.operation_id == "get_item"
+            assert encoded.path_values == {"item_id": "search"}
+            nested = adapter.match("post", "/siren/items/one/commands/retry/")
+            assert nested.operation_id == "retry_item"
+            assert nested.path_values == {"item_id": "one"}
+            generic = adapter.match("POST", "/api/items/one/commands/archive")
+            assert generic.operation_id == "run_item_command"
+            assert generic.path_values == {"item_id": "one", "command_name": "archive"}
+            assert adapter.match("DELETE", "/api/items/search") is None
+
+    def test_adapter_construction_rejects_indistinguishable_route_templates(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        with pytest.raises(
+            ModwireSirenError,
+            match=r"Ambiguous Siren adapter templates for GET /api/items/\{\}",
+        ):
+            SirenAdapter(
+                engine=adapter.engine,
+                routes=(
+                    {
+                        "source_path": "/api/items/{item_id}",
+                        "public_path": "/siren/items/{item_id}",
+                        "method": "GET",
+                        "operation_id": "get_item",
+                    },
+                    {
+                        "source_path": "/api/items/{slug}",
+                        "public_path": "/siren/items/{slug}",
+                        "method": "GET",
+                        "operation_id": "get_item_by_slug",
+                    },
+                ),
+            )
 
     def test_adapter_projects_api_entry_points_and_keeps_explicit_root_commands(self):
         adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
