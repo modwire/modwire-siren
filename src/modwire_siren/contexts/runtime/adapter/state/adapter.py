@@ -51,7 +51,7 @@ class SirenAdapter(BaseState):
             if operation_id is None:
                 document = self.error(request)
             else:
-                document = self.engine.project_response(SirenResponseContext(
+                context = SirenResponseContext(
                     operation_id=operation_id,
                     status=request.status,
                     result=request.result,
@@ -64,7 +64,11 @@ class SirenAdapter(BaseState):
                     capabilities=request.policy.capabilities,
                     item_capabilities=request.policy.item_capabilities,
                     relationships=request.policy.relationships,
-                ))
+                )
+                if request.status >= 400 and not self.engine.has_response(context):
+                    document = self.engine.project_error(context, request.request_url)
+                else:
+                    document = self.engine.project_response(context)
             headers = {
                 name: value
                 for name, value in request.headers.items()
