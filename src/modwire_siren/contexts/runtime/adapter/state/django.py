@@ -1,8 +1,6 @@
 import json
 from collections.abc import Callable
 
-from pydantic import model_validator
-
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ..contracts import SirenCapabilityPolicy
@@ -13,8 +11,9 @@ from .adapter import SirenAdapter
 class SirenDjangoMiddleware(BaseState):
     """Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
-    Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`
-    or a callable returning `SirenAdapterPolicy`.
+    Configure this callable as Django middleware. The standard loader supplies
+    `SirenAllowAllPolicy` when no application authorization policy is configured; direct callers
+    provide a `SirenCapabilityPolicy` or a callable returning `SirenAdapterPolicy`.
     It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
     content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
     pass through without projection, as do all requests that do not select Siren. Negotiation honors
@@ -28,27 +27,27 @@ class SirenDjangoMiddleware(BaseState):
     ConditionalGetMiddleware before this middleware so it evaluates the final Siren representation on
     the response path; a downstream 304 remains untouched because its representation body is unavailable.
 
-    Django middleware supports negotiation on the source routes that Django actually dispatches.
-    Configure identical source and public paths; an independent public mount requires real framework
-    routes and is rejected here because matching after execution cannot make it operational safely.
+    When source and public paths differ, the middleware maps a matched public route to its compiled
+    source route before Django dispatch and restores the public request path before projection.
     """
 
     get_response: Callable[[object], object]
     adapter: SirenAdapter
     policy: SirenCapabilityPolicy | Callable[..., SirenAdapterPolicy]
 
-    @model_validator(mode="after")
-    def validate_routes(self) -> "SirenDjangoMiddleware":
-        if any(route.source_path != route.public_path for route in self.adapter.routes):
-            raise ModwireSirenError(
-                "Django Siren middleware requires identical source and public paths; "
-                "install real framework routes for an independent public mount"
-            )
-        return self
-
     def __call__(self, request: object) -> object:
         match = self.adapter.match(request.method, request.path)
-        response = self.get_response(request)
+        dispatch_path = self.adapter.dispatch_path(request.method, request.path)
+        original_path = request.path
+        original_path_info = request.path_info
+        if dispatch_path is not None:
+            request.path = dispatch_path
+            request.path_info = dispatch_path
+        try:
+            response = self.get_response(request)
+        finally:
+            request.path = original_path
+            request.path_info = original_path_info
         if match is None:
             return response
         from django.utils.cache import patch_vary_headers

@@ -1,6 +1,8 @@
-from urllib.parse import unquote
+import re
+from collections.abc import Mapping
+from urllib.parse import quote, unquote
 
-from pydantic import model_validator
+from pydantic import JsonValue, model_validator
 
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
@@ -90,6 +92,33 @@ class SirenAdapter(BaseState):
                         selected_specificity = specificity
         return selected
 
+    def dispatch_path(self, method: str, path: str) -> str | None:
+        match = self.match(method, path)
+        if match is None:
+            return None
+        routes = [route for route in self.routes if route.operation_id == match.operation_id]
+        if len(routes) != 1:
+            raise ModwireSirenError(
+                f"Siren adapter operation requires exactly one route: {match.operation_id}"
+            )
+        route = routes[0]
+        public_path = self.render_path(route.public_path, match.path_values)
+        normalized = "/" + path.strip("/") if path.strip("/") else "/"
+        normalized_public = "/" + public_path.strip("/") if public_path.strip("/") else "/"
+        if normalized != normalized_public:
+            return None
+        source_path = self.render_path(route.source_path, match.path_values)
+        if path.endswith("/") and not source_path.endswith("/"):
+            source_path += "/"
+        return source_path
+
+    def render_path(self, template: str, values: Mapping[str, JsonValue]) -> str:
+        return re.sub(
+            r"\{([^}]+)\}",
+            lambda matched: quote(str(values[matched.group(1)]), safe=""),
+            template,
+        )
+
     def respond(self, request: SirenAdapterRequest) -> SirenAdapterResponse:
         try:
             match = None
@@ -100,6 +129,9 @@ class SirenAdapter(BaseState):
             if operation_id is None:
                 document = self.error(request)
             else:
+                capabilities = request.policy.capabilities
+                if request.policy.all_capabilities:
+                    capabilities = self.capabilities(operation_id)
                 context = SirenResponseContext(
                     operation_id=operation_id,
                     status=request.status,
@@ -110,7 +142,7 @@ class SirenAdapter(BaseState):
                     representation=request.policy.representation,
                     path_values=path_values,
                     query=request.query,
-                    capabilities=request.policy.capabilities,
+                    capabilities=capabilities,
                     item_titles=request.policy.item_titles,
                     item_capabilities=request.policy.item_capabilities,
                     relationships=request.policy.relationships,
@@ -170,6 +202,22 @@ class SirenAdapter(BaseState):
             )
         except Exception as error:
             raise ModwireSirenError("Siren adapter response failed") from error
+
+    def capabilities(self, operation_id: str) -> frozenset[str]:
+        operations = [operation for operation in self.engine.api.operations if operation.name == operation_id]
+        if len(operations) != 1:
+            raise ModwireSirenError(f"Siren response references unknown operation: {operation_id}")
+        operation = operations[0]
+        if operation.resource is None:
+            return frozenset(self.engine.api.root.operations)
+        resources = [
+            resource for resource in self.engine.api.resources
+            if resource.reference == operation.resource
+        ]
+        if len(resources) != 1:
+            raise ModwireSirenError(f"Siren operation references unknown resource: {operation_id}")
+        resource = resources[0]
+        return frozenset((*resource.collection_operations, *resource.entity_operations))
 
     def error(self, request: SirenAdapterRequest) -> SirenDocument:
         if request.status < 400:

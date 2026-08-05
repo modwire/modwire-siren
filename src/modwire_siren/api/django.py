@@ -2,6 +2,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
 from ..contexts.runtime.adapter import (
+    SirenAllowAllPolicy,
     SirenCapabilityPolicy,
     SirenDjangoMiddleware,
 )
@@ -14,15 +15,14 @@ class SirenMiddleware:
     """Install Siren through Django's standard middleware loader.
 
     Add the root import directly to Django settings. The OpenAPI target may be a mapping, a callable
-    returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. The policy target
-    may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`. Optional
-    `PROFILES` dotted paths are instantiated once with the adapter.
+    returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. By default the
+    middleware exposes every capability owned by the matched operation's compiled graph scope. An
+    optional policy target may restrict those capabilities or override exceptional response semantics.
+    Optional `PROFILES` dotted paths are instantiated once with the adapter.
 
     ```python
     # example_project/api.py
     from ninja_extra import ControllerBase, NinjaExtraAPI, api_controller, http_get
-    from modwire_siren import SirenAdapterPolicy
-
     api = NinjaExtraAPI()
 
     @api_controller("/articles")
@@ -36,9 +36,6 @@ class SirenMiddleware:
     def siren_openapi():
         return api.get_openapi_schema(path_prefix="/api")
 
-    def siren_policy(operation_id, status, request, result):
-        return SirenAdapterPolicy(capabilities=frozenset({operation_id}))
-
     # settings.py
     MIDDLEWARE = [
         "django.middleware.http.ConditionalGetMiddleware",
@@ -47,8 +44,7 @@ class SirenMiddleware:
     MODWIRE_SIREN = {
         "OPENAPI": "example_project.api.siren_openapi",
         "SOURCE_PATH": "/api",
-        "PUBLIC_PATH": "/api",
-        "POLICY": "example_project.api.siren_policy",
+        "PUBLIC_PATH": "/siren",
         "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
     }
 
@@ -79,7 +75,7 @@ class SirenMiddleware:
             policy_path = configuration.get("POLICY")
             if not isinstance(openapi_path, str) or not openapi_path:
                 raise ModwireSirenError("MODWIRE_SIREN.OPENAPI must be a dotted import path")
-            if not isinstance(policy_path, str) or not policy_path:
+            if policy_path is not None and (not isinstance(policy_path, str) or not policy_path):
                 raise ModwireSirenError("MODWIRE_SIREN.POLICY must be a dotted import path")
             source_path = configuration.get("SOURCE_PATH", "/")
             public_path = configuration.get("PUBLIC_PATH", "/")
@@ -112,14 +108,16 @@ class SirenMiddleware:
             if not isinstance(openapi, Mapping):
                 raise ModwireSirenError("MODWIRE_SIREN.OPENAPI did not produce an OpenAPI mapping")
 
-            try:
-                policy = import_string(policy_path)
-                if isinstance(policy, type):
-                    policy = policy()
-            except Exception as error:
-                raise ModwireSirenError(
-                    f"MODWIRE_SIREN.POLICY could not be loaded: {error}"
-                ) from error
+            policy = SirenAllowAllPolicy()
+            if policy_path is not None:
+                try:
+                    policy = import_string(policy_path)
+                    if isinstance(policy, type):
+                        policy = policy()
+                except Exception as error:
+                    raise ModwireSirenError(
+                        f"MODWIRE_SIREN.POLICY could not be loaded: {error}"
+                    ) from error
             if not isinstance(policy, SirenCapabilityPolicy) and not callable(policy):
                 raise ModwireSirenError(
                     "MODWIRE_SIREN.POLICY must resolve to a SirenCapabilityPolicy or callable"

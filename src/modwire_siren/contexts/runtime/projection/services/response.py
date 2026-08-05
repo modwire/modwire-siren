@@ -34,20 +34,22 @@ class SirenResponseProjectionService:
                 raise ModwireSirenError("OpenAPI array response requires collection representation")
             return self.collection(api, resource, context)
         representation = context.representation
+        if (
+            representation is None
+            and operation.scope == SirenScope.ROOT
+            and operation.route == api.root.route
+        ):
+            representation = "root"
         if representation == "root":
             return self.root(api, operation, context)
         if (
             representation is None
-            and operation.scope == SirenScope.ENTITY
             and resource is not None
-            and resource.entity is not None
-            and operation.route == resource.entity
+            and operation.route in {resource.collection, resource.entity}
         ):
             representation = "entity"
         if representation is None:
-            raise ModwireSirenError(
-                f"OpenAPI object response representation is ambiguous: {context.operation_id} {context.status}"
-            )
+            representation = "command"
         if representation == "entity":
             return self.entity(api, resource, context)
         if representation == "command":
