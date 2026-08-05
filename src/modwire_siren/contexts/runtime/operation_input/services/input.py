@@ -26,6 +26,7 @@ class SirenOperationInputService:
                 SirenDelegatedInput(
                     name=item.name,
                     location=item.location,
+                    kind=item.kind,
                     required=item.required,
                     media_type=item.media_type,
                     style=item.style,

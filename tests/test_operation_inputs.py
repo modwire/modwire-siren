@@ -55,13 +55,20 @@ class TestOperationInputs:
                 },
                 "RecordPatch": {
                     "type": "object",
-                    "required": ["metadata", "items"],
+                    "required": ["metadata", "items", "record_ids"],
                     "properties": {
                         "title": {"type": "string"},
                         "metadata": {"$ref": "#/components/schemas/Metadata"},
                         "items": {
                             "type": "array",
                             "items": {"$ref": "#/components/schemas/Metadata"},
+                        },
+                        "record_ids": {
+                            "type": "array",
+                            "title": "Record IDs",
+                            "minItems": 1,
+                            "uniqueItems": True,
+                            "items": {"type": "string", "format": "uuid"},
                         },
                     },
                 },
@@ -84,6 +91,7 @@ class TestOperationInputs:
             (
                 value.name,
                 value.location,
+                value.kind,
                 value.required,
                 value.style,
                 value.explode,
@@ -95,6 +103,7 @@ class TestOperationInputs:
             (
                 "filter",
                 "query",
+                "object",
                 True,
                 "deepObject",
                 True,
@@ -105,15 +114,15 @@ class TestOperationInputs:
                     "properties": {"state": {"type": "string"}},
                 },
             ),
-            ("trace", "header", True, "simple", False, False, {"type": "string"}),
-            ("session", "cookie", False, "form", False, False, {"type": "string"}),
+            ("trace", "header", "json", True, "simple", False, False, {"type": "string"}),
+            ("session", "cookie", "json", False, "form", False, False, {"type": "string"}),
         ]
         assert isinstance(body_input, SirenOperationInput)
         assert body_input.media_type == "application/json"
         assert body_input.official_fields == ("title",)
         assert body_input.definition == {
             "type": "object",
-            "required": ["metadata", "items"],
+            "required": ["metadata", "items", "record_ids"],
             "properties": {
                 "title": {"type": "string"},
                 "metadata": {
@@ -129,17 +138,26 @@ class TestOperationInputs:
                         "properties": {"source": {"type": "string"}},
                     },
                 },
+                "record_ids": {
+                    "type": "array",
+                    "title": "Record IDs",
+                    "minItems": 1,
+                    "uniqueItems": True,
+                    "items": {"type": "string", "format": "uuid"},
+                },
             },
         }
         assert [
-            (value.name, value.location, value.required, value.media_type)
+            (value.name, value.location, value.kind, value.required, value.media_type)
             for value in body_input.delegated_inputs
         ] == [
-            ("metadata", "body", True, "application/json"),
-            ("items", "body", True, "application/json"),
+            ("metadata", "body", "object", True, "application/json"),
+            ("items", "body", "array", True, "application/json"),
+            ("record_ids", "body", "array", True, "application/json"),
         ]
         assert body_input.delegated_inputs[0].definition == body_input.definition["properties"]["metadata"]
         assert body_input.delegated_inputs[1].definition == body_input.definition["properties"]["items"]
+        assert body_input.delegated_inputs[2].definition == body_input.definition["properties"]["record_ids"]
 
         projected = engine.project(
             SirenContext(
@@ -170,6 +188,7 @@ class TestOperationInputs:
                 SirenDelegatedInput(
                     name="body",
                     location="body",
+                    kind="json",
                     required=True,
                     media_type="text/plain",
                     definition={"type": "string", "minLength": 1},

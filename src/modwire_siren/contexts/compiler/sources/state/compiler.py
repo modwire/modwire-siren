@@ -123,11 +123,15 @@ class OpenApiOperationCompiler(BaseState):
                     fields.append(self.projection.field(name, definition))
                     continue
                 except ModwireSirenError:
-                    if not self.projection.delegated(definition):
+                    kind = self.projection.delegated_kind(name, definition)
+                    if kind is None:
                         raise
+            else:
+                kind = self.projection.delegated_kind(name, definition) or "json"
             delegated.append(DelegatedInputDraft(
                 name=name,
                 location=location,
+                kind=kind,
                 required=parameter.get("required") is True,
                 style=parameter.get("style", "simple" if location == "header" else "form"),
                 explode=parameter.get("explode", location != "header"),
@@ -157,6 +161,7 @@ class OpenApiOperationCompiler(BaseState):
             delegated.append(DelegatedInputDraft(
                 name="body",
                 location="body",
+                kind=self.projection.delegated_kind("body", definition) or "json",
                 required=body.get("required") is True,
                 media_type=media_type,
                 definition=definition,
@@ -181,11 +186,13 @@ class OpenApiOperationCompiler(BaseState):
             try:
                 fields.append(self.projection.field(name, value))
             except ModwireSirenError:
-                if not self.projection.delegated(value):
+                kind = self.projection.delegated_kind(name, value)
+                if kind is None:
                     raise
                 delegated.append(DelegatedInputDraft(
                     name=name,
                     location="body",
+                    kind=kind,
                     required=name in required,
                     media_type=media_type,
                     definition=value,
