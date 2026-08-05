@@ -507,10 +507,17 @@ class TestAdapter:
                 "type": "object",
                 "required": ["source"],
                 "properties": {"source": {"type": "string"}},
+                "additionalProperties": {},
             },
             "ArticlePatch": {
                 "type": "object",
-                "required": ["metadata", "items", "payload", "record_ids"],
+                "required": [
+                    "metadata",
+                    "items",
+                    "payload",
+                    "content_schema",
+                    "record_ids",
+                ],
                 "properties": {
                     "title": {"type": "string"},
                     "metadata": {"$ref": "#/components/schemas/Metadata"},
@@ -519,6 +526,18 @@ class TestAdapter:
                         "items": {"$ref": "#/components/schemas/Metadata"},
                     },
                     "payload": {"type": "object", "additionalProperties": True},
+                    "content_schema": {"type": "object", "additionalProperties": {}},
+                    "implicit_document": {"type": "object"},
+                    "empty_document": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": {},
+                    },
+                    "typed_map": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    },
+                    "closed_document": {"type": "object", "additionalProperties": False},
                     "record_ids": {
                         "type": "array",
                         "title": "Record IDs",
@@ -605,6 +624,11 @@ class TestAdapter:
             "metadata",
             "items",
             "payload",
+            "content_schema",
+            "implicit_document",
+            "empty_document",
+            "typed_map",
+            "closed_document",
             "record_ids",
         }
         assert controls["filter"] == {
@@ -626,6 +650,7 @@ class TestAdapter:
         assert controls["trace"]["location"] == "header"
         assert controls["session"]["location"] == "cookie"
         assert controls["metadata"]["control"] == SirenStructuredFormProfile.object_control
+        assert controls["metadata"]["schema"]["additionalProperties"] == {}
         assert controls["metadata"]["required"] is True
         assert controls["metadata"]["mediaType"] == "application/json"
         assert controls["items"]["control"] == SirenStructuredFormProfile.array_control
@@ -645,6 +670,24 @@ class TestAdapter:
             "mediaType": "application/json",
         }
         assert controls["payload"]["control"] == SirenStructuredFormProfile.json_control
+        assert controls["content_schema"] == {
+            "name": "content_schema",
+            "location": "body",
+            "required": True,
+            "control": SirenStructuredFormProfile.json_control,
+            "schema": {"type": "object", "additionalProperties": {}},
+            "mediaType": "application/json",
+        }
+        assert controls["implicit_document"]["control"] == SirenStructuredFormProfile.json_control
+        assert controls["implicit_document"]["schema"] == {"type": "object"}
+        assert controls["empty_document"]["control"] == SirenStructuredFormProfile.json_control
+        assert controls["empty_document"]["schema"] == {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {},
+        }
+        assert controls["typed_map"]["control"] == SirenStructuredFormProfile.object_control
+        assert controls["closed_document"]["control"] == SirenStructuredFormProfile.object_control
         assert "$ref" not in json.dumps(extension)
 
         with ThreadPoolExecutor(max_workers=4) as executor:

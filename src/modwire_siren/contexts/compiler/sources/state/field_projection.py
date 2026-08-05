@@ -31,7 +31,15 @@ class OpenApiFieldProjection(BaseState):
             return None
         schema_type = definition.get("type")
         if schema_type == "object":
-            if definition.get("additionalProperties") is True and "properties" not in definition:
+            properties = definition.get("properties")
+            additional = definition.get("additionalProperties", True)
+            if properties is not None and not isinstance(properties, dict):
+                raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
+            if not isinstance(additional, (bool, dict)):
+                raise ModwireSirenError(f"OpenAPI field schema is unsupported: {name}")
+            if not (isinstance(properties, dict) and properties) and (
+                additional is True or additional == {}
+            ):
                 return "json"
             return "object"
         if schema_type == "array":
