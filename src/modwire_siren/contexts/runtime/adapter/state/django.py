@@ -6,14 +6,15 @@ from pydantic import model_validator
 from modwire_siren.contexts.shared import BaseState, ModwireSirenError
 
 from ..contracts import SirenCapabilityPolicy
-from ..values import SirenAccept, SirenAdapterRequest
+from ..values import SirenAccept, SirenAdapterPolicy, SirenAdapterRequest
 from .adapter import SirenAdapter
 
 
 class SirenDjangoMiddleware(BaseState):
     """Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
-    Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
+    Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`
+    or a callable returning `SirenAdapterPolicy`.
     It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
     content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
     pass through without projection, as do all requests that do not select Siren. Negotiation honors
@@ -34,7 +35,7 @@ class SirenDjangoMiddleware(BaseState):
 
     get_response: Callable[[object], object]
     adapter: SirenAdapter
-    policy: SirenCapabilityPolicy
+    policy: SirenCapabilityPolicy | Callable[..., SirenAdapterPolicy]
 
     @model_validator(mode="after")
     def validate_routes(self) -> "SirenDjangoMiddleware":
@@ -71,7 +72,12 @@ class SirenDjangoMiddleware(BaseState):
         if not SirenAccept(value=accept).selects_siren():
             return response
         result = json.loads(content) if content else None
-        selected = self.policy.select(match.operation_id, response.status_code, request, result)
+        if isinstance(self.policy, SirenCapabilityPolicy):
+            selected = self.policy.select(match.operation_id, response.status_code, request, result)
+        else:
+            selected = self.policy(match.operation_id, response.status_code, request, result)
+        if not isinstance(selected, SirenAdapterPolicy):
+            raise ModwireSirenError("Siren capability policy must return SirenAdapterPolicy")
         query = tuple((name, value) for name in request.GET for value in request.GET.getlist(name))
         projected = self.adapter.respond(SirenAdapterRequest(
             operation_id=match.operation_id,

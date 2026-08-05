@@ -6,6 +6,7 @@ from typing import ClassVar
 
 import pytest
 from django.conf import settings
+from django.core.handlers.base import BaseHandler
 from django.http import (
     FileResponse,
     HttpResponse,
@@ -15,6 +16,7 @@ from django.http import (
 )
 from django.test import RequestFactory, override_settings
 from framework_fixtures.capability_policy import CapabilityPolicy
+from framework_fixtures.django_openapi_provider import django_openapi_provider
 from framework_fixtures.root_capability_policy import RootCapabilityPolicy
 
 from modwire_siren import (
@@ -22,6 +24,7 @@ from modwire_siren import (
     SirenAdapterPolicy,
     SirenAdapterRequest,
     SirenDjangoMiddleware,
+    SirenMiddleware,
     siren_adapter,
 )
 
@@ -721,6 +724,54 @@ class TestAdapter:
 
         with pytest.raises(ModwireSirenError, match="requires identical source and public paths"):
             SirenDjangoMiddleware(get_response=handler, adapter=adapter, policy=policy)
+
+    def test_standard_django_loader_builds_one_fresh_adapter_without_application_middleware(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        django_openapi_provider.calls = 0
+        configuration = {
+            "OPENAPI": (
+                "framework_fixtures.django_openapi_provider.django_openapi_provider"
+            ),
+            "SOURCE_PATH": "/api",
+            "PUBLIC_PATH": "/api",
+            "POLICY": "framework_fixtures.django_siren_policy.django_siren_policy",
+        }
+        factory = RequestFactory()
+
+        with override_settings(
+            ALLOWED_HOSTS=["testserver"],
+            MIDDLEWARE=["modwire_siren.SirenMiddleware"],
+            MODWIRE_SIREN=configuration,
+            ROOT_URLCONF="framework_fixtures.django_urls",
+        ):
+            handler = BaseHandler()
+            handler.load_middleware()
+            ordinary = handler.get_response(factory.get(
+                "/api/articles/one",
+                HTTP_ACCEPT="application/json",
+            ))
+            siren = handler.get_response(factory.get(
+                "/api/articles/one",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
+
+        assert ordinary["Content-Type"].startswith("application/json")
+        assert json.loads(siren.content)["class"] == ["article"]
+        assert siren["Content-Type"] == "application/vnd.siren+json"
+        assert django_openapi_provider.calls == 1
+
+        with override_settings(MODWIRE_SIREN=configuration):
+            SirenMiddleware(lambda request: JsonResponse({"article_id": "two", "title": "Fresh"}))
+
+        assert django_openapi_provider.calls == 2
+
+    def test_standard_django_loader_rejects_incomplete_configuration_at_startup(self):
+        with (
+            override_settings(MODWIRE_SIREN={"OPENAPI": "missing"}),
+            pytest.raises(ModwireSirenError, match=r"MODWIRE_SIREN\.POLICY"),
+        ):
+            SirenMiddleware(lambda request: JsonResponse({}))
 
     def test_root_import_keeps_django_optional(self):
         script = (
