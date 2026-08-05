@@ -127,9 +127,6 @@ class SirenBuilder:
                         isinstance(title, str) and title.startswith("Response ")
                     ):
                         title = None
-                    if not title:
-                        items = definition.get("items")
-                        title = items.get("title") if isinstance(items, Mapping) else None
                 elif scope == SirenScope.ENTITY and exact_entity and response.shape == "object":
                     priority = 0 if operation.method == SirenHttpMethod.GET else 2
                     title = definition.get("title")

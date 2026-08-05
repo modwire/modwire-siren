@@ -230,7 +230,7 @@ class TestTitles:
         assert entity["actions"][0]["title"] == "Read article"
         assert entity["links"][0]["title"] == "Article"
 
-    def test_framework_response_wrapper_defers_to_the_array_item_schema_title(self):
+    def test_framework_response_wrapper_defers_to_the_resource_schema_title(self):
         document = deepcopy(self.schema)
         response_schema = document["paths"]["/articles"]["get"]["responses"]["200"]["content"][
             "application/json"
@@ -248,6 +248,58 @@ class TestTitles:
 
         assert projected["title"] == "Article"
         assert projected["links"][0]["title"] == "Article"
+
+    def test_item_dto_titles_do_not_leak_and_runtime_title_then_name_labels_items(self):
+        document = deepcopy(self.schema)
+        document["components"]["schemas"]["Article"]["title"] = "Scaffolding"
+        response_schema = document["paths"]["/articles"]["get"]["responses"]["200"]["content"][
+            "application/json"
+        ]["schema"]
+        response_schema.pop("title")
+        response_schema["items"] = {
+            "type": "object",
+            "title": "ScaffoldingSummary",
+            "properties": {
+                "article_id": {"type": "string"},
+                "title": {"type": "string"},
+                "name": {"type": "string"},
+            },
+        }
+        engine = siren(document)
+
+        root = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            scope="root",
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+        collection = engine.project(SirenContext(
+            base_url="https://api.example.com",
+            scope="collection",
+            resource="article",
+            items=(
+                {"article_id": "42", "title": "Visible title", "name": "Ignored name"},
+                {"article_id": "43", "name": "Visible name"},
+                {"article_id": "44", "title": "   ", "name": "Name after blank title"},
+                {"article_id": "45", "title": 45, "name": "Name after numeric title"},
+                {"article_id": "46"},
+            ),
+        )).model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        assert root["links"][1]["title"] == "Scaffolding"
+        assert collection["title"] == "Scaffolding"
+        assert [item["title"] for item in collection["entities"]] == [
+            "Visible title",
+            "Visible name",
+            "Name after blank title",
+            "Name after numeric title",
+            "Scaffolding",
+        ]
+        assert [item["links"][0]["title"] for item in collection["entities"]] == [
+            "Visible title",
+            "Visible name",
+            "Name after blank title",
+            "Name after numeric title",
+            "Scaffolding",
+        ]
 
     def test_runtime_item_titles_remain_aligned_with_nested_collection_capabilities(self):
         document = deepcopy(self.schema)
@@ -286,7 +338,18 @@ class TestTitles:
                 scope="collection",
                 resource="article",
                 path_values={"author_id": "7"},
-                items=({"article_id": "42"}, {"article_id": "43"}),
+                items=(
+                    {
+                        "article_id": "42",
+                        "title": "Ignored first title",
+                        "name": "Ignored first name",
+                    },
+                    {
+                        "article_id": "43",
+                        "title": "Ignored second title",
+                        "name": "Ignored second name",
+                    },
+                ),
                 item_titles=("First article", "Second article"),
                 item_capabilities=(
                     frozenset({"get_article"}),
