@@ -1,6 +1,6 @@
 from typing import Any
 
-from modwire_siren.contexts.shared import BaseState, ModwireSirenError, SirenMediaType
+from modwire_siren.contexts.shared import BaseState, ModwireSirenError, SirenActionMethod, SirenMediaType
 
 from ..values import ResponseDraft
 from .components import ComponentResolver
@@ -8,6 +8,25 @@ from .components import ComponentResolver
 
 class OpenApiResponseProjection(BaseState):
     components: ComponentResolver
+
+    def single_object_paths(self, paths: dict[str, Any]) -> frozenset[str]:
+        selected = set()
+        supported = {method.lower() for method in SirenActionMethod.values()}
+        for path, path_item in paths.items():
+            if not isinstance(path_item, dict):
+                continue
+            shapes = set()
+            for method, operation in path_item.items():
+                if not isinstance(method, str) or method.lower() not in supported or not isinstance(operation, dict):
+                    continue
+                shapes.update(
+                    response.shape
+                    for response in self.responses(operation)
+                    if response.status.startswith("2")
+                )
+            if "object" in shapes and "array" not in shapes:
+                selected.add(path)
+        return frozenset(selected)
 
     def responses(self, operation: dict[str, Any]) -> tuple[ResponseDraft, ...]:
         responses = operation.get("responses")

@@ -11,6 +11,24 @@ class DjangoOpenApiProvider:
             "openapi": "3.1.1",
             "info": {"title": "Installed API", "version": "4.0.0"},
             "paths": {
+                "/api/": {
+                    "get": {
+                        "operationId": "get_api_root",
+                        "responses": {
+                            "200": {
+                                "description": "API root",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {"status": {"type": "string"}},
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    }
+                },
                 "/api/articles/{article_id}": {
                     "parameters": [
                         {
