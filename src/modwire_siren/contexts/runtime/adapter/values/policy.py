@@ -13,7 +13,7 @@ class SirenAdapterPolicy(BaseValue):
     """
 
     title: str | None = None
-    representation: Literal["entity", "collection", "command"] | None = None
+    representation: Literal["root", "entity", "collection", "command"] | None = None
     capabilities: frozenset[str] = frozenset()
     item_capabilities: tuple[frozenset[str], ...] = ()
     relationships: tuple[SirenRelationship, ...] = ()

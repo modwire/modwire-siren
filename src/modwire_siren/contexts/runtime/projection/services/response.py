@@ -25,6 +25,8 @@ class SirenResponseProjectionService:
         self.validate_result(response, context.result)
         if context.status >= 400:
             return self.error(operation, resource, context)
+        if context.representation == "root" and response.shape != "object":
+            raise ModwireSirenError("Siren root response requires an OpenAPI object response")
         if response.shape == "empty":
             return self.empty(operation, resource, context)
         if response.shape == "array":
@@ -32,6 +34,8 @@ class SirenResponseProjectionService:
                 raise ModwireSirenError("OpenAPI array response requires collection representation")
             return self.collection(api, resource, context)
         representation = context.representation
+        if representation == "root":
+            return self.root(api, operation, context)
         if (
             representation is None
             and operation.scope == SirenScope.ENTITY
@@ -49,6 +53,22 @@ class SirenResponseProjectionService:
         if representation == "command":
             return self.command(operation, resource, context)
         raise ModwireSirenError("OpenAPI object response cannot use collection representation")
+
+    def root(
+        self, api: SirenApi, operation: SirenOperation, context: SirenResponseContext
+    ) -> SirenDocument:
+        if operation.scope != SirenScope.ROOT or not isinstance(context.result, Mapping):
+            raise ModwireSirenError("Siren root response requires a root operation and mapping result")
+        request = SirenContext(
+            base_url=context.base_url,
+            scope=SirenScope.ROOT,
+            title=context.title,
+            value=context.result,
+            path_values=context.path_values,
+            query=context.query,
+            capabilities=context.capabilities,
+        )
+        return self.projection.project(api, request)
 
     def operation(self, api: SirenApi, operation_id: str) -> SirenOperation:
         matches = [operation for operation in api.operations if operation.name == operation_id]

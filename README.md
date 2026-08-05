@@ -60,6 +60,12 @@ When a framework returns an undeclared status from 400 through 599, the adapter 
 its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
 an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
+Set `SirenAdapterPolicy(representation="root")` for an executed API entry-point operation. The
+existing root projector supplies `class: ["api", "entry-point"]`, discovery links, and explicitly
+permitted root actions. Executed mapping members become document properties; compiled OpenAPI
+`info.version` wins a `version` collision, and the policy title continues to override `info.title`.
+Use `representation="command"` when the same root operation is intentionally a command result.
+
 For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
 normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
 before middleware can transform its result, so an independent public mount is rejected rather than
@@ -301,9 +307,10 @@ document = engine.project_response(SirenResponseContext(
 ```
 
 An object response from a collection, root, or entity-owned subcommand is semantically
-ambiguous: set its response context `representation` to `"entity"` or `"command"`. No
-identifier property name is inferred; compiled route parameters and explicit path values
-resolve entity links.
+ambiguous: set its response context `representation` to `"root"`, `"entity"`, or `"command"`.
+Root representation reuses API discovery projection; explicit command representation remains
+available for root operations. No identifier property name is inferred; compiled route
+parameters and explicit path values resolve entity links.
 
 Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
 mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
@@ -323,9 +330,10 @@ Supply an executed OpenAPI operation and result for operation-aware projection.
 
 The compiled response status, media type, and schema determine whether the result is empty,
 an object, or an array. Array responses project as collections and object responses from an
-entity's exact route project as entities. Set `representation` to `"entity"` or `"command"`
-when an object response from a collection, root, or entity-owned subcommand is ambiguous.
-`title` overrides the compiled resource or operation title for the projected result.
+entity's exact route project as entities. Set `representation` to `"root"` for an API entry
+point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
+projection preserves executed mapping properties while compiled OpenAPI version metadata wins
+a `version` collision. `title` overrides the compiled resource or operation title.
 
 ### `SirenRelationship`
 
@@ -408,7 +416,7 @@ in multiple nested routes, `path_values` selects the route with matching parent 
 | `scope` | `"root"`, `"collection"`, or `"entity"`. |
 | `resource` | Derived singular resource name; required outside root. |
 | `title` | Explicit document title overriding compiled OpenAPI metadata. |
-| `value` | Entity or collection properties and entity path parameters. |
+| `value` | Entity or root properties and entity path parameters. |
 | `items` | Entity mappings for a collection. |
 | `item_capabilities` | Optional permitted operation IDs for each collection item. |
 | `relationships` | Linked or embedded related resources for this document. |

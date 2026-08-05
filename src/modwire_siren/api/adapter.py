@@ -42,6 +42,12 @@ def siren_adapter(
     its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
     an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
+    Set `SirenAdapterPolicy(representation="root")` for an executed API entry-point operation. The
+    existing root projector supplies `class: ["api", "entry-point"]`, discovery links, and explicitly
+    permitted root actions. Executed mapping members become document properties; compiled OpenAPI
+    `info.version` wins a `version` collision, and the policy title continues to override `info.title`.
+    Use `representation="command"` when the same root operation is intentionally a command result.
+
     For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
     normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
     before middleware can transform its result, so an independent public mount is rejected rather than

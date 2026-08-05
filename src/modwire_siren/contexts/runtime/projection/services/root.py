@@ -25,6 +25,9 @@ class SirenRootScopeProjector(SirenScopeProjector):
     def project(self, request: SirenProjectionRequest) -> SirenDocument:
         operations = {operation.name: operation for operation in request.api.operations}
         title = request.context.title or request.api.root.title or None
+        properties = dict(request.context.value)
+        if request.api.root.version:
+            properties["version"] = request.api.root.version
         links = [SirenLink(
             rel=("self",),
             href=self.hrefs.href(request.api.root.route.path, request.context, None),
@@ -53,7 +56,7 @@ class SirenRootScopeProjector(SirenScopeProjector):
         return SirenDocument(
             class_=("api", "entry-point"),
             title=title,
-            properties={"version": request.api.root.version} if request.api.root.version else None,
+            properties=properties or None,
             links=tuple(links),
             actions=tuple(actions) or None,
         )

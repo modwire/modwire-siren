@@ -217,9 +217,10 @@ def siren(
     ```
 
     An object response from a collection, root, or entity-owned subcommand is semantically
-    ambiguous: set its response context `representation` to `"entity"` or `"command"`. No
-    identifier property name is inferred; compiled route parameters and explicit path values
-    resolve entity links.
+    ambiguous: set its response context `representation` to `"root"`, `"entity"`, or `"command"`.
+    Root representation reuses API discovery projection; explicit command representation remains
+    available for root operations. No identifier property name is inferred; compiled route
+    parameters and explicit path values resolve entity links.
 
     Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
     mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing

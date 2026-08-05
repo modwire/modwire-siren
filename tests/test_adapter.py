@@ -15,6 +15,7 @@ from django.http import (
 )
 from django.test import RequestFactory, override_settings
 from framework_fixtures.capability_policy import CapabilityPolicy
+from framework_fixtures.root_capability_policy import RootCapabilityPolicy
 
 from modwire_siren import (
     ModwireSirenError,
@@ -30,6 +31,47 @@ class TestAdapter:
         "openapi": "3.1.1",
         "info": {"title": "Adapter API", "version": "4.0.0"},
         "paths": {
+            "/api": {
+                "get": {
+                    "operationId": "get_api_root",
+                    "summary": "Read API entry point",
+                    "responses": {
+                        "200": {
+                            "description": "API entry point",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {"type": "string"},
+                                            "version": {"type": "string"},
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    },
+                }
+            },
+            "/api/reindex": {
+                "post": {
+                    "operationId": "reindex",
+                    "summary": "Reindex content",
+                    "responses": {
+                        "202": {
+                            "description": "Reindex accepted",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {"accepted": {"type": "boolean"}},
+                                    }
+                                }
+                            },
+                        }
+                    },
+                }
+            },
             "/api/articles": {
                 "get": {
                     "operationId": "list_articles",
@@ -232,6 +274,79 @@ class TestAdapter:
             "properties": {"detail": "Not found", "status": 404},
             "links": [{"rel": ["self"], "href": "https://example.test/api/unknown"}],
         }
+
+    def test_adapter_projects_api_entry_points_and_keeps_explicit_root_commands(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+
+        root = adapter.respond(SirenAdapterRequest(
+            operation_id="get_api_root",
+            status=200,
+            result={"status": "ready", "version": "runtime"},
+            base_url="https://example.test",
+            query=(("view", "full"),),
+            policy=SirenAdapterPolicy(
+                representation="root",
+                capabilities=frozenset({"reindex"}),
+            ),
+        ))
+        command = adapter.respond(SirenAdapterRequest(
+            operation_id="get_api_root",
+            status=200,
+            result={"status": "ready"},
+            base_url="https://example.test",
+            policy=SirenAdapterPolicy(representation="command"),
+        ))
+        titled = adapter.respond(SirenAdapterRequest(
+            operation_id="get_api_root",
+            status=200,
+            result={"status": "ready"},
+            base_url="https://example.test",
+            policy=SirenAdapterPolicy(representation="root", title="Live API"),
+        ))
+
+        assert root.payload == {
+            "class": ["api", "entry-point"],
+            "title": "Adapter API",
+            "properties": {"status": "ready", "version": "4.0.0"},
+            "actions": [
+                {
+                    "name": "reindex",
+                    "title": "Reindex content",
+                    "href": "https://example.test/siren/reindex",
+                    "method": "POST",
+                }
+            ],
+            "links": [
+                {
+                    "title": "Adapter API",
+                    "rel": ["self"],
+                    "href": "https://example.test/siren?view=full",
+                },
+                {
+                    "rel": ["collection"],
+                    "href": "https://example.test/siren/articles",
+                },
+            ],
+        }
+        assert command.payload["class"] == ["command-result"]
+        assert command.payload["links"] == [
+            {
+                "title": "Read API entry point",
+                "rel": ["self"],
+                "href": "https://example.test/siren",
+            }
+        ]
+        assert titled.payload["title"] == "Live API"
+        assert titled.payload["links"][0]["title"] == "Live API"
+
+        with pytest.raises(ModwireSirenError, match="Siren adapter response failed"):
+            adapter.respond(SirenAdapterRequest(
+                operation_id="get_article",
+                status=200,
+                result={"article_key": "one"},
+                base_url="https://example.test",
+                policy=SirenAdapterPolicy(representation="root"),
+            ))
 
     def test_undeclared_errors_preserve_every_body_shape_and_operation_context(self):
         adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
@@ -459,6 +574,35 @@ class TestAdapter:
         assert json.loads(response.content)["properties"] == {"detail": "Missing", "status": 404}
         assert calls == ["/api/articles/missing"]
         assert policy.calls == [("delete_article", 404)]
+
+    def test_django_bridge_projects_browser_discovery_from_the_api_root(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
+        calls = []
+
+        def handler(request):
+            calls.append(request.path)
+            return JsonResponse({"status": "ready"})
+
+        middleware = SirenDjangoMiddleware(
+            get_response=handler,
+            adapter=adapter,
+            policy=RootCapabilityPolicy(),
+        )
+        factory = RequestFactory()
+        with override_settings(ALLOWED_HOSTS=["testserver"]):
+            response = middleware(factory.get(
+                "/api?view=full",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
+
+        payload = json.loads(response.content)
+        assert payload["class"] == ["api", "entry-point"]
+        assert payload["properties"] == {"status": "ready", "version": "4.0.0"}
+        assert payload["links"][0]["href"] == "http://testserver/api?view=full"
+        assert payload["links"][1]["href"] == "http://testserver/api/articles"
+        assert calls == ["/api"]
 
     def test_django_bridge_rejects_an_independent_public_mount(self):
         adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
