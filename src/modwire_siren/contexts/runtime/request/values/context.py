@@ -21,7 +21,7 @@ class SirenContext(BaseValue):
     | `scope` | `"root"`, `"collection"`, or `"entity"`. |
     | `resource` | Derived singular resource name; required outside root. |
     | `title` | Explicit document title overriding compiled OpenAPI metadata. |
-    | `value` | Entity or collection properties and entity path parameters. |
+    | `value` | Entity or root properties and entity path parameters. |
     | `items` | Entity mappings for a collection. |
     | `item_capabilities` | Optional permitted operation IDs for each collection item. |
     | `relationships` | Linked or embedded related resources for this document. |

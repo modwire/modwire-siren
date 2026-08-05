@@ -13,9 +13,10 @@ class SirenResponseContext(BaseValue):
 
     The compiled response status, media type, and schema determine whether the result is empty,
     an object, or an array. Array responses project as collections and object responses from an
-    entity's exact route project as entities. Set `representation` to `"entity"` or `"command"`
-    when an object response from a collection, root, or entity-owned subcommand is ambiguous.
-    `title` overrides the compiled resource or operation title for the projected result.
+    entity's exact route project as entities. Set `representation` to `"root"` for an API entry
+    point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
+    projection preserves executed mapping properties while compiled OpenAPI version metadata wins
+    a `version` collision. `title` overrides the compiled resource or operation title.
     """
 
     operation_id: str
@@ -24,7 +25,7 @@ class SirenResponseContext(BaseValue):
     base_url: str
     title: str | None = None
     media_type: SirenMediaType | None = None
-    representation: Literal["entity", "collection", "command"] | None = None
+    representation: Literal["root", "entity", "collection", "command"] | None = None
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
     query: tuple[tuple[str, JsonValue], ...] = ()
     capabilities: frozenset[str] = frozenset()
