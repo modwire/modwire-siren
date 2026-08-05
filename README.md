@@ -360,6 +360,58 @@ Expose normalized input metadata for one compiled OpenAPI operation.
 `delegated_inputs` retains structured query values, headers, cookies, and body values for an
 adapter or transport. `definition` is the normalized request-body schema when one is declared.
 
+### `SirenMiddleware`
+
+Install Siren through Django's standard middleware loader.
+
+Add the root import directly to Django settings. The OpenAPI target may be a mapping, a callable
+returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. The policy target
+may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`.
+
+```python
+# example_project/api.py
+from ninja_extra import ControllerBase, NinjaExtraAPI, api_controller, http_get
+from modwire_siren import SirenAdapterPolicy
+
+api = NinjaExtraAPI()
+
+@api_controller("/articles")
+class ArticleController(ControllerBase):
+    @http_get("/{article_id}", operation_id="get_article")
+    def get_article(self, article_id: str) -> dict[str, str]:
+        return {"article_id": article_id, "title": "One-line Siren"}
+
+api.register_controllers(ArticleController)
+
+def siren_openapi():
+    return api.get_openapi_schema(path_prefix="/api")
+
+def siren_policy(operation_id, status, request, result):
+    return SirenAdapterPolicy(capabilities=frozenset({operation_id}))
+
+# settings.py
+MIDDLEWARE = [
+    "django.middleware.http.ConditionalGetMiddleware",
+    "modwire_siren.SirenMiddleware",
+]
+MODWIRE_SIREN = {
+    "OPENAPI": "example_project.api.siren_openapi",
+    "SOURCE_PATH": "/api",
+    "PUBLIC_PATH": "/api",
+    "POLICY": "example_project.api.siren_policy",
+}
+
+# urls.py
+from django.urls import path
+from example_project.api import api
+urlpatterns = [path("api/", api.urls)]
+```
+
+Django constructs this class with only `get_response`. Each middleware instance resolves the current
+settings and compiles after importing the configured API, once, so autoreload processes and overridden
+test settings receive a fresh completed route catalogue without process-global adapter state. Invalid or
+premature configuration raises `ModwireSirenError` during middleware startup.
+
 ### `SirenLink`
 
 Describe a navigational Siren link.
@@ -393,7 +445,8 @@ belong in `entities`.
 
 Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
-Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`.
+Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`
+or a callable returning `SirenAdapterPolicy`.
 It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
 content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
 pass through without projection, as do all requests that do not select Siren. Negotiation honors
@@ -550,6 +603,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenField` | Describe an official Siren action field. | — |
 | `SirenFieldValue` | Describe a selectable Siren action field value. | — |
 | `SirenLink` | Describe a navigational Siren link. | — |
+| `SirenMiddleware` | Install Siren through Django's standard middleware loader. | — |
 | `SirenOperationInput` | Expose normalized input metadata for one compiled OpenAPI operation. | — |
 | `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
 | `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |

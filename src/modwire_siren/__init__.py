@@ -1,4 +1,4 @@
-from .api import audit, siren, siren_adapter
+from .api import SirenMiddleware, audit, siren, siren_adapter
 from .contexts.compiler.compatibility import SirenCompatibilityFinding, SirenCompatibilityReport
 from .contexts.runtime.adapter import (
     SirenAdapter,
@@ -42,6 +42,7 @@ __all__ = [
     "SirenField",
     "SirenFieldValue",
     "SirenLink",
+    "SirenMiddleware",
     "SirenOperationInput",
     "SirenRelationship",
     "SirenResponseContext",
