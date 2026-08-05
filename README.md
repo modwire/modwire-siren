@@ -71,8 +71,10 @@ assert response.media_type == "application/vnd.siren+json"
 
 The result must come from an operation the application has already executed; `respond()` never
 dispatches application code. Pass `operation_id` directly when the framework exposes it, or pass
-`method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
-explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
+`method` and `path` for catalogue resolution. Capability sets are explicit `SirenAdapterPolicy`
+inputs and are never inferred from result identifiers. The compiled graph supplies deterministic
+defaults for an exact root entry point, collection arrays, objects on exact resource routes, and
+command objects on subcommand routes; policy `representation` overrides exceptional operations.
 For collection results, `item_titles` supplies one application-owned title per item. Titles and
 item-specific capability sets are independently validated against result order; an empty result
 needs neither.
@@ -82,17 +84,16 @@ When a framework returns an undeclared status from 400 through 599, the adapter 
 its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
 an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
-Set `SirenAdapterPolicy(representation="root")` for an executed API entry-point operation. The
-existing root projector supplies `class: ["api", "entry-point"]`, discovery links, and explicitly
-permitted root actions. Executed mapping members become document properties; compiled OpenAPI
-`info.version` wins a `version` collision, and the policy title continues to override `info.title`.
-Use `representation="command"` when the same root operation is intentionally a command result.
+An exact root operation uses the root projector and supplies `class: ["api", "entry-point"]`,
+discovery links, and permitted root actions. Executed mapping members become document properties;
+compiled OpenAPI `info.version` wins a `version` collision, and the policy title continues to
+override `info.title`. Use `representation="command"` when that operation is intentionally a
+command result.
 
-For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
-normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
-before middleware can transform its result, so an independent public mount is rejected rather than
-pretending that it can execute without redispatch. Install real framework routes when an independent
-mount is required.
+For Django Ninja and Ninja Extra, `SirenDjangoMiddleware` negotiates source routes directly. When
+source and public mounts differ, a matched public route is rewritten to its compiled source route
+before Django resolution, executed once, then restored before Siren projection. Unmatched routes
+are never rewritten.
 
 The bridge keeps Django optional by importing it only while handling a matched response. It transforms
 matched `application/json`, `+json`, and content-free responses. Accept ranges use quality and specificity;
@@ -108,7 +109,8 @@ headers, and removes source-byte validators, digests, encodings, ranges, and fra
 `ConditionalGetMiddleware` before `SirenDjangoMiddleware` so response processing validates the final
 Siren bytes; a 304 produced downstream is passed through because it has no representation to project.
 Unmatched errors also pass through because the bridge does not guess API ownership from a URL prefix.
-Its required `SirenCapabilityPolicy` is application code:
+Direct middleware construction receives an explicit authorization policy; the standard Django
+loader uses `SirenAllowAllPolicy` when `MODWIRE_SIREN["POLICY"]` is absent:
 
 ```python
 from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
@@ -341,11 +343,11 @@ document = engine.project_response(SirenResponseContext(
 ))
 ```
 
-An object response from a collection, root, or entity-owned subcommand is semantically
-ambiguous: set its response context `representation` to `"root"`, `"entity"`, or `"command"`.
-Root representation reuses API discovery projection; explicit command representation remains
-available for root operations. No identifier property name is inferred; compiled route
-parameters and explicit path values resolve entity links.
+An object response on the exact API root becomes the entry point, an object on an exact resource
+collection or entity route becomes an entity, and an object on a subcommand route becomes a
+command result. Set response-context `representation` to override an exceptional operation. No
+identifier property name is inferred; compiled route parameters and explicit path values resolve
+entity links.
 
 Set `source_path` to the OpenAPI route prefix and `public_path` to the independently
 mounted Siren prefix. Both prefixes are segment-aware and normalized without a trailing
@@ -379,11 +381,12 @@ Supply an executed OpenAPI operation and result for operation-aware projection.
 
 The compiled response status, media type, and schema determine whether the result is empty,
 an object, or an array. Array responses project as collections and object responses from an
-entity's exact route project as entities. Set `representation` to `"root"` for an API entry
-point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
-projection preserves executed mapping properties while compiled OpenAPI version metadata wins
-a `version` collision. `title` overrides the compiled resource or operation title. For an array
-response, `item_titles` supplies one explicit title per result item.
+entity's or collection's exact route project as entities, an exact root operation projects as
+the API entry point, and other object responses project as command results. Set `representation`
+to override an exceptional operation. Root projection preserves executed mapping properties while
+compiled OpenAPI version metadata wins a `version` collision. `title` overrides the compiled
+resource or operation title. For an array response, `item_titles` supplies one explicit title per
+result item.
 
 ### `SirenRelationship`
 
@@ -406,15 +409,14 @@ adapter or transport. `definition` is the normalized request-body schema when on
 Install Siren through Django's standard middleware loader.
 
 Add the root import directly to Django settings. The OpenAPI target may be a mapping, a callable
-returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. The policy target
-may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`. Optional
-`PROFILES` dotted paths are instantiated once with the adapter.
+returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. By default the
+middleware exposes every capability owned by the matched operation's compiled graph scope. An
+optional policy target may restrict those capabilities or override exceptional response semantics.
+Optional `PROFILES` dotted paths are instantiated once with the adapter.
 
 ```python
 # example_project/api.py
 from ninja_extra import ControllerBase, NinjaExtraAPI, api_controller, http_get
-from modwire_siren import SirenAdapterPolicy
-
 api = NinjaExtraAPI()
 
 @api_controller("/articles")
@@ -428,9 +430,6 @@ api.register_controllers(ArticleController)
 def siren_openapi():
     return api.get_openapi_schema(path_prefix="/api")
 
-def siren_policy(operation_id, status, request, result):
-    return SirenAdapterPolicy(capabilities=frozenset({operation_id}))
-
 # settings.py
 MIDDLEWARE = [
     "django.middleware.http.ConditionalGetMiddleware",
@@ -439,8 +438,7 @@ MIDDLEWARE = [
 MODWIRE_SIREN = {
     "OPENAPI": "example_project.api.siren_openapi",
     "SOURCE_PATH": "/api",
-    "PUBLIC_PATH": "/api",
-    "POLICY": "example_project.api.siren_policy",
+    "PUBLIC_PATH": "/siren",
     "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
 }
 
@@ -488,8 +486,9 @@ belong in `entities`.
 
 Render negotiated Django Ninja/Ninja Extra JSON responses as Siren.
 
-Configure this callable as Django middleware with an application-owned `SirenCapabilityPolicy`
-or a callable returning `SirenAdapterPolicy`.
+Configure this callable as Django middleware. The standard loader supplies
+`SirenAllowAllPolicy` when no application authorization policy is configured; direct callers
+provide a `SirenCapabilityPolicy` or a callable returning `SirenAdapterPolicy`.
 It calls the wrapped operation exactly once and transforms only matched JSON-compatible or
 content-free responses. Unmatched, non-JSON, streaming, redirect, 304, and already-Siren responses
 pass through without projection, as do all requests that do not select Siren. Negotiation honors
@@ -503,9 +502,8 @@ digests, encodings, ranges, and framing tied to the source JSON bytes. Place Dja
 ConditionalGetMiddleware before this middleware so it evaluates the final Siren representation on
 the response path; a downstream 304 remains untouched because its representation body is unavailable.
 
-Django middleware supports negotiation on the source routes that Django actually dispatches.
-Configure identical source and public paths; an independent public mount requires real framework
-routes and is rejected here because matching after execution cannot make it operational safely.
+When source and public paths differ, the middleware maps a matched public route to its compiled
+source route before Django dispatch and restores the public request path before projection.
 
 ### `SirenDelegatedInput`
 
@@ -548,7 +546,11 @@ Describe one OpenAPI construct outside the current official-Siren boundary.
 
 ### `SirenCapabilityPolicy`
 
-Select explicit application capabilities and projection semantics for one response.
+Select application authorization and optional projection overrides for one response.
+
+### `SirenAllowAllPolicy`
+
+Permit every capability owned by the matched operation's compiled graph scope.
 
 ### `SirenAdapterResponse`
 
@@ -573,12 +575,12 @@ the ordered pipeline; extension members are the profile's explicit non-standard 
 
 ### `SirenAdapterPolicy`
 
-Declare application-owned projection semantics and permitted capabilities.
+Declare application-owned authorization and optional projection overrides.
 
-Adapters never infer permissions or representation semantics from OpenAPI or result identifiers.
-Supply this value directly to a framework-neutral request, or return it from a framework bridge's
-capability policy. For a collection response, `item_titles` supplies one explicit title per
-result item in the same order as `item_capabilities`.
+Adapters never infer permissions from OpenAPI or result identifiers. Representation defaults come
+from the compiled API graph and may be overridden for exceptional operations. For a collection
+response, `item_titles` supplies one explicit title per result item in the same order as
+`item_capabilities`.
 
 ### `SirenAdapterMatch`
 
@@ -646,13 +648,14 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | --- | --- | --- |
 | `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
-| `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> modwire_siren.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`respond(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`error(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.document.values.document.SirenDocument'>` |
+| `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> modwire_siren.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`dispatch_path(method: <class 'str'>, path: <class 'str'>) -> str | None`<br>`render_path(template: <class 'str'>, values: collections.abc.Mapping[str, JsonValue]) -> <class 'str'>`<br>`respond(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`capabilities(operation_id: <class 'str'>) -> frozenset[str]`<br>`error(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.document.values.document.SirenDocument'>` |
 | `SirenAdapterMatch` | !!! abstract "Usage Documentation" | — |
-| `SirenAdapterPolicy` | Declare application-owned projection semantics and permitted capabilities. | — |
+| `SirenAdapterPolicy` | Declare application-owned authorization and optional projection overrides. | — |
 | `SirenAdapterProfile` | Extend a fresh adapter document using public normalized operation metadata. | `apply(operation_id: <class 'str'>, operation_input: modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'modwire_siren.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]` |
 | `SirenAdapterRequest` | Describe one already-executed HTTP operation for Siren projection. | — |
 | `SirenAdapterResponse` | Represent an HTTP-ready official Siren response without framework dependencies. | — |
-| `SirenCapabilityPolicy` | Select explicit application capabilities and projection semantics for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
+| `SirenAllowAllPolicy` | Permit every capability owned by the matched operation's compiled graph scope. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
+| `SirenCapabilityPolicy` | Select application authorization and optional projection overrides for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |

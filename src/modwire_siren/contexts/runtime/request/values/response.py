@@ -13,11 +13,12 @@ class SirenResponseContext(BaseValue):
 
     The compiled response status, media type, and schema determine whether the result is empty,
     an object, or an array. Array responses project as collections and object responses from an
-    entity's exact route project as entities. Set `representation` to `"root"` for an API entry
-    point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
-    projection preserves executed mapping properties while compiled OpenAPI version metadata wins
-    a `version` collision. `title` overrides the compiled resource or operation title. For an array
-    response, `item_titles` supplies one explicit title per result item.
+    entity's or collection's exact route project as entities, an exact root operation projects as
+    the API entry point, and other object responses project as command results. Set `representation`
+    to override an exceptional operation. Root projection preserves executed mapping properties while
+    compiled OpenAPI version metadata wins a `version` collision. `title` overrides the compiled
+    resource or operation title. For an array response, `item_titles` supplies one explicit title per
+    result item.
     """
 
     operation_id: str

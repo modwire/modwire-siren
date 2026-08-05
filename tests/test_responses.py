@@ -179,7 +179,7 @@ class TestResponses:
             "links": [{"rel": ["self"], "href": "https://api.example.com/articles"}],
         }
 
-    def test_public_engine_projects_collection_owned_object_responses_only_with_explicit_semantics(self):
+    def test_public_engine_projects_collection_owned_object_responses_as_entities(self):
         engine = siren(self.schema)
         context = SirenResponseContext(
             operation_id="create_article",
@@ -188,11 +188,7 @@ class TestResponses:
             base_url="https://api.example.com",
         )
 
-        with pytest.raises(ModwireSirenError, match="Siren response projection failed") as raised:
-            engine.project_response(context)
-        assert "OpenAPI object response representation is ambiguous" in str(raised.value.__cause__)
-
-        document = engine.project_response(context.model_copy(update={"representation": "entity"})).model_dump(
+        document = engine.project_response(context).model_dump(
             by_alias=True, mode="json", exclude_none=True
         )
         assert document["class"] == ["article"]
@@ -223,16 +219,13 @@ class TestResponses:
             base_url="https://api.example.com",
             path_values={"article_key": "article/42"},
         )
-        with pytest.raises(ModwireSirenError, match="Siren response projection failed"):
-            engine.project_response(publication_context)
-        publication = engine.project_response(
-            publication_context.model_copy(update={"representation": "command"})
-        ).model_dump(by_alias=True, mode="json", exclude_none=True)
+        publication = engine.project_response(publication_context).model_dump(
+            by_alias=True, mode="json", exclude_none=True
+        )
         reindex = engine.project_response(SirenResponseContext(
             operation_id="reindex",
             status=202,
             result={"accepted": True},
-            representation="command",
             base_url="https://api.example.com",
         )).model_dump(by_alias=True, mode="json", exclude_none=True)
 

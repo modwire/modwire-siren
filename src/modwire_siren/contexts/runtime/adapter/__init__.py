@@ -1,5 +1,5 @@
 from .contracts import SirenAdapterProfile, SirenCapabilityPolicy
-from .services import SirenStructuredFormProfile
+from .services import SirenAllowAllPolicy, SirenStructuredFormProfile
 from .state import SirenAdapter, SirenDjangoMiddleware
 from .values import SirenAdapterMatch, SirenAdapterPolicy, SirenAdapterRequest, SirenAdapterResponse
 
@@ -10,6 +10,7 @@ __all__ = [
     "SirenAdapterProfile",
     "SirenAdapterRequest",
     "SirenAdapterResponse",
+    "SirenAllowAllPolicy",
     "SirenCapabilityPolicy",
     "SirenDjangoMiddleware",
     "SirenStructuredFormProfile",

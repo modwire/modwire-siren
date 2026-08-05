@@ -57,8 +57,10 @@ def siren_adapter(
 
     The result must come from an operation the application has already executed; `respond()` never
     dispatches application code. Pass `operation_id` directly when the framework exposes it, or pass
-    `method` and `path` for catalogue resolution. Capability sets and ambiguous object semantics are
-    explicit `SirenAdapterPolicy` inputs and are never inferred from OpenAPI or identifier fields.
+    `method` and `path` for catalogue resolution. Capability sets are explicit `SirenAdapterPolicy`
+    inputs and are never inferred from result identifiers. The compiled graph supplies deterministic
+    defaults for an exact root entry point, collection arrays, objects on exact resource routes, and
+    command objects on subcommand routes; policy `representation` overrides exceptional operations.
     For collection results, `item_titles` supplies one application-owned title per item. Titles and
     item-specific capability sets are independently validated against result order; an empty result
     needs neither.
@@ -68,17 +70,16 @@ def siren_adapter(
     its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
     an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
-    Set `SirenAdapterPolicy(representation="root")` for an executed API entry-point operation. The
-    existing root projector supplies `class: ["api", "entry-point"]`, discovery links, and explicitly
-    permitted root actions. Executed mapping members become document properties; compiled OpenAPI
-    `info.version` wins a `version` collision, and the policy title continues to override `info.title`.
-    Use `representation="command"` when the same root operation is intentionally a command result.
+    An exact root operation uses the root projector and supplies `class: ["api", "entry-point"]`,
+    discovery links, and permitted root actions. Executed mapping members become document properties;
+    compiled OpenAPI `info.version` wins a `version` collision, and the policy title continues to
+    override `info.title`. Use `representation="command"` when that operation is intentionally a
+    command result.
 
-    For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
-    normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
-    before middleware can transform its result, so an independent public mount is rejected rather than
-    pretending that it can execute without redispatch. Install real framework routes when an independent
-    mount is required.
+    For Django Ninja and Ninja Extra, `SirenDjangoMiddleware` negotiates source routes directly. When
+    source and public mounts differ, a matched public route is rewritten to its compiled source route
+    before Django resolution, executed once, then restored before Siren projection. Unmatched routes
+    are never rewritten.
 
     The bridge keeps Django optional by importing it only while handling a matched response. It transforms
     matched `application/json`, `+json`, and content-free responses. Accept ranges use quality and specificity;
@@ -94,7 +95,8 @@ def siren_adapter(
     `ConditionalGetMiddleware` before `SirenDjangoMiddleware` so response processing validates the final
     Siren bytes; a 304 produced downstream is passed through because it has no representation to project.
     Unmatched errors also pass through because the bridge does not guess API ownership from a URL prefix.
-    Its required `SirenCapabilityPolicy` is application code:
+    Direct middleware construction receives an explicit authorization policy; the standard Django
+    loader uses `SirenAllowAllPolicy` when `MODWIRE_SIREN["POLICY"]` is absent:
 
     ```python
     from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
