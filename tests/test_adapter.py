@@ -1,11 +1,18 @@
 import json
 import subprocess
 import sys
+from io import BytesIO
 from typing import ClassVar
 
 import pytest
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import (
+    FileResponse,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+    StreamingHttpResponse,
+)
 from django.test import RequestFactory, override_settings
 from framework_fixtures.capability_policy import CapabilityPolicy
 
@@ -320,12 +327,14 @@ class TestAdapter:
     def test_django_bridge_executes_once_and_preserves_unselected_json(self):
         if not settings.configured:
             settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
-        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
         calls = []
         original = JsonResponse({"article_key": "one", "title": "One"}, headers={"ETag": "one"})
 
         def handler(request):
             calls.append(request.path)
+            if request.method == "DELETE":
+                return HttpResponse(status=204)
             if request.path.endswith("invalid"):
                 return JsonResponse(
                     [{"location": "article_key", "message": "Invalid"}], status=422, safe=False
@@ -345,6 +354,10 @@ class TestAdapter:
                 "/api/articles/invalid",
                 HTTP_ACCEPT="application/vnd.siren+json",
             ))
+            empty = middleware(factory.delete(
+                "/api/articles/one",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
 
         assert ordinary is original
         assert siren.status_code == 200
@@ -355,8 +368,107 @@ class TestAdapter:
             "errors": [{"location": "article_key", "message": "Invalid"}],
             "status": 422,
         }
-        assert calls == ["/api/articles/one", "/api/articles/one", "/api/articles/invalid"]
-        assert policy.calls == [("get_article", 200), ("get_article", 422)]
+        assert json.loads(empty.content)["class"] == ["empty"]
+        assert calls == [
+            "/api/articles/one",
+            "/api/articles/one",
+            "/api/articles/invalid",
+            "/api/articles/one",
+        ]
+        assert policy.calls == [
+            ("get_article", 200),
+            ("get_article", 422),
+            ("delete_article", 204),
+        ]
+
+    def test_django_bridge_passes_ineligible_responses_through_without_decoding(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
+        policy = CapabilityPolicy()
+        factory = RequestFactory()
+        cases = (
+            ("/openapi.json", JsonResponse({"openapi": "3.1.1"})),
+            ("/health", JsonResponse({"status": "ok"})),
+            ("/missing", HttpResponse("<h1>Missing</h1>", status=404, content_type="text/html")),
+            ("/api/articles/one", HttpResponse("<h1>Article</h1>", content_type="text/html")),
+            ("/api/articles/one", HttpResponseRedirect("/login")),
+            ("/api/articles/one", HttpResponse(status=304)),
+            (
+                "/api/articles/one",
+                StreamingHttpResponse(iter((b'{"article_key":"one"}',)), content_type="application/json"),
+            ),
+            ("/api/articles/one", FileResponse(BytesIO(b"article"))),
+            (
+                "/api/articles/one",
+                HttpResponse(
+                    '{"class":["article"]}', content_type="application/vnd.siren+json"
+                ),
+            ),
+        )
+        calls = []
+        responses = [response for _, response in cases]
+
+        def handler(request):
+            calls.append(request.path)
+            return responses.pop(0)
+
+        with override_settings(ALLOWED_HOSTS=["testserver"]):
+            for path, response in cases:
+                middleware = SirenDjangoMiddleware(
+                    get_response=handler,
+                    adapter=adapter,
+                    policy=policy,
+                )
+                returned = middleware(factory.get(
+                    path,
+                    HTTP_ACCEPT="application/vnd.siren+json",
+                ))
+
+                assert returned is response
+                response.close()
+
+        assert calls == [path for path, _ in cases]
+        assert policy.calls == []
+
+    def test_django_bridge_projects_matched_json_suffix_responses(self):
+        if not settings.configured:
+            settings.configure(DEFAULT_CHARSET="utf-8", ALLOWED_HOSTS=["testserver"])
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/api")
+        policy = CapabilityPolicy()
+        calls = []
+        problem = HttpResponse(
+            '{"detail":"Missing"}',
+            status=404,
+            content_type="application/problem+json; charset=utf-8",
+        )
+
+        def handler(request):
+            calls.append(request.path)
+            return problem
+
+        middleware = SirenDjangoMiddleware(get_response=handler, adapter=adapter, policy=policy)
+        factory = RequestFactory()
+        with override_settings(ALLOWED_HOSTS=["testserver"]):
+            response = middleware(factory.delete(
+                "/api/articles/missing",
+                HTTP_ACCEPT="application/vnd.siren+json",
+            ))
+
+        assert response["Content-Type"] == "application/vnd.siren+json"
+        assert json.loads(response.content)["properties"] == {"detail": "Missing", "status": 404}
+        assert calls == ["/api/articles/missing"]
+        assert policy.calls == [("delete_article", 404)]
+
+    def test_django_bridge_rejects_an_independent_public_mount(self):
+        adapter = siren_adapter(self.schema, source_path="/api", public_path="/siren")
+        policy = CapabilityPolicy()
+
+        def handler(request):
+            return JsonResponse({"article_key": "one"})
+
+        with pytest.raises(ModwireSirenError, match="requires identical source and public paths"):
+            SirenDjangoMiddleware(get_response=handler, adapter=adapter, policy=policy)
 
     def test_root_import_keeps_django_optional(self):
         script = (

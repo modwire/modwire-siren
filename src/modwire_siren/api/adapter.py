@@ -42,13 +42,27 @@ def siren_adapter(
     its mapping, list, scalar, or empty result in a generic Siren error document. A declared status with
     an incompatible runtime media type also uses this fallback; successful responses remain strict.
 
-    For Django Ninja and Ninja Extra, wrap the normal Django response callable with
-    `SirenDjangoMiddleware`. The bridge imports Django only when rendering a negotiated Siren response,
-    preserves non-content headers and cookies, and returns the original response object when Siren is
-    not selected. Its required `SirenCapabilityPolicy` is application code:
+    For Django Ninja and Ninja Extra, compile with identical source and public paths, then wrap the
+    normal Django response callable with `SirenDjangoMiddleware`. Django dispatches the source route
+    before middleware can transform its result, so an independent public mount is rejected rather than
+    pretending that it can execute without redispatch. Install real framework routes when an independent
+    mount is required.
+
+    The bridge imports Django only when rendering a negotiated Siren response. It transforms matched
+    `application/json`, `+json`, and content-free responses. Unmatched routes, non-JSON content, streams,
+    files, redirects, 304 responses, and already-Siren responses pass through unchanged. Non-Siren
+    requests always receive the original response object. Unmatched errors also pass through because
+    the bridge does not guess API ownership from a URL prefix. Its required `SirenCapabilityPolicy` is
+    application code:
 
     ```python
     from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
+
+    django_adapter = siren_adapter(
+        api.get_openapi_schema(),
+        source_path="/api",
+        public_path="/api",
+    )
 
     class Capabilities:
         def select(self, operation_id, status, request, result):
@@ -57,7 +71,7 @@ def siren_adapter(
 
     middleware = SirenDjangoMiddleware(
         get_response=django_handler,
-        adapter=adapter,
+        adapter=django_adapter,
         policy=Capabilities(),
     )
     ```
