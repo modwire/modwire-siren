@@ -12,6 +12,7 @@ from modwire_siren import (
     SirenAdapter,
     SirenAdapterMatch,
     SirenAdapterPolicy,
+    SirenAdapterProfile,
     SirenAdapterRequest,
     SirenAdapterResponse,
     SirenCapabilityPolicy,
@@ -30,6 +31,7 @@ from modwire_siren import (
     SirenOperationInput,
     SirenRelationship,
     SirenResponseContext,
+    SirenStructuredFormProfile,
     audit,
     siren,
     siren_adapter,
@@ -58,6 +60,7 @@ class TestFacade:
             "SirenAdapter",
             "SirenAdapterMatch",
             "SirenAdapterPolicy",
+            "SirenAdapterProfile",
             "SirenAdapterRequest",
             "SirenAdapterResponse",
             "SirenCapabilityPolicy",
@@ -76,6 +79,7 @@ class TestFacade:
             "SirenOperationInput",
             "SirenRelationship",
             "SirenResponseContext",
+            "SirenStructuredFormProfile",
             "audit",
             "siren",
             "siren_adapter",
@@ -86,6 +90,7 @@ class TestFacade:
             SirenAdapter,
             SirenAdapterMatch,
             SirenAdapterPolicy,
+            SirenAdapterProfile,
             SirenAdapterRequest,
             SirenAdapterResponse,
             SirenCapabilityPolicy,
@@ -103,6 +108,7 @@ class TestFacade:
             SirenOperationInput,
             SirenRelationship,
             SirenResponseContext,
+            SirenStructuredFormProfile,
             audit,
         ) == (
             modwire_siren.ModwireSirenError,
@@ -110,6 +116,7 @@ class TestFacade:
             modwire_siren.SirenAdapter,
             modwire_siren.SirenAdapterMatch,
             modwire_siren.SirenAdapterPolicy,
+            modwire_siren.SirenAdapterProfile,
             modwire_siren.SirenAdapterRequest,
             modwire_siren.SirenAdapterResponse,
             modwire_siren.SirenCapabilityPolicy,
@@ -127,6 +134,7 @@ class TestFacade:
             modwire_siren.SirenOperationInput,
             modwire_siren.SirenRelationship,
             modwire_siren.SirenResponseContext,
+            modwire_siren.SirenStructuredFormProfile,
             modwire_siren.audit,
         )
         parameters = signature(siren).parameters
@@ -137,7 +145,15 @@ class TestFacade:
         assert parameters["public_path"].kind is Parameter.KEYWORD_ONLY
         assert parameters["public_path"].default == "/"
         assert tuple(signature(audit).parameters) == ("openapi",)
-        assert tuple(signature(siren_adapter).parameters) == ("openapi", "source_path", "public_path")
+        adapter_parameters = signature(siren_adapter).parameters
+        assert tuple(adapter_parameters) == (
+            "openapi",
+            "source_path",
+            "public_path",
+            "profiles",
+        )
+        assert adapter_parameters["profiles"].kind is Parameter.KEYWORD_ONLY
+        assert adapter_parameters["profiles"].default == ()
 
     def test_public_facade_remounts_source_paths_without_mutating_the_openapi_document(self):
         schema = deepcopy(SCHEMA)

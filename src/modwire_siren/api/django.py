@@ -15,7 +15,8 @@ class SirenMiddleware:
 
     Add the root import directly to Django settings. The OpenAPI target may be a mapping, a callable
     returning one, or a Django Ninja/Ninja Extra API exposing `get_openapi_schema()`. The policy target
-    may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`.
+    may implement `SirenCapabilityPolicy` or be a callable returning `SirenAdapterPolicy`. Optional
+    `PROFILES` dotted paths are instantiated once with the adapter.
 
     ```python
     # example_project/api.py
@@ -48,6 +49,7 @@ class SirenMiddleware:
         "SOURCE_PATH": "/api",
         "PUBLIC_PATH": "/api",
         "POLICY": "example_project.api.siren_policy",
+        "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
     }
 
     # urls.py
@@ -83,6 +85,13 @@ class SirenMiddleware:
             public_path = configuration.get("PUBLIC_PATH", "/")
             if not isinstance(source_path, str) or not isinstance(public_path, str):
                 raise ModwireSirenError("MODWIRE_SIREN source and public paths must be strings")
+            profile_paths = configuration.get("PROFILES", ())
+            if not isinstance(profile_paths, list | tuple) or any(
+                not isinstance(path, str) or not path for path in profile_paths
+            ):
+                raise ModwireSirenError(
+                    "MODWIRE_SIREN.PROFILES must be a sequence of dotted import paths"
+                )
 
             try:
                 openapi_source = import_string(openapi_path)
@@ -116,11 +125,22 @@ class SirenMiddleware:
                     "MODWIRE_SIREN.POLICY must resolve to a SirenCapabilityPolicy or callable"
                 )
 
+            profiles = []
+            for profile_path in profile_paths:
+                try:
+                    profile = import_string(profile_path)
+                    profiles.append(profile() if isinstance(profile, type) else profile)
+                except Exception as error:
+                    raise ModwireSirenError(
+                        f"MODWIRE_SIREN.PROFILES could not load {profile_path!r}: {error}"
+                    ) from error
+
             try:
                 adapter = siren_adapter(
                     openapi,
                     source_path=source_path,
                     public_path=public_path,
+                    profiles=tuple(profiles),
                 )
             except Exception as error:
                 raise ModwireSirenError(
