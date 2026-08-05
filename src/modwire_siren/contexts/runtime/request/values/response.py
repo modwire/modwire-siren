@@ -16,7 +16,8 @@ class SirenResponseContext(BaseValue):
     entity's exact route project as entities. Set `representation` to `"root"` for an API entry
     point, or to `"entity"` or `"command"` when another object response is ambiguous. Root
     projection preserves executed mapping properties while compiled OpenAPI version metadata wins
-    a `version` collision. `title` overrides the compiled resource or operation title.
+    a `version` collision. `title` overrides the compiled resource or operation title. For an array
+    response, `item_titles` supplies one explicit title per result item.
     """
 
     operation_id: str
@@ -29,6 +30,7 @@ class SirenResponseContext(BaseValue):
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
     query: tuple[tuple[str, JsonValue], ...] = ()
     capabilities: frozenset[str] = frozenset()
+    item_titles: tuple[str, ...] = ()
     item_capabilities: tuple[frozenset[str], ...] = ()
     relationships: tuple[SirenRelationship, ...] = ()
 
@@ -38,6 +40,10 @@ class SirenResponseContext(BaseValue):
             raise ModwireSirenError("Siren response status must be between 100 and 599")
         if any(isinstance(value, (dict, list)) for _, value in self.query):
             raise ModwireSirenError("Siren query values must be scalar")
+        if self.item_titles and (
+            not isinstance(self.result, list) or len(self.item_titles) != len(self.result)
+        ):
+            raise ModwireSirenError("Siren item titles must align with response items")
         if self.item_capabilities and (
             not isinstance(self.result, list) or len(self.item_capabilities) != len(self.result)
         ):

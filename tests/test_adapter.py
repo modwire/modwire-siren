@@ -285,6 +285,46 @@ class TestAdapter:
             "links": [{"rel": ["self"], "href": "https://example.test/api/unknown"}],
         }
 
+    def test_adapter_policy_projects_distinct_aligned_collection_item_titles(self):
+        response = siren_adapter(self.schema, source_path="/api", public_path="/siren").respond(
+            SirenAdapterRequest(
+                operation_id="list_articles",
+                status=200,
+                result=[
+                    {"article_key": "one", "title": "Stored one"},
+                    {"article_key": "two", "title": "Stored two"},
+                ],
+                base_url="https://example.test",
+                policy=SirenAdapterPolicy(
+                    item_titles=("First article", "Second article"),
+                    item_capabilities=(
+                        frozenset({"get_article"}),
+                        frozenset(),
+                    ),
+                ),
+            )
+        )
+
+        assert [item["title"] for item in response.payload["entities"]] == [
+            "First article",
+            "Second article",
+        ]
+        assert [item["links"][0]["title"] for item in response.payload["entities"]] == [
+            "First article",
+            "Second article",
+        ]
+        assert [item.get("actions", []) for item in response.payload["entities"]] == [
+            [
+                {
+                    "name": "get_article",
+                    "href": "https://example.test/siren/articles/one",
+                    "method": "GET",
+                    "title": "Read article",
+                }
+            ],
+            [],
+        ]
+
     def test_adapter_route_resolution_is_specific_deterministic_and_mount_independent(self):
         parameter_paths = {
             "/api/items/{item_id}": {

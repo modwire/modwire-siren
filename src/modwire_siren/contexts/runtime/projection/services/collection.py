@@ -36,7 +36,8 @@ class SirenCollectionScopeProjector(SirenScopeProjector):
                 request.resource,
                 item,
                 request.context.model_copy(update={
-                    "title": None,
+                    "title": request.context.item_titles[index]
+                    if request.context.item_titles else None,
                     "capabilities": request.context.item_capabilities[index]
                     if request.context.item_capabilities else request.context.capabilities,
                 }),

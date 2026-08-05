@@ -23,6 +23,7 @@ class SirenContext(BaseValue):
     | `title` | Explicit document title overriding compiled OpenAPI metadata. |
     | `value` | Entity or root properties and entity path parameters. |
     | `items` | Entity mappings for a collection. |
+    | `item_titles` | Optional explicit titles aligned with collection items. |
     | `item_capabilities` | Optional permitted operation IDs for each collection item. |
     | `relationships` | Linked or embedded related resources for this document. |
     | `path_values` | Missing path parameters, such as a parent resource ID or a root command target. |
@@ -36,6 +37,7 @@ class SirenContext(BaseValue):
     title: str | None = None
     value: Mapping[str, JsonValue] = Field(default_factory=dict)
     items: tuple[Mapping[str, JsonValue], ...] = ()
+    item_titles: tuple[str, ...] = ()
     item_capabilities: tuple[frozenset[str], ...] = ()
     relationships: tuple[SirenRelationship, ...] = ()
     path_values: Mapping[str, JsonValue] = Field(default_factory=dict)
@@ -52,6 +54,8 @@ class SirenContext(BaseValue):
                 f"Siren {self.scope} context requires a resource")
         if any(isinstance(value, (dict, list)) for _, value in self.query):
             raise ModwireSirenError("Siren query values must be scalar")
+        if self.item_titles and len(self.item_titles) != len(self.items):
+            raise ModwireSirenError("Siren item titles must align with collection items")
         if self.item_capabilities and len(self.item_capabilities) != len(self.items):
             raise ModwireSirenError("Siren item capabilities must align with collection items")
         return self

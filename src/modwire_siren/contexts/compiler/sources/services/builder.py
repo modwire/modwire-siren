@@ -123,6 +123,10 @@ class SirenBuilder:
                 if scope == SirenScope.COLLECTION and exact_collection and response.shape == "array":
                     priority = 0 if operation.method == SirenHttpMethod.GET else 1
                     title = definition.get("title")
+                    if title == "Response" or (
+                        isinstance(title, str) and title.startswith("Response ")
+                    ):
+                        title = None
                     if not title:
                         items = definition.get("items")
                         title = items.get("title") if isinstance(items, Mapping) else None
