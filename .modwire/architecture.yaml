@@ -1,22 +1,22 @@
 boundaries:
   tags:
-    - {name: package, match: src/modwire_siren}
+    - {name: package, match: src/sirenity}
     - {
         name: &context_tag context,
-        match: src/modwire_siren/contexts/*/__init__.py,
+        match: src/sirenity/contexts/*/__init__.py,
       }
     - {
         name: &module_tag module,
-        match: src/modwire_siren/contexts/*/*,
-        excluded_patterns: [src/modwire_siren/contexts/*/__init__.py],
+        match: src/sirenity/contexts/*/*,
+        excluded_patterns: [src/sirenity/contexts/*/__init__.py],
       }
-    - {name: &api_tag api, match: src/modwire_siren/api}
+    - {name: &api_tag api, match: src/sirenity/api}
     - {name: &tests_tag tests, match: tests}
     - {name: scripts, match: scripts}
-    - {name: &contracts_tag contracts, match: src/modwire_siren/contexts/*/*/contracts}
-    - {name: &services_tag services, match: src/modwire_siren/contexts/*/*/services}
-    - {name: &state_tag state, match: src/modwire_siren/contexts/*/*/state}
-    - {name: &values_tag values, match: src/modwire_siren/contexts/*/*/values}
+    - {name: &contracts_tag contracts, match: src/sirenity/contexts/*/*/contracts}
+    - {name: &services_tag services, match: src/sirenity/contexts/*/*/services}
+    - {name: &state_tag state, match: src/sirenity/contexts/*/*/state}
+    - {name: &values_tag values, match: src/sirenity/contexts/*/*/values}
 
   flow:
     analyzers: [backward-flow, no-cycles, no-reentry]
@@ -30,7 +30,7 @@ boundaries:
 shape:
   realms:
     - name: project
-      match: "src/modwire_siren/*"
+      match: "src/sirenity/*"
       shape:
         max_classes_per_file: -1
         max_interfaces_per_file: -1

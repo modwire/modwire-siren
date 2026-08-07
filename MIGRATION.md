@@ -13,7 +13,7 @@ Version 2 treats OpenAPI as the structural contract. It derives resources from c
 compiles one immutable `SirenApi`, and projects a `SirenContext` at runtime.
 
 ```python
-from modwire_siren import SirenContext, siren
+from sirenity import SirenContext, siren
 
 engine = siren(openapi)
 document = engine.project(
@@ -102,12 +102,12 @@ Authorization and state remain application responsibilities. OpenAPI defines can
 
 ## Deterministic rejections
 
-Only root `modwire_siren` imports are supported. There is no public builder or internal-engine
+Only root `sirenity` imports are supported. There is no public builder or internal-engine
 construction path in version 2. Call `siren(openapi)` once at startup and handle the stable public
 error types at the boundary:
 
 ```python
-from modwire_siren import ModwireSirenError, siren
+from sirenity import ModwireSirenError, siren
 
 try:
     engine = siren(openapi)

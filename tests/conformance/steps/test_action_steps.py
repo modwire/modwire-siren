@@ -2,7 +2,7 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, parsers, scenarios, then, when
 
-from modwire_siren import ModwireSirenError, SirenAction, SirenDocument, SirenField
+from sirenity import ModwireSirenError, SirenAction, SirenDocument, SirenField
 
 
 class ActionSteps:

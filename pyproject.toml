@@ -3,7 +3,7 @@ requires = ["hatchling>=1.28", "hatch-vcs>=0.5"]
 build-backend = "hatchling.build"
 
 [project]
-name = "modwire-siren"
+name = "sirenity"
 dynamic = ["version"]
 description = "Compile OpenAPI API graphs into Siren hypermedia documents."
 readme = "README.md"
@@ -56,8 +56,8 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/modwire/modwire-siren"
-Issues = "https://github.com/modwire/modwire-siren/issues"
+Repository = "https://github.com/szpak-dev/sirenity"
+Issues = "https://github.com/szpak-dev/sirenity/issues"
 
 [tool.hatch.version]
 source = "vcs"
@@ -65,10 +65,10 @@ tag-pattern = '^v(?P<version>\d+\.\d+\.\d+)$'
 fallback-version = "0.0.0"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/modwire_siren/_version.py"
+version-file = "src/sirenity/_version.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/modwire_siren"]
+packages = ["src/sirenity"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "tests", "LICENSE", "README.md", "MIGRATION.md", "pyproject.toml"]

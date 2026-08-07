@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 from openapi_documents import SCHEMA
 
-import modwire_siren
-from modwire_siren import (
+import sirenity
+from sirenity import (
     ModwireSirenError,
     SirenAction,
     SirenAdapter,
@@ -55,7 +55,7 @@ class TestFacade:
             siren(openapi, source_path=source_path, public_path=public_path)
 
     def test_public_facade_exports_siren_contracts_and_composition_entry_points(self):
-        assert modwire_siren.__all__ == [
+        assert sirenity.__all__ == [
             "ModwireSirenError",
             "SirenAction",
             "SirenAdapter",
@@ -114,32 +114,32 @@ class TestFacade:
             SirenStructuredFormProfile,
             audit,
         ) == (
-            modwire_siren.ModwireSirenError,
-            modwire_siren.SirenAction,
-            modwire_siren.SirenAdapter,
-            modwire_siren.SirenAdapterMatch,
-            modwire_siren.SirenAdapterPolicy,
-            modwire_siren.SirenAdapterProfile,
-            modwire_siren.SirenAdapterRequest,
-            modwire_siren.SirenAdapterResponse,
-            modwire_siren.SirenAllowAllPolicy,
-            modwire_siren.SirenCapabilityPolicy,
-            modwire_siren.SirenCompatibilityFinding,
-            modwire_siren.SirenCompatibilityReport,
-            modwire_siren.SirenDelegatedInput,
-            modwire_siren.SirenDjangoMiddleware,
-            modwire_siren.SirenDocument,
-            modwire_siren.SirenEmbeddedLink,
-            modwire_siren.SirenEmbeddedRepresentation,
-            modwire_siren.SirenField,
-            modwire_siren.SirenFieldValue,
-            modwire_siren.SirenLink,
-            modwire_siren.SirenMiddleware,
-            modwire_siren.SirenOperationInput,
-            modwire_siren.SirenRelationship,
-            modwire_siren.SirenResponseContext,
-            modwire_siren.SirenStructuredFormProfile,
-            modwire_siren.audit,
+            sirenity.ModwireSirenError,
+            sirenity.SirenAction,
+            sirenity.SirenAdapter,
+            sirenity.SirenAdapterMatch,
+            sirenity.SirenAdapterPolicy,
+            sirenity.SirenAdapterProfile,
+            sirenity.SirenAdapterRequest,
+            sirenity.SirenAdapterResponse,
+            sirenity.SirenAllowAllPolicy,
+            sirenity.SirenCapabilityPolicy,
+            sirenity.SirenCompatibilityFinding,
+            sirenity.SirenCompatibilityReport,
+            sirenity.SirenDelegatedInput,
+            sirenity.SirenDjangoMiddleware,
+            sirenity.SirenDocument,
+            sirenity.SirenEmbeddedLink,
+            sirenity.SirenEmbeddedRepresentation,
+            sirenity.SirenField,
+            sirenity.SirenFieldValue,
+            sirenity.SirenLink,
+            sirenity.SirenMiddleware,
+            sirenity.SirenOperationInput,
+            sirenity.SirenRelationship,
+            sirenity.SirenResponseContext,
+            sirenity.SirenStructuredFormProfile,
+            sirenity.audit,
         )
         parameters = signature(siren).parameters
         assert tuple(parameters) == ("openapi", "source_path", "public_path")

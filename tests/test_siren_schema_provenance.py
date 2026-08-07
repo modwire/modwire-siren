@@ -2,14 +2,14 @@ import hashlib
 import json
 from importlib.resources import files
 
-import modwire_siren
-from modwire_siren import SirenAction, SirenField, SirenLink
+import sirenity
+from sirenity import SirenAction, SirenField, SirenLink
 
 
 class TestSirenSchemaProvenance:
     def test_vendored_schema_matches_the_pinned_source_and_digest(self):
-        schema = files(modwire_siren).joinpath("contexts/shared/siren_schema/values/siren.schema.json")
-        provenance = files(modwire_siren).joinpath("contexts/shared/siren_schema/values/siren.schema.provenance.json")
+        schema = files(sirenity).joinpath("contexts/shared/siren_schema/values/siren.schema.json")
+        provenance = files(sirenity).joinpath("contexts/shared/siren_schema/values/siren.schema.provenance.json")
 
         assert json.loads(provenance.read_text()) == {
             "source_url": "https://github.com/kevinswiber/siren/blob/c29a87840407419d52c2acd742a1ad6a03ce80da/siren.schema.json",
@@ -20,7 +20,7 @@ class TestSirenSchemaProvenance:
         assert hashlib.sha256(schema.read_bytes()).hexdigest() == json.loads(provenance.read_text())["vendored_sha256"]
 
     def test_public_vocabulary_and_defaults_resolve_the_pinned_schema(self):
-        schema = files(modwire_siren).joinpath("contexts/shared/siren_schema/values/siren.schema.json")
+        schema = files(sirenity).joinpath("contexts/shared/siren_schema/values/siren.schema.json")
         document = json.loads(schema.read_text())
 
         action_schema = SirenAction.model_json_schema()["properties"]

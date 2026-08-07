@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import PARAMETER_MEDIA_SCHEMA
 
-from modwire_siren import ModwireSirenError, audit, siren
+from sirenity import ModwireSirenError, audit, siren
 
 
 class TestCompatibility:

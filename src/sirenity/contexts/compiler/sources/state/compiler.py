@@ -1,0 +1,207 @@
+from typing import Any, ClassVar
+
+from sirenity.contexts.shared import (
+    BaseState,
+    ModwireSirenError,
+    SirenActionMethod,
+    SirenHttpMethod,
+    SirenMediaType,
+    SirenScope,
+)
+
+from ..values import DelegatedInputDraft, Field, InputDraft
+from .assembly import SirenAssembly
+from .components import ComponentResolver
+from .field_projection import OpenApiFieldProjection
+from .response_projection import OpenApiResponseProjection
+from .routes import RouteCatalog
+
+
+class OpenApiOperationCompiler(BaseState):
+    methods: ClassVar[frozenset[SirenHttpMethod]] = frozenset(
+        SirenHttpMethod(value) for value in SirenActionMethod.values()
+    )
+    assembly: SirenAssembly
+    routes: RouteCatalog
+    components: ComponentResolver
+    projection: OpenApiFieldProjection
+    responses: OpenApiResponseProjection
+
+    def compile(self) -> None:
+        for path, path_item in self.routes.paths.items():
+            if not isinstance(path_item, dict):
+                continue
+            if "$ref" in path_item:
+                raise ModwireSirenError(f"OpenAPI path item reference is unsupported: {path}")
+            for method, operation in path_item.items():
+                method_name = method.lower()
+                if method_name == "trace":
+                    raise ModwireSirenError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                try:
+                    operation_method = SirenHttpMethod(method.upper())
+                except ValueError:
+                    continue
+                if operation_method in {SirenHttpMethod.HEAD, SirenHttpMethod.OPTIONS}:
+                    raise ModwireSirenError(f"OpenAPI operation method is unsupported: {method.upper()} {path}")
+                if operation_method not in self.methods or not isinstance(operation, dict):
+                    continue
+                name = operation.get("operationId")
+                if not isinstance(name, str) or not name:
+                    raise ModwireSirenError(f"OpenAPI operation requires operationId: {method.upper()} {path}")
+                title = operation.get("summary")
+                if title is not None and not isinstance(title, str):
+                    raise ModwireSirenError(f"OpenAPI operation summary must be a string: {method.upper()} {path}")
+                ownership = self.routes.ownership(path)
+                fields, input = self.input(path_item, operation)
+                media_type = input.media_type if input else None
+                responses = self.responses.responses(operation)
+                if ownership is None:
+                    self.assembly.add_operation(
+                        None,
+                        SirenScope.ROOT,
+                        name,
+                        operation_method,
+                        self.routes.public(path),
+                        title or None,
+                        media_type,
+                        input,
+                        responses,
+                    )
+                    self.assembly.add_root_operation(name)
+                    for field in fields:
+                        self.assembly.add_field(name, field.name, field.type, field.values, field.title, field.default)
+                    continue
+                resource, scope = ownership
+                self.assembly.add_operation(
+                    resource.reference,
+                    scope,
+                    name,
+                    operation_method,
+                    self.routes.public(path),
+                    title or None,
+                    media_type,
+                    input,
+                    responses,
+                )
+                for field in fields:
+                    self.assembly.add_field(name, field.name, field.type, field.values, field.title, field.default)
+                if (
+                    scope == SirenScope.COLLECTION
+                    and path == resource.collection_path
+                    and not self.routes.parameters(path)
+                    and operation_method != SirenHttpMethod.GET
+                ):
+                    self.assembly.add_root_operation(name)
+
+    def input(
+        self, path_item: dict[str, Any], operation: dict[str, Any]
+    ) -> tuple[tuple[Field, ...], InputDraft | None]:
+        parameters = (*path_item.get("parameters", ()), *operation.get("parameters", ()))
+        parameter_index: dict[tuple[str, str], dict[str, Any]] = {}
+        for parameter in parameters:
+            definition = self.components.parameter(parameter)
+            name = definition.get("name")
+            location = definition.get("in")
+            if not isinstance(name, str) or not isinstance(location, str):
+                raise ModwireSirenError("OpenAPI parameter requires string name and location")
+            if location == "path":
+                continue
+            if location not in {"query", "header", "cookie"}:
+                raise ModwireSirenError(f"OpenAPI parameter location is unsupported: {location}")
+            schema = definition.get("schema")
+            if not isinstance(schema, dict):
+                raise ModwireSirenError(f"OpenAPI parameter schema is required: {name}")
+            parameter_index[name, location] = definition
+        fields: list[Field] = []
+        delegated: list[DelegatedInputDraft] = []
+        for (name, location), parameter in parameter_index.items():
+            definition = self.components.schema_tree(parameter["schema"])
+            if not isinstance(definition, dict):
+                raise ModwireSirenError(f"OpenAPI parameter schema is required: {name}")
+            if location == "query":
+                try:
+                    fields.append(self.projection.field(name, definition))
+                    continue
+                except ModwireSirenError:
+                    kind = self.projection.delegated_kind(name, definition)
+                    if kind is None:
+                        raise
+            else:
+                kind = self.projection.delegated_kind(name, definition) or "json"
+            delegated.append(DelegatedInputDraft(
+                name=name,
+                location=location,
+                kind=kind,
+                required=parameter.get("required") is True,
+                style=parameter.get("style", "simple" if location == "header" else "form"),
+                explode=parameter.get("explode", location != "header"),
+                allow_reserved=parameter.get("allowReserved") is True,
+                definition=definition,
+            ))
+        body = self.components.request_body(operation.get("requestBody", {}))
+        content = body.get("content", {}) if isinstance(body, dict) else {}
+        if content and not isinstance(content, dict):
+            raise ModwireSirenError("OpenAPI request body content must be an object")
+        media_name = "application/json" if isinstance(content, dict) and "application/json" in content else None
+        if media_name is None and isinstance(content, dict) and len(content) == 1:
+            media_name = next(iter(content))
+        if content and not isinstance(media_name, str):
+            raise ModwireSirenError("OpenAPI request body media types are ambiguous")
+        media = content.get(media_name, {}) if isinstance(content, dict) and media_name else {}
+        if content and not isinstance(media, dict):
+            raise ModwireSirenError("OpenAPI request body media type is invalid")
+        media_type = SirenMediaType.validate(media_name) if media_name else None
+        schema = media.get("schema", {}) if isinstance(media, dict) else {}
+        if content and not isinstance(schema, dict):
+            raise ModwireSirenError("OpenAPI request body schema is required")
+        definition = self.components.schema_tree(schema) if content else None
+        if definition is not None and not isinstance(definition, dict):
+            raise ModwireSirenError("OpenAPI request body schema is required")
+        if content and media_name != "application/json":
+            delegated.append(DelegatedInputDraft(
+                name="body",
+                location="body",
+                kind=self.projection.delegated_kind("body", definition) or "json",
+                required=body.get("required") is True,
+                media_type=media_type,
+                definition=definition,
+            ))
+            return tuple(fields), InputDraft(
+                media_type=media_type,
+                definition=definition,
+                official_fields=tuple(field.name for field in fields),
+                delegated_inputs=tuple(delegated),
+            )
+        if content and definition.get("type") != "object":
+            raise ModwireSirenError("OpenAPI JSON request body must be an object")
+        properties = definition.get("properties", {}) if definition else {}
+        if not isinstance(properties, dict):
+            raise ModwireSirenError("OpenAPI JSON request body properties must be an object")
+        required = definition.get("required", []) if definition else []
+        if not isinstance(required, list) or any(not isinstance(name, str) for name in required):
+            raise ModwireSirenError("OpenAPI JSON request body required properties must be an array of names")
+        for name, value in properties.items():
+            if not isinstance(name, str) or not isinstance(value, dict):
+                raise ModwireSirenError("OpenAPI JSON request body property is invalid")
+            try:
+                fields.append(self.projection.field(name, value))
+            except ModwireSirenError:
+                kind = self.projection.delegated_kind(name, value)
+                if kind is None:
+                    raise
+                delegated.append(DelegatedInputDraft(
+                    name=name,
+                    location="body",
+                    kind=kind,
+                    required=name in required,
+                    media_type=media_type,
+                    definition=value,
+                ))
+        if not fields and not delegated and not content:
+            return (), None
+        return tuple(fields), InputDraft(
+            media_type=media_type,
+            definition=definition,
+            official_fields=tuple(field.name for field in fields),
+            delegated_inputs=tuple(delegated),
+        )

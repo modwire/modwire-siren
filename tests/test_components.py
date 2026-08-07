@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from openapi_documents import REFERENCED_SCHEMA
 
-from modwire_siren import ModwireSirenError, SirenContext, siren
+from sirenity import ModwireSirenError, SirenContext, siren
 
 
 class TestComponents:

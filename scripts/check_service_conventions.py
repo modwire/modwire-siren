@@ -4,7 +4,7 @@ from pathlib import Path
 
 class ServiceConventionChecker:
     def run(self) -> int:
-        root = Path(__file__).parents[1] / "src" / "modwire_siren"
+        root = Path(__file__).parents[1] / "src" / "sirenity"
         paths = tuple(sorted(path for path in root.glob("**/*.py") if path.name != "__init__.py"))
         collaborators = self.collaborators(paths)
         injectables = self.injectables(paths)
@@ -126,7 +126,7 @@ class ServiceConventionChecker:
 
     def check_composition(self) -> list[str]:
         try:
-            from modwire_siren.wiring import SirenApplicationContainer
+            from sirenity.wiring import SirenApplicationContainer
 
             application = SirenApplicationContainer().application()
             application.api_service()

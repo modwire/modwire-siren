@@ -2,7 +2,7 @@ from collections.abc import Mapping
 
 from pytest_bdd import given, scenarios, then, when
 
-from modwire_siren import SirenDocument
+from sirenity import SirenDocument
 
 
 class HarnessSteps:

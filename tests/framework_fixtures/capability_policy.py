@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from modwire_siren import SirenAdapterPolicy
+from sirenity import SirenAdapterPolicy
 
 
 @dataclass

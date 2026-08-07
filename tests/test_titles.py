@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import ClassVar
 
-from modwire_siren import SirenContext, SirenRelationship, SirenResponseContext, siren
+from sirenity import SirenContext, SirenRelationship, SirenResponseContext, siren
 
 
 class TestTitles:

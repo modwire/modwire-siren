@@ -65,7 +65,7 @@ class TestSirenSpecCommand:
 
     def test_command_fails_after_a_public_schema_narrows_an_official_requirement(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        field_value = workspace / "src/modwire_siren/contexts/runtime/document/values/field_value.py"
+        field_value = workspace / "src/sirenity/contexts/runtime/document/values/field_value.py"
         field_value.write_text(
             field_value.read_text().replace("value: str | StrictInt | StrictFloat", "value: str | StrictInt")
         )
@@ -79,7 +79,7 @@ class TestSirenSpecCommand:
 
     def test_command_fails_for_an_unsupported_official_schema_term(self, tmp_path: Path):
         workspace = self.workspace(tmp_path)
-        schema = workspace / "src/modwire_siren/contexts/shared/siren_schema/values/siren.schema.json"
+        schema = workspace / "src/sirenity/contexts/shared/siren_schema/values/siren.schema.json"
         document = json.loads(schema.read_text())
         document["definitions"]["Action"]["properties"]["href"]["minLength"] = 1
         schema.write_text(json.dumps(document))
