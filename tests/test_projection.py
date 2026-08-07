@@ -1,7 +1,7 @@
 import pytest
 from openapi_documents import SCHEMA
 
-from modwire_siren import (
+from sirenity import (
     ModwireSirenError,
     SirenContext,
     SirenDocument,

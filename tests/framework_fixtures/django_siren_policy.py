@@ -1,4 +1,4 @@
-from modwire_siren import SirenAdapterPolicy
+from sirenity import SirenAdapterPolicy
 
 
 class DjangoSirenPolicy:

@@ -1,6 +1,6 @@
 # Rules
 
-- The supported public API is `modwire_siren` root imports; private modules are never contractual.
+- The supported public API is `sirenity` root imports; private modules are never contractual.
 - Use OOP: one class per file and no helper or pseudo-private functions. Public functions such as `siren()` are allowed.
 - Keep contexts feature-packaged: roots expose only their minimal public/composition API, and no flat service fields.
   `wiring.py` is the sole plumbing exception and keeps all cross-context discovery and application-container classes

@@ -8,7 +8,7 @@ import pytest
 from framework_fixtures.django_ninja_extra.openapi_fixture import DjangoNinjaExtraOpenApiFixture
 from framework_fixtures.fastapi.openapi_fixture import FastApiOpenApiFixture
 
-from modwire_siren import ModwireSirenError, SirenContext, siren
+from sirenity import ModwireSirenError, SirenContext, siren
 
 
 class TestConformance:
@@ -181,4 +181,4 @@ class TestConformance:
         )
 
         assert result.returncode == 0, result.stderr
-        assert "site-packages/modwire_siren" in result.stdout
+        assert "site-packages/sirenity" in result.stdout

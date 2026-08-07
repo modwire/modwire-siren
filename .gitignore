@@ -4,5 +4,5 @@
 __pycache__/
 *.py[cod]
 dist/
-src/modwire_siren/_version.py
+src/sirenity/_version.py
 .dump/

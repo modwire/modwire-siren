@@ -23,7 +23,7 @@ class PackageDocumentation:
 
 PACKAGES = (
     PackageDocumentation(
-        "modwire_siren",
+        "sirenity",
         ROOT / "README.md",
     ),
 )

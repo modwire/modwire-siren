@@ -21,7 +21,7 @@ from framework_fixtures.capability_policy import CapabilityPolicy
 from framework_fixtures.django_openapi_provider import django_openapi_provider
 from framework_fixtures.root_capability_policy import RootCapabilityPolicy
 
-from modwire_siren import (
+from sirenity import (
     ModwireSirenError,
     SirenAdapter,
     SirenAdapterPolicy,
@@ -1295,13 +1295,13 @@ class TestAdapter:
             ),
             "SOURCE_PATH": "/api",
             "PUBLIC_PATH": "/siren",
-            "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
+            "PROFILES": ["sirenity.SirenStructuredFormProfile"],
         }
         factory = RequestFactory()
 
         with override_settings(
             ALLOWED_HOSTS=["testserver"],
-            MIDDLEWARE=["modwire_siren.SirenMiddleware"],
+            MIDDLEWARE=["sirenity.SirenMiddleware"],
             MODWIRE_SIREN=configuration,
             ROOT_URLCONF="framework_fixtures.django_urls",
         ):
@@ -1342,7 +1342,7 @@ class TestAdapter:
 
         with override_settings(
             ALLOWED_HOSTS=["testserver"],
-            MIDDLEWARE=["modwire_siren.SirenMiddleware"],
+            MIDDLEWARE=["sirenity.SirenMiddleware"],
             MODWIRE_SIREN=configuration,
             ROOT_URLCONF="framework_fixtures.django_urls",
         ):
@@ -1387,7 +1387,7 @@ class TestAdapter:
             "        raise AssertionError('core imported Django')\n"
             "    return original(name, *args, **kwargs)\n"
             "builtins.__import__ = guarded\n"
-            "import modwire_siren\n"
+            "import sirenity\n"
         )
 
         result = subprocess.run((sys.executable, "-c", script), capture_output=True, text=True)

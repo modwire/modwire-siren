@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from modwire_siren.wiring import SirenApplicationContainer
+from sirenity.wiring import SirenApplicationContainer
 
 with TemporaryDirectory() as directory:
     cucumber_report = Path(directory) / "cucumber.json"

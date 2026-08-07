@@ -1,7 +1,7 @@
 import pytest
 from openapi_documents import ROUTE_POLICY_SCHEMA, SCHEMA
 
-from modwire_siren import ModwireSirenError, SirenContext, siren
+from sirenity import ModwireSirenError, SirenContext, siren
 
 
 class TestQueries:

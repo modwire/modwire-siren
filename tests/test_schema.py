@@ -4,8 +4,8 @@ from importlib.resources import files
 import pytest
 from jsonschema import Draft4Validator, FormatChecker, ValidationError
 
-import modwire_siren
-from modwire_siren import (
+import sirenity
+from sirenity import (
     ModwireSirenError,
     SirenAction,
     SirenDocument,
@@ -19,7 +19,7 @@ from modwire_siren import (
 
 class TestSchema:
     schema = json.loads(
-        files(modwire_siren).joinpath("contexts/shared/siren_schema/values/siren.schema.json").read_text()
+        files(sirenity).joinpath("contexts/shared/siren_schema/values/siren.schema.json").read_text()
     )
     validator = Draft4Validator(schema, format_checker=FormatChecker())
 

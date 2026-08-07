@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from modwire_siren import (
+from sirenity import (
     SirenAction,
     SirenDocument,
     SirenEmbeddedLink,

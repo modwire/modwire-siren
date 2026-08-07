@@ -2,7 +2,7 @@ from typing import ClassVar
 
 import pytest
 
-from modwire_siren import ModwireSirenError, SirenResponseContext, siren
+from sirenity import ModwireSirenError, SirenResponseContext, siren
 
 
 class TestResponses:

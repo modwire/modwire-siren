@@ -1,6 +1,6 @@
-# modwire-siren
+# sirenity
 
-`modwire-siren` compiles a complete OpenAPI 3.1 document into a reusable Siren engine. At request
+`sirenity` compiles a complete OpenAPI 3.1 document into a reusable Siren engine. At request
 time, the engine turns application data and permissions into a Siren response with concrete links
 and authorized actions.
 
@@ -9,7 +9,7 @@ Requires Python 3.12 or later.
 ## Install
 
 ```bash
-python -m pip install modwire-siren
+python -m pip install sirenity
 ```
 
 For local development, install `uv` and use the locked environment:
@@ -45,7 +45,7 @@ adds a versioned URI-namespaced control extension for delegated structured input
 official scalar fields:
 
 ```python
-from modwire_siren import SirenStructuredFormProfile, siren_adapter
+from sirenity import SirenStructuredFormProfile, siren_adapter
 
 adapter = siren_adapter(
     api.get_openapi_schema(),
@@ -54,7 +54,7 @@ adapter = siren_adapter(
 ```
 
 ```python
-from modwire_siren import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
+from sirenity import SirenAdapterPolicy, SirenAdapterRequest, siren_adapter
 
 adapter = siren_adapter(api.get_openapi_schema(), source_path="/api", public_path="/siren")
 response = adapter.respond(SirenAdapterRequest(
@@ -113,7 +113,7 @@ Direct middleware construction receives an explicit authorization policy; the st
 loader uses `SirenAllowAllPolicy` when `MODWIRE_SIREN["POLICY"]` is absent:
 
 ```python
-from modwire_siren import SirenAdapterPolicy, SirenDjangoMiddleware
+from sirenity import SirenAdapterPolicy, SirenDjangoMiddleware
 
 django_adapter = siren_adapter(
     api.get_openapi_schema(),
@@ -144,7 +144,7 @@ capabilities decide which candidate actions are present in that response.
 #### Example
 
 ```python
-from modwire_siren import SirenContext, siren
+from sirenity import SirenContext, siren
 
 openapi = {
     "openapi": "3.1.1",
@@ -341,7 +341,7 @@ and statuses from 400 onward become `error` documents whose properties preserve 
 structured result.
 
 ```python
-from modwire_siren import SirenResponseContext
+from sirenity import SirenResponseContext
 
 document = engine.project_response(SirenResponseContext(
     operation_id="get_record",
@@ -441,13 +441,13 @@ def siren_openapi():
 # settings.py
 MIDDLEWARE = [
     "django.middleware.http.ConditionalGetMiddleware",
-    "modwire_siren.SirenMiddleware",
+    "sirenity.SirenMiddleware",
 ]
 MODWIRE_SIREN = {
     "OPENAPI": "example_project.api.siren_openapi",
     "SOURCE_PATH": "/api",
     "PUBLIC_PATH": "/siren",
-    "PROFILES": ["modwire_siren.SirenStructuredFormProfile"],
+    "PROFILES": ["sirenity.SirenStructuredFormProfile"],
 }
 
 # urls.py
@@ -651,20 +651,20 @@ Indicate a Modwire Siren operation failure.
 
 ## Public API
 
-The supported root imports below are generated from `modwire_siren.__all__`.
+The supported root imports below are generated from `sirenity.__all__`.
 
 | Symbol | Purpose | Primary API |
 | --- | --- | --- |
 | `ModwireSirenError` | Indicate a Modwire Siren operation failure. | — |
 | `SirenAction` | Describe an available Siren action. | — |
-| `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> modwire_siren.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`dispatch_path(method: <class 'str'>, path: <class 'str'>) -> str | None`<br>`render_path(template: <class 'str'>, values: collections.abc.Mapping[str, JsonValue]) -> <class 'str'>`<br>`respond(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`capabilities(operation_id: <class 'str'>) -> frozenset[str]`<br>`error(request: <class 'modwire_siren.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'modwire_siren.contexts.runtime.document.values.document.SirenDocument'>` |
+| `SirenAdapter` | Project already-executed framework results through a startup-compiled Siren engine. | `match(method: <class 'str'>, path: <class 'str'>) -> sirenity.contexts.runtime.adapter.values.match.SirenAdapterMatch | None`<br>`dispatch_path(method: <class 'str'>, path: <class 'str'>) -> str | None`<br>`render_path(template: <class 'str'>, values: collections.abc.Mapping[str, JsonValue]) -> <class 'str'>`<br>`respond(request: <class 'sirenity.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'sirenity.contexts.runtime.adapter.values.response.SirenAdapterResponse'>`<br>`capabilities(operation_id: <class 'str'>) -> frozenset[str]`<br>`error(request: <class 'sirenity.contexts.runtime.adapter.values.request.SirenAdapterRequest'>) -> <class 'sirenity.contexts.runtime.document.values.document.SirenDocument'>` |
 | `SirenAdapterMatch` | !!! abstract "Usage Documentation" | — |
 | `SirenAdapterPolicy` | Declare application-owned authorization and optional projection overrides. | — |
-| `SirenAdapterProfile` | Extend a fresh adapter document using public normalized operation metadata. | `apply(operation_id: <class 'str'>, operation_input: modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'modwire_siren.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]` |
+| `SirenAdapterProfile` | Extend a fresh adapter document using public normalized operation metadata. | `apply(operation_id: <class 'str'>, operation_input: sirenity.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, sirenity.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'sirenity.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]` |
 | `SirenAdapterRequest` | Describe one already-executed HTTP operation for Siren projection. | — |
 | `SirenAdapterResponse` | Represent an HTTP-ready official Siren response without framework dependencies. | — |
-| `SirenAllowAllPolicy` | Permit every capability owned by the matched operation's compiled graph scope. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
-| `SirenCapabilityPolicy` | Select application authorization and optional projection overrides for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'modwire_siren.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
+| `SirenAllowAllPolicy` | Permit every capability owned by the matched operation's compiled graph scope. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'sirenity.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
+| `SirenCapabilityPolicy` | Select application authorization and optional projection overrides for one response. | `select(operation_id: str | None, status: <class 'int'>, request: <class 'object'>, result: JsonValue) -> <class 'sirenity.contexts.runtime.adapter.values.policy.SirenAdapterPolicy'>` |
 | `SirenCompatibilityFinding` | Describe one OpenAPI construct outside the current official-Siren boundary. | — |
 | `SirenCompatibilityReport` | Expose deterministic OpenAPI-to-Siren compatibility findings. | `compatible: <class 'bool'>`<br>`render() -> <class 'str'>` |
 | `SirenContext` | Supply runtime state used to project a Siren document. | — |
@@ -680,7 +680,7 @@ The supported root imports below are generated from `modwire_siren.__all__`.
 | `SirenOperationInput` | Expose normalized input metadata for one compiled OpenAPI operation. | — |
 | `SirenRelationship` | Describe a runtime relationship to another OpenAPI resource. | — |
 | `SirenResponseContext` | Supply an executed OpenAPI operation and result for operation-aware projection. | — |
-| `SirenStructuredFormProfile` | Emit the versioned Modwire structured-form extension for delegated inputs. | `apply(operation_id: <class 'str'>, operation_input: modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'modwire_siren.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]`<br>`enrich(entity: collections.abc.Mapping[str, JsonValue], operation_inputs: collections.abc.Mapping[str, modwire_siren.contexts.runtime.operation_input.values.operation.SirenOperationInput | None]) -> collections.abc.Mapping[str, JsonValue]`<br>`control(delegated: <class 'modwire_siren.contexts.runtime.operation_input.values.delegated.SirenDelegatedInput'>) -> collections.abc.Mapping[str, JsonValue]` |
+| `SirenStructuredFormProfile` | Emit the versioned Modwire structured-form extension for delegated inputs. | `apply(operation_id: <class 'str'>, operation_input: sirenity.contexts.runtime.operation_input.values.operation.SirenOperationInput | None, operation_inputs: collections.abc.Mapping[str, sirenity.contexts.runtime.operation_input.values.operation.SirenOperationInput | None], document: collections.abc.Mapping[str, JsonValue], context: <class 'sirenity.contexts.runtime.request.values.response.SirenResponseContext'>) -> collections.abc.Mapping[str, JsonValue]`<br>`enrich(entity: collections.abc.Mapping[str, JsonValue], operation_inputs: collections.abc.Mapping[str, sirenity.contexts.runtime.operation_input.values.operation.SirenOperationInput | None]) -> collections.abc.Mapping[str, JsonValue]`<br>`control(delegated: <class 'sirenity.contexts.runtime.operation_input.values.delegated.SirenDelegatedInput'>) -> collections.abc.Mapping[str, JsonValue]` |
 | `audit` | Inspect a valid OpenAPI document against the current official-Siren support boundary. | — |
 | `siren` | Compile a complete OpenAPI 3.1 document into a reusable Siren engine. | — |
 | `siren_adapter` | Compile a framework-neutral boundary for operation-aware Siren HTTP responses. | — |

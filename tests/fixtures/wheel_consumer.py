@@ -1,5 +1,5 @@
-import modwire_siren
-from modwire_siren import SirenContext, siren
+import sirenity
+from sirenity import SirenContext, siren
 
 schema = {
     "openapi": "3.1.1",
@@ -19,4 +19,4 @@ context = SirenContext(
 document = siren(schema).project(context).model_dump(by_alias=True, mode="json", exclude_none=True)
 
 assert document["links"] == [{"rel": ["self"], "href": "https://api.example.com/widgets"}]
-print(modwire_siren.__file__)
+print(sirenity.__file__)
